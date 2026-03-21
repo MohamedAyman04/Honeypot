@@ -1,0 +1,163 @@
+version: "3.8"
+
+services:
+  plc_simulator:
+    build:
+      context: .
+      dockerfile: plc/Dockerfile
+    container_name: plc_simulator
+    ports: 
+      - "5020:5020"
+    networks:
+      - dmz-net
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "/app/plc/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  ics_s7_plc:
+    build:
+      context: .
+      dockerfile: plc/Dockerfile
+    container_name: ics_s7_plc
+    command: python /app/plc/s7_server.py
+    networks:
+      - dmz-net
+    ports:
+      - "102:102"
+    restart: always
+
+  hmi:
+    build:
+      context: ./hmi
+    container_name: ics_hmi
+    depends_on:
+      plc_simulator:
+        condition: service_healthy
+    networks:
+      - ot-net
+      - dmz-net
+    ports:
+      - "8060:8060"
+    environment:
+      - PLC_IP=plc_simulator
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    command: >
+      sh -c "sleep 5 && python hmi_app.py"
+
+  # Background Data Logger (Historian Feed)
+  historian_bridge:
+    build:
+      context: ./hmi
+    container_name: ics_historian_bridge
+    command: python hmi_simulator.py
+    depends_on:
+      plc_simulator:
+        condition: service_healthy
+      historian:
+        condition: service_started
+    networks:
+      - dmz-net
+      - monitor-net
+    environment:
+      - PLC_IP=plc_simulator
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # ML Detection Engine
+  ml_engine:
+    build:
+      context: ./ml-engine
+    container_name: ics_ml_engine
+    volumes:
+      - shared-data:/data
+    depends_on:
+      historian:
+        condition: service_started
+    networks:
+      - monitor-net
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # Continuous Network Sniffer for ML Baseline
+  network_sniffer:
+    build:
+      context: ./logger
+    container_name: ics_sniffer
+    command: python logger.py
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - shared-data:/data
+    networks:
+      - dmz-net
+    restart: unless-stopped
+
+  correlator:
+    build:
+      context: ./logger
+    container_name: ics_correlator
+    depends_on:
+      - plc_simulator
+      - historian
+    networks:
+      - dmz-net
+      - monitor-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - PLC_IP=plc_simulator
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  historian:
+    image: influxdb:latest
+    container_name: ics_historian
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password123
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=supersecrettoken
+      - DOCKER_INFLUXDB_INIT_ORG=my_refinery
+      - DOCKER_INFLUXDB_INIT_BUCKET=sensor_logs
+    networks:
+      - monitor-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ics_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana_provisioning:/etc/grafana/provisioning
+      - ./grafana_dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - historian
+    networks:
+      - monitor-net
+    restart: unless-stopped
+
+volumes:
+  shared-data:
+
+networks:
+  dmz-net:
+    driver: bridge
+  ot-net:
+    driver: bridge
+  monitor-net:
+    driver: bridge
