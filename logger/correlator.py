@@ -1,3 +1,11 @@
+"""
+Cross-Layer Correlator
+======================
+Sniffs Modbus TCP (port 5020) write commands using Scapy and correlates them
+with live physical sensor readings from the PLC.  All events are written to
+InfluxDB (correlation_logs measurement) for the ML engine to consume.
+"""
+
 import scapy.all as scapy
 from pymodbus.client import ModbusTcpClient
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -6,67 +14,110 @@ import os
 import time
 import struct
 
-# Config
-PLC_IP = os.environ.get('PLC_IP', 'plc_simulator')
-INFLUX_URL = "http://ics_historian:8086"
-INFLUX_TOKEN = "supersecrettoken"
-INFLUX_ORG = "my_refinery"
-INFLUX_BUCKET = "sensor_logs"
+# ── Configuration ──────────────────────────────────────────────────────────────
+PLC_IP        = os.environ.get('PLC_IP',         'plc_simulator')
+INFLUX_URL    = os.environ.get('INFLUX_URL',     'http://ics_historian:8086')
+INFLUX_TOKEN  = os.environ.get('INFLUX_TOKEN',   'supersecrettoken')
+INFLUX_ORG    = os.environ.get('INFLUX_ORG',     'my_refinery')
+INFLUX_BUCKET = os.environ.get('INFLUX_BUCKET',  'sensor_logs')
 
-# Init Clients
-db_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
-write_api = db_client.write_api(write_options=SYNCHRONOUS)
-plc_client = ModbusTcpClient(PLC_IP, port=5020)
+db_client  = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+write_api  = db_client.write_api(write_options=SYNCHRONOUS)
 
 print("--- CROSS-LAYER CORRELATOR STARTING ---")
 
-def get_modbus_data(payload):
-    # Modbus TCP Header: Transaction ID (2), Protocol ID (2), Length (2), Unit ID (1) = 7 bytes
-    # PDU: Function Code (1), Data (...)
+def make_plc_client():
+    return ModbusTcpClient(PLC_IP, port=5020)
+
+def read_physical_state() -> dict | None:
+    client = make_plc_client()
+    try:
+        if client.connect():
+            res = client.read_holding_registers(100, 4)
+            if hasattr(res, 'registers') and not res.isError():
+                return {
+                    'pressure':    float(res.registers[0]),
+                    'flow_rate':   float(res.registers[1]) / 10.0,
+                    'temperature': float(res.registers[2]),
+                    'pump_rpm':    float(res.registers[3]),
+                }
+    except Exception:
+        pass
+    finally:
+        try:
+            client.close()
+        except Exception:
+            pass
+    return None
+
+def parse_modbus_write(payload: bytes):
+    """
+    Extract function code and register info from a raw Modbus TCP payload.
+    Modbus TCP ADU: Trans(2) + Proto(2) + Len(2) + UnitID(1) + FC(1) + Data(...)
+    """
     if len(payload) < 8:
         return None
-    
-    trans_id = struct.unpack(">H", payload[0:2])[0]
     func_code = payload[7]
-    return trans_id, func_code, payload[8:]
+    if func_code not in (5, 6, 15, 16):   # write function codes only
+        return None, None, None
+    if len(payload) < 12:
+        return func_code, None, None
+    reg_addr = struct.unpack('>H', payload[8:10])[0]
+    reg_val  = struct.unpack('>H', payload[10:12])[0]
+    return func_code, reg_addr, reg_val
 
 def process_packet(packet):
-    if packet.haslayer(scapy.Raw):
-        payload = packet[scapy.Raw].load
-        modbus = get_modbus_data(payload)
-        if not modbus:
-            return
-            
-        trans_id, func_code, data = modbus
-        
-        # Function Code 6: Write Single Register
-        if func_code == 6:
-            reg_addr = struct.unpack(">H", data[0:2])[0]
-            reg_val = struct.unpack(">H", data[2:4])[0]
-            
-            print(f"[!] Write Command Captured: Reg {reg_addr} = {reg_val}")
-            
-            # Immediately query the PLC for the current physical state for correlation
-            try:
-                # Read sensors: Pressure (100), Flow (101)
-                res = plc_client.read_holding_registers(100, 2)
-                if not res.isError():
-                    pressure = res.registers[0]
-                    flow = res.registers[1] / 10.0
-                    
-                    point = Point("correlation_logs") \
-                        .tag("event_type", "write_command") \
-                        .field("register", reg_addr) \
-                        .field("value", reg_val) \
-                        .field("phys_pressure", float(pressure)) \
-                        .field("phys_flow", float(flow)) \
-                        .field("trans_id", trans_id) \
-                        .time(time.time_ns(), WritePrecision.NS)
-                    
-                    write_api.write(bucket=INFLUX_BUCKET, record=point)
-                    print(f"Logged Correlation: Write {reg_addr} @ Pressure {pressure}")
-            except Exception as e:
-                print(f"Correlation Error: {e}")
+    if not packet.haslayer(scapy.Raw) or not packet.haslayer(scapy.TCP):
+        return
+    layer = packet[scapy.TCP]
+    if layer.dport != 5020 and layer.sport != 5020:
+        return
 
-# Sniffing
-scapy.sniff(iface="eth0", filter="tcp port 5020", prn=process_packet, store=0)
+    payload   = packet[scapy.Raw].load
+    parsed    = parse_modbus_write(payload)
+    if parsed is None:
+        return
+    func_code, reg_addr, reg_val = parsed
+    if func_code is None:
+        return
+
+    src_ip = packet[scapy.IP].src if packet.haslayer(scapy.IP) else "?"
+    print(f"[CORRELATOR] FC{func_code} Write: Reg {reg_addr} = {reg_val}  from {src_ip}")
+
+    state = read_physical_state()
+    pressure = float(state['pressure']) if state else 0.0
+    flow     = float(state['flow_rate']) if state else 0.0
+
+    try:
+        point = (Point("correlation_logs")
+                 .tag("event_type",  "write_command")
+                 .tag("source_ip",   src_ip)
+                 .field("func_code",     func_code)
+                 .field("register",      reg_addr   if reg_addr is not None else -1)
+                 .field("value",         reg_val    if reg_val  is not None else -1)
+                 .field("phys_pressure", pressure)
+                 .field("phys_flow",     flow)
+                 .time(time.time_ns(), WritePrecision.NS))
+        write_api.write(bucket=INFLUX_BUCKET, record=point)
+        print(f"[CORRELATOR] Logged: Reg={reg_addr} Val={reg_val} P={pressure:.1f} PSI")
+    except Exception as e:
+        print(f"[CORRELATOR] InfluxDB error: {e}")
+
+# Detect available interface
+def get_iface():
+    try:
+        ifaces = scapy.get_if_list()
+        for candidate in ["eth0", "eth1", "ens3", "enp0s3"]:
+            if candidate in ifaces:
+                return candidate
+        return next((i for i in ifaces if i != "lo"), None)
+    except Exception:
+        return None
+
+IFACE = get_iface()
+print(f"[CORRELATOR] Sniffing on {IFACE}")
+
+if IFACE:
+    scapy.sniff(iface=IFACE, filter="tcp port 5020", prn=process_packet, store=0)
+else:
+    scapy.sniff(filter="tcp port 5020", prn=process_packet, store=0)

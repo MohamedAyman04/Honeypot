@@ -1,17 +1,27 @@
 version: "3.8"
 
 services:
+
+  # ── Modbus PLC Simulator (Purdue Level 1) ────────────────────────────────────
   plc_simulator:
     build:
       context: .
       dockerfile: plc/Dockerfile
     container_name: plc_simulator
-    ports: 
+    ports:
       - "5020:5020"
     networks:
       - dmz-net
+      - monitor-net
     environment:
       - PYTHONUNBUFFERED=1
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
+    depends_on:
+      historian:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "/app/plc/healthcheck.py"]
@@ -20,6 +30,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # ── S7comm PLC Honeypot (Siemens S7 emulation) ───────────────────────────────
   ics_s7_plc:
     build:
       context: .
@@ -31,7 +42,37 @@ services:
     ports:
       - "102:102"
     restart: always
+    healthcheck:
+      test: ["CMD", "python", "/app/plc/s7_healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
 
+  # ── DNP3 Honeypot (power/water utility protocol) ─────────────────────────────
+  ics_dnp3:
+    build:
+      context: .
+      dockerfile: plc/Dockerfile
+    container_name: ics_dnp3
+    command: python /app/plc/dnp3_server.py
+    networks:
+      - dmz-net
+      - monitor-net
+    ports:
+      - "20000:20000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
+    depends_on:
+      historian:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── HMI Web Dashboard ─────────────────────────────────────────────────────────
   hmi:
     build:
       context: ./hmi
@@ -51,7 +92,7 @@ services:
     command: >
       sh -c "sleep 5 && python hmi_app.py"
 
-  # Background Data Logger (Historian Feed)
+  # ── Historian Bridge (Modbus → InfluxDB) ─────────────────────────────────────
   historian_bridge:
     build:
       context: ./hmi
@@ -67,10 +108,14 @@ services:
       - monitor-net
     environment:
       - PLC_IP=plc_simulator
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ML Detection Engine
+  # ── ML Anomaly Detection Engine ───────────────────────────────────────────────
   ml_engine:
     build:
       context: ./ml-engine
@@ -83,10 +128,14 @@ services:
     networks:
       - monitor-net
     environment:
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # Continuous Network Sniffer for ML Baseline
+  # ── Network Sniffer / Logger ──────────────────────────────────────────────────
   network_sniffer:
     build:
       context: ./logger
@@ -95,12 +144,14 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    network_mode: host        # Must see actual network traffic
     volumes:
       - shared-data:/data
-    networks:
-      - dmz-net
     restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
 
+  # ── Cross-Layer Correlator ────────────────────────────────────────────────────
   correlator:
     build:
       context: ./logger
@@ -116,9 +167,14 @@ services:
       - NET_RAW
     environment:
       - PLC_IP=plc_simulator
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
+  # ── InfluxDB Historian ─────────────────────────────────────────────────────────
   historian:
     image: influxdb:latest
     container_name: ics_historian
@@ -131,10 +187,13 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=supersecrettoken
       - DOCKER_INFLUXDB_INIT_ORG=my_refinery
       - DOCKER_INFLUXDB_INIT_BUCKET=sensor_logs
+    volumes:
+      - influx-data:/var/lib/influxdb2
     networks:
       - monitor-net
     restart: unless-stopped
 
+  # ── Grafana Dashboard ──────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     container_name: ics_grafana
@@ -145,6 +204,8 @@ services:
       - ./grafana_dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     depends_on:
       - historian
     networks:
@@ -153,6 +214,7 @@ services:
 
 volumes:
   shared-data:
+  influx-data:
 
 networks:
   dmz-net:
