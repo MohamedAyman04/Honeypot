@@ -57,7 +57,7 @@ app.layout = dbc.Container([
                 dbc.CardHeader("⚙️ Process Control"),
                 dbc.CardBody([
                     html.Label("Pump RPM", className="fw-bold"),
-                    dcc.Slider(0, 3000, 100, value=1200, id='pump-slider',
+                    dcc.Slider(0, 3000, 100, value=1200, id='pump-slider', className="text-muted",
                                marks={0: '0', 1000: '1k', 2000: '2k', 3000: '3k'},
                                tooltip={"placement": "bottom", "always_visible": True}),
                     html.Hr(),
@@ -70,7 +70,7 @@ app.layout = dbc.Container([
                     dbc.Card([
                         dbc.CardBody([
                             html.Small("Pump RPM", className="text-muted"),
-                            html.H4("0", id="rpm-display", className="text-center text-light"),
+                            html.H4("0", id="rpm-display", className="text-center text-white"),
                         ])
                     ], className="mb-2"),
                     dbc.Card([

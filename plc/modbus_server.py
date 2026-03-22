@@ -82,7 +82,7 @@ async def run_server():
     physics.set_valve_pos(0.5)
 
     store = PhysicsAwareDataBlock(0, [0] * 300, physics)
-    context = ModbusSlaveContext(hr=store)
+    context = ModbusSlaveContext(hr=store, zero_mode=True)
     single_context = ModbusServerContext(slaves=context, single=True)
 
     identity = ModbusDeviceIdentification()
