@@ -20,7 +20,7 @@ temps = deque(maxlen=MAX_POINTS)
 
 def get_plc_data():
     """Connect fresh each time to avoid stale socket issues."""
-    client = ModbusTcpClient(PLC_IP, port=5020)
+    client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
             # Read registers 100-103: pressure, flow*10, temp, pump_rpm
@@ -171,7 +171,7 @@ def toggle_valve(n, current_state):
     if n is None:
         return current_state
     new_state = 1 if current_state == 0 else 0
-    client = ModbusTcpClient(PLC_IP, port=5020)
+    client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
             # Write to register 202 (valve on/off)
@@ -193,7 +193,7 @@ def toggle_valve(n, current_state):
     prevent_initial_call=True
 )
 def set_pump_rpm(value):
-    client = ModbusTcpClient(PLC_IP, port=5020)
+    client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
             client.write_register(200, int(value))

@@ -21,7 +21,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 TARGET_IP       = '127.0.0.1'
-MODBUS_PORT     = 5020
+MODBUS_PORT     = 502
 DNP3_PORT       = 20000
 S7COMM_PORT     = 102
 

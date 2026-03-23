@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   # ── Modbus PLC Simulator (Purdue Level 1) ────────────────────────────────────
   plc_simulator:
     build:
@@ -9,7 +8,7 @@ services:
       dockerfile: plc/Dockerfile
     container_name: plc_simulator
     ports:
-      - "5020:5020"
+      - "502:502"
     networks:
       - dmz-net
       - monitor-net
@@ -144,7 +143,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    network_mode: host        # Must see actual network traffic
+    network_mode: host # Must see actual network traffic
     volumes:
       - shared-data:/data
     restart: unless-stopped

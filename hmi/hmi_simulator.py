@@ -34,7 +34,7 @@ _hist_pressure_history = []   # last N logged values
 
 
 def read_plc():
-    client = ModbusTcpClient(PLC_IP, port=5020)
+    client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
             res = client.read_holding_registers(address=100, count=4)

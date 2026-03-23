@@ -1,7 +1,7 @@
 """
 Cross-Layer Correlator
 ======================
-Sniffs Modbus TCP (port 5020) write commands using Scapy and correlates them
+Sniffs Modbus TCP (port 502) write commands using Scapy and correlates them
 with live physical sensor readings from the PLC.  All events are written to
 InfluxDB (correlation_logs measurement) for the ML engine to consume.
 """
@@ -27,7 +27,7 @@ write_api  = db_client.write_api(write_options=SYNCHRONOUS)
 print("--- CROSS-LAYER CORRELATOR STARTING ---")
 
 def make_plc_client():
-    return ModbusTcpClient(PLC_IP, port=5020)
+    return ModbusTcpClient(PLC_IP, port=502)
 
 def read_physical_state() -> dict | None:
     client = make_plc_client()
@@ -70,7 +70,7 @@ def process_packet(packet):
     if not packet.haslayer(scapy.Raw) or not packet.haslayer(scapy.TCP):
         return
     layer = packet[scapy.TCP]
-    if layer.dport != 5020 and layer.sport != 5020:
+    if layer.dport != 502 and layer.sport != 502:
         return
 
     payload   = packet[scapy.Raw].load
@@ -118,6 +118,6 @@ IFACE = get_iface()
 print(f"[CORRELATOR] Sniffing on {IFACE}")
 
 if IFACE:
-    scapy.sniff(iface=IFACE, filter="tcp port 5020", prn=process_packet, store=0)
+    scapy.sniff(iface=IFACE, filter="tcp port 502", prn=process_packet, store=0)
 else:
-    scapy.sniff(filter="tcp port 5020", prn=process_packet, store=0)
+    scapy.sniff(filter="tcp port 502", prn=process_packet, store=0)

@@ -88,8 +88,8 @@ async def run_server():
     identity = ModbusDeviceIdentification()
     identity.ProductName = 'SIMATIC S7-300 Modbus Gateway'
 
-    log.info("Starting Modbus PLC Simulator on port 5020...")
-    await StartAsyncTcpServer(context=single_context, identity=identity, address=("0.0.0.0", 5020))
+    log.info("Starting Modbus PLC Simulator on port 502...")
+    await StartAsyncTcpServer(context=single_context, identity=identity, address=("0.0.0.0", 502))
 
 if __name__ == "__main__":
     try: asyncio.run(run_server())

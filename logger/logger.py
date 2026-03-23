@@ -1,7 +1,7 @@
 """
 Network Logger (Scapy-based)
 ============================
-Captures Modbus (5020) and S7comm (102) traffic on all available interfaces
+Captures Modbus (502) and S7comm (102) traffic on all available interfaces
 and writes JSON log entries to /data/network_logs.json for the correlator.
 """
 import scapy.all as scapy
@@ -31,7 +31,7 @@ def get_iface():
 IFACE = get_iface()
 print(f"--- LOGGER STARTING: sniffing on {IFACE} ---")
 
-WATCHED_PORTS = {5020, 102, 20000}   # Modbus, S7comm, DNP3
+WATCHED_PORTS = {502, 102, 20000}   # Modbus, S7comm, DNP3
 
 def process_packet(packet):
     if not packet.haslayer(scapy.Raw):
@@ -47,7 +47,7 @@ def process_packet(packet):
         return
 
     payload = packet[scapy.Raw].load
-    proto   = "modbus" if (dport == 5020 or sport == 5020) else \
+    proto   = "modbus" if (dport == 502 or sport == 502) else \
               "s7comm"  if (dport == 102  or sport == 102)  else "dnp3"
 
     log_entry = {
