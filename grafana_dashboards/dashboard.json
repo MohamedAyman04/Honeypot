@@ -9,12 +9,11 @@
   "id": null,
   "links": [],
   "panels": [
-
     {
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 100,
-      "title": "🏭  Pipeline Telemetry",
+      "title": "Pipeline Telemetry",
       "type": "row"
     },
 
@@ -103,7 +102,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
       "id": 101,
-      "title": "🔒  Security & Anomaly Detection",
+      "title": "Security & Anomaly Detection",
       "type": "row"
     },
 
@@ -116,11 +115,17 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           },
           "mappings": [
-            { "options": { "0": { "text": "NORMAL" }, "1": { "text": "ANOMALY" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "text": "NORMAL" },
+                "1": { "text": "ANOMALY" }
+              },
+              "type": "value"
+            }
           ]
         },
         "overrides": []
@@ -162,7 +167,10 @@
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
       "fieldConfig": {
-        "defaults": { "custom": { "lineWidth": 2 }, "color": { "mode": "palette-classic" } },
+        "defaults": {
+          "custom": { "lineWidth": 2 },
+          "color": { "mode": "palette-classic" }
+        },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
@@ -186,7 +194,7 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           }
         },
@@ -208,7 +216,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
       "id": 102,
-      "title": "⚔️  Attack Simulation Results",
+      "title": "Attack Simulation Results",
       "type": "row"
     },
 
@@ -221,11 +229,17 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           },
           "mappings": [
-            { "options": { "0": { "text": "BLOCKED" }, "1": { "text": "SUCCEEDED" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "text": "BLOCKED" },
+                "1": { "text": "SUCCEEDED" }
+              },
+              "type": "value"
+            }
           ]
         },
         "overrides": []
@@ -252,11 +266,17 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           },
           "mappings": [
-            { "options": { "0": { "text": "BLOCKED" }, "1": { "text": "SUCCEEDED" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "text": "BLOCKED" },
+                "1": { "text": "SUCCEEDED" }
+              },
+              "type": "value"
+            }
           ]
         },
         "overrides": []
@@ -283,11 +303,17 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           },
           "mappings": [
-            { "options": { "0": { "text": "NO RESPONSE" }, "1": { "text": "RESPONDED" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "text": "NO RESPONSE" },
+                "1": { "text": "RESPONDED" }
+              },
+              "type": "value"
+            }
           ]
         },
         "overrides": []
@@ -314,11 +340,17 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              { "color": "red", "value": 1 }
             ]
           },
           "mappings": [
-            { "options": { "0": { "text": "NO RESPONSE" }, "1": { "text": "RESPONDED" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "text": "NO RESPONSE" },
+                "1": { "text": "RESPONDED" }
+              },
+              "type": "value"
+            }
           ]
         },
         "overrides": []
@@ -340,7 +372,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
       "id": 103,
-      "title": "🌐  Protocol Honeypot Events",
+      "title": "Protocol Honeypot Events",
       "type": "row"
     },
 
@@ -362,7 +394,6 @@
       "title": "DNP3 Honeypot Events",
       "type": "table"
     }
-
   ],
   "refresh": "5s",
   "schemaVersion": 38,
