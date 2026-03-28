@@ -1,11 +1,16 @@
 """
 HMI / Historian Bridge
 =======================
-Polls Modbus PLC every 2 s, writes all telemetry to InfluxDB.
+Polls Modbus PLC every 2 s, writes ALL telemetry to InfluxDB:
+  - pipeline_metrics   (process telemetry)
+  - process_state      (canonical state per thesis Table 4.1)
+  - security_alerts    (replay attack detection)
+  - hmi_access         (access log for historian bridge)
 Detects replay attacks by checking for FLAT historian values while PLC changes.
 """
 import time
 import os
+import uuid
 from pymodbus.client import ModbusTcpClient
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -18,19 +23,18 @@ INFLUX_URL = os.environ.get('INFLUX_URL',     'http://ics_historian:8086')
 
 POLL_INTERVAL = 2
 
-# A replay attack shows the historian receiving the SAME value repeatedly
-# while the PLC is actually changing.  We track recent historian values.
-REPLAY_FLAT_COUNT   = 3      # how many identical historian rows = suspect
-REPLAY_PLC_DELTA    = 8.0    # PLC must also have moved this much during flat window
+# Session ID – matches the modbus_server session for cross-referencing
+SESSION_ID = os.environ.get('SESSION_ID', str(uuid.uuid4())[:8])
 
-print("HMI/Historian Bridge started...")
+# Replay detection thresholds
+REPLAY_FLAT_COUNT = 3     # how many identical historian rows = suspect
+REPLAY_PLC_DELTA  = 8.0  # PLC must also have moved this much
+
+print(f"HMI/Historian Bridge started [session={SESSION_ID}]...")
 
 db_client = InfluxDBClient(url=INFLUX_URL, token=TOKEN, org=ORG)
 write_api  = db_client.write_api(write_options=SYNCHRONOUS)
 query_api  = db_client.query_api()
-
-# Rolling history for replay detection
-_hist_pressure_history = []   # last N logged values
 
 
 def read_plc():
@@ -110,44 +114,87 @@ from(bucket: "{BUCKET}")
     return False
 
 
+def log_hmi_access(endpoint: str, src_ip: str = "historian_bridge", http_code: int = 200):
+    """
+    Log access events to hmi_access measurement (Table 4.1 in thesis).
+    """
+    try:
+        p = (Point("hmi_access")
+             .tag("session_id", SESSION_ID)
+             .tag("src_ip",     src_ip)
+             .tag("endpoint",   endpoint)
+             .field("http_code", http_code)
+             .time(time.time_ns(), WritePrecision.NS))
+        write_api.write(bucket=BUCKET, record=p)
+    except Exception as e:
+        print(f"hmi_access log error: {e}")
+
+
+poll_count = 0
 while True:
     try:
+        start_ts = time.time_ns()
         data = read_plc()
+        poll_count += 1
+
         if data is not None:
             pressure_val = data['pressure']
+            pump_state   = "running" if data['pump_rpm'] > 0 else "stopped"
 
             # ── Replay attack detection ──────────────────────────────────────
             if check_replay_attack(pressure_val):
                 print(f"!!! REPLAY ATTACK ALERT !!! PLC={pressure_val:.1f} but historian is flat")
                 alert = (Point("security_alerts")
                          .tag("alert_type", "replay_attack")
+                         .tag("session_id", SESSION_ID)
                          .field("live_pressure", pressure_val)
                          .field("detail", "Historian frozen while PLC changed")
                          .time(time.time_ns(), WritePrecision.NS))
                 write_api.write(bucket=BUCKET, record=alert)
 
             # ── Deception feedback ───────────────────────────────────────────
+            display_pressure = pressure_val
             if check_for_anomaly():
                 import random
-                pressure_val = pressure_val * random.uniform(0.5, 2.0)
-                print(f"!!! DECEPTION ACTIVE !!! Scrambled to {pressure_val:.1f}")
+                display_pressure = pressure_val * random.uniform(0.5, 2.0)
+                print(f"!!! DECEPTION ACTIVE !!! Scrambled to {display_pressure:.1f}")
 
-            # ── Write to historian ───────────────────────────────────────────
+            # ── Write pipeline_metrics (legacy + ML engine compat) ──────────
             p = (Point("pipeline_metrics")
-                 .tag("location", "pump_station_01")
-                 .tag("source", "historian_bridge")
+                 .tag("location",   "pump_station_01")
+                 .tag("source",     "historian_bridge")
+                 .tag("session_id", SESSION_ID)
                  .field("pressure",    data['pressure'])
                  .field("flow_rate",   data['flow_rate'])
                  .field("temperature", data['temperature'])
                  .field("pump_rpm",    data['pump_rpm'])
-                 .time(time.time_ns(), WritePrecision.NS))
+                 .time(start_ts, WritePrecision.NS))
             write_api.write(bucket=BUCKET, record=p)
+
+            # ── Write process_state (Table 4.1: canonical state measurement) ─
+            ps = (Point("process_state")
+                  .tag("location",   "pump_station_01")
+                  .tag("session_id", SESSION_ID)
+                  .field("pressure",    data['pressure'])
+                  .field("flow_rate",   data['flow_rate'])
+                  .field("temperature", data['temperature'])
+                  .field("pump_rpm",    data['pump_rpm'])
+                  .field("pump_state",  pump_state)
+                  .field("setpoint",    200.0)   # default safe operating setpoint
+                  .time(start_ts, WritePrecision.NS))
+            write_api.write(bucket=BUCKET, record=ps)
+
+            # ── Log this historian poll as HMI access ────────────────────────
+            if poll_count % 10 == 0:  # log every 20 s to avoid noise
+                log_hmi_access("/api/plc/poll", src_ip="historian_bridge", http_code=200)
+
             print(f"Logged → P={data['pressure']:.1f} PSI  "
                   f"F={data['flow_rate']:.2f}  "
                   f"T={data['temperature']:.1f}°C  "
                   f"RPM={data['pump_rpm']:.0f}")
         else:
             print("WARNING: Could not reach Modbus PLC, retrying...")
+            log_hmi_access("/api/plc/poll", src_ip="historian_bridge", http_code=503)
 
     except Exception as e:
         print(f"Bridge error: {e}")

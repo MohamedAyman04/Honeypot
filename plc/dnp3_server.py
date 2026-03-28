@@ -1,12 +1,16 @@
 """
 DNP3 Honeypot Server - TCP 20000
 Parses link layer frames, sends ACK responses, logs to InfluxDB.
+- Logs to honeypot_events (protocol activity).
+- Logs to auth_attempts (connection events per Table 4.1).
+- Uses session_id for cross-layer correlation.
 """
 import socket
 import struct
 import threading
 import time
 import os
+import uuid
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
@@ -15,6 +19,9 @@ INFLUX_URL   = os.environ.get("INFLUX_URL",    "http://ics_historian:8086")
 INFLUX_TOKEN = os.environ.get("INFLUX_TOKEN",  "supersecrettoken")
 INFLUX_ORG   = os.environ.get("INFLUX_ORG",    "my_refinery")
 INFLUX_BUCKET = os.environ.get("INFLUX_BUCKET","sensor_logs")
+
+# Session ID for cross-layer tracking
+SESSION_ID = str(uuid.uuid4())[:8]
 
 _db_client = None
 _write_api = None
@@ -57,7 +64,7 @@ def build_dnp3_ack(src_addr: int = 1, dst_addr: int = 3) -> bytes:
     ctrl = 0x00 # Secondary, ACK
     raw = bytes([
         0x05, 0x64, # Start
-        0x05,       # Length (5 bytes after length field: ctrl+dst+src)
+        0x05,       # Length
         ctrl,
         dst_addr & 0xFF, (dst_addr >> 8) & 0xFF,
         src_addr & 0xFF, (src_addr >> 8) & 0xFF
@@ -73,27 +80,49 @@ def parse_dnp3_frame(data: bytes) -> dict | None:
     return {"control": ctrl, "dst": dst, "src": src}
 
 def log_event(remote_ip: str, remote_port: int, frame, raw_hex: str):
+    """Log protocol details for the dashboard."""
     try:
         api = get_write_api()
         if not api: return
-        p = (Point("honeypot_events").tag("protocol", "DNP3").tag("remote_ip", remote_ip)
-             .field("remote_port", remote_port).field("raw_data", raw_hex[:256])
+        p = (Point("honeypot_events")
+             .tag("protocol", "DNP3")
+             .tag("remote_ip", remote_ip)
+             .tag("session_id", SESSION_ID)
+             .field("remote_port", remote_port)
+             .field("raw_data", raw_hex[:256])
              .field("src_addr", int(frame["src"]) if frame else -1)
              .field("dst_addr", int(frame["dst"]) if frame else -1)
              .time(time.time_ns(), WritePrecision.NS))
         api.write(bucket=INFLUX_BUCKET, record=p)
     except Exception as e:
-        print(f"[DNP3] InfluxDB log error: {e}")
+        print(f"[DNP3] honeypot_events log error: {e}")
+
+def log_auth_attempt(remote_ip: str, detail: str):
+    """Log connection attempt (Purdue Level 3.5 access)."""
+    try:
+        api = get_write_api()
+        if not api: return
+        p = (Point("auth_attempts")
+             .tag("session_id", SESSION_ID)
+             .tag("src_ip", remote_ip)
+             .tag("service", "dnp3")
+             .field("detail", detail)
+             .time(time.time_ns(), WritePrecision.NS))
+        api.write(bucket=INFLUX_BUCKET, record=p)
+    except Exception as e:
+        print(f"[DNP3] auth_attempts log error: {e}")
 
 def handle_client(conn: socket.socket, addr: tuple):
     ip, port = addr
     print(f"[DNP3] Connection from {ip}:{port}")
+    log_auth_attempt(ip, "TCP Connection established")
+    
     try:
         conn.settimeout(30)
         while True:
             data = conn.recv(1024)
             if not data: break
-            print(f"[DNP3] RX {len(data)}b from {ip}: {data.hex()}")
+            print(f"[DNP3] RX {len(data)}b from {ip}")
             frame = parse_dnp3_frame(data)
             log_event(ip, port, frame, data.hex())
             if frame:
@@ -106,13 +135,14 @@ def handle_client(conn: socket.socket, addr: tuple):
     finally:
         conn.close()
         print(f"[DNP3] {ip} disconnected")
+        log_auth_attempt(ip, "TCP Connection closed")
 
 def run_server():
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind(("0.0.0.0", DNP3_PORT))
     srv.listen(10)
-    print(f"[DNP3] Honeypot outstation listening on port {DNP3_PORT}")
+    print(f"[DNP3] Honeypot outstation listening on port {DNP3_PORT} [session={SESSION_ID}]")
     while True:
         conn, addr = srv.accept()
         threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()

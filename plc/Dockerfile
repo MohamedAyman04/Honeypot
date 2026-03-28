@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
 # snap7 via pip bundles the shared lib — no apt needed
-RUN pip install --no-cache-dir pymodbus==3.1.3 python-snap7 influxdb-client
+RUN pip install --no-cache-dir pymodbus==3.1.3 python-snap7 influxdb-client redis
 
 WORKDIR /app
 

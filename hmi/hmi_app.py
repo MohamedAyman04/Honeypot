@@ -6,29 +6,78 @@ import os
 import plotly.graph_objs as go
 from collections import deque
 import datetime
+import uuid
+import flask
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 # Config
-PLC_IP = os.environ.get('PLC_IP', 'plc_simulator')
+PLC_IP     = os.environ.get('PLC_IP',        'plc_simulator')
+INFLUX_URL = os.environ.get("INFLUX_URL",    "http://ics_historian:8086")
+INFLUX_TOKEN = os.environ.get("INFLUX_TOKEN",  "supersecrettoken")
+INFLUX_ORG   = os.environ.get("INFLUX_ORG",    "my_refinery")
+INFLUX_BUCKET = os.environ.get("INFLUX_BUCKET", "sensor_logs")
+
+# Session ID for cross-layer tracking
+SESSION_ID = str(uuid.uuid4())[:8]
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
+server = app.server # Access underlying Flask server
+
+# InfluxDB writing client
+_influx_client = None
+_write_api = None
+
+def get_write_api():
+    global _influx_client, _write_api
+    if _write_api is None:
+        try:
+            _influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+            _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
+        except Exception: pass
+    return _write_api
+
+
+def log_hmi_access(src_ip, endpoint, status_code=200):
+    """Log access events to hmi_access measurement (Table 4.1 in thesis)."""
+    try:
+        api = get_write_api()
+        if not api: return
+        p = (Point("hmi_access")
+             .tag("session_id", SESSION_ID)
+             .tag("src_ip", src_ip)
+             .tag("endpoint", endpoint)
+             .field("http_code", status_code)
+             .time(datetime.datetime.utcnow(), WritePrecision.NS))
+        api.write(bucket=INFLUX_BUCKET, record=p)
+    except Exception: pass
+
+
+@server.before_request
+def before_request_log():
+    # Only log relevant page/api calls, not static assets
+    if not flask.request.path.startswith('/_dash') and \
+       not flask.request.path.startswith('/assets'):
+        log_hmi_access(flask.request.remote_addr, flask.request.path)
+
 
 # Historical data for charts
 MAX_POINTS = 60
-times = deque(maxlen=MAX_POINTS)
+times     = deque(maxlen=MAX_POINTS)
 pressures = deque(maxlen=MAX_POINTS)
-flows = deque(maxlen=MAX_POINTS)
-temps = deque(maxlen=MAX_POINTS)
+flows     = deque(maxlen=MAX_POINTS)
+temps     = deque(maxlen=MAX_POINTS)
 
 def get_plc_data():
     """Connect fresh each time to avoid stale socket issues."""
     client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
-            # Read registers 100-103: pressure, flow*10, temp, pump_rpm
             res = client.read_holding_registers(100, 4)
             if hasattr(res, 'registers') and not res.isError():
                 pressure = float(res.registers[0])
-                flow = float(res.registers[1]) / 10.0
-                temp = float(res.registers[2])
+                flow     = float(res.registers[1]) / 10.0
+                temp     = float(res.registers[2])
                 pump_rpm = float(res.registers[3])
                 return pressure, flow, temp, pump_rpm
     except Exception as e:
@@ -111,8 +160,6 @@ app.layout = dbc.Container([
     dcc.Store(id='valve-state-store', data=0)
 ], fluid=True)
 
-
-# ── Telemetry update callback ──────────────────────────────────────────────────
 @app.callback(
     [Output('pressure-display', 'children'),
      Output('flow-display', 'children'),
@@ -160,8 +207,6 @@ def update_metrics(n, valve_state):
             valve_text, valve_color,
             f"{temp:.1f}", f"{int(pump_rpm)}")
 
-
-# ── Valve toggle callback ──────────────────────────────────────────────────────
 @app.callback(
     Output('valve-state-store', 'data'),
     [Input('valve-btn', 'n_clicks')],
@@ -185,8 +230,6 @@ def toggle_valve(n, current_state):
             pass
     return new_state
 
-
-# ── Pump RPM callback ──────────────────────────────────────────────────────────
 @app.callback(
     Output('valve-status', 'className'),  # dummy output
     Input('pump-slider', 'value'),
@@ -206,6 +249,6 @@ def set_pump_rpm(value):
             pass
     return "mt-2 text-center fw-bold"
 
-
 if __name__ == '__main__':
+    print(f"HMI dashboard started [session={SESSION_ID}]")
     app.run(host='0.0.0.0', port=8060, debug=False)

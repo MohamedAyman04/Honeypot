@@ -1,35 +1,56 @@
 version: "3.8"
 
 services:
-  # ── Modbus PLC Simulator (Purdue Level 1) ────────────────────────────────────
+  # ── Shared State Store (Redis) ────────────────────────────────────────────────
+  redis:
+    image: redis:latest
+    container_name: ics_state_store
+    networks:
+      - ot-net
+    restart: always
+
+  # ── Physical Process Simulator (Purdue Level 0/1 Simulation) ──────────────────
+  physics_simulator:
+    build:
+      context: .
+      dockerfile: plc/Dockerfile
+    container_name: ics_physics_engine
+    command: python /app/physics/physics_process.py
+    networks:
+      - ot-net
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ── Modbus PLC Simulator (Purdue Level 2 - Exposed via DMZ) ───────────────────
   plc_simulator:
     build:
       context: .
       dockerfile: plc/Dockerfile
     container_name: plc_simulator
+    command: python /app/plc/modbus_server.py
     ports:
       - "502:502"
     networks:
       - dmz-net
+      - ot-net
       - monitor-net
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
       - INFLUX_URL=http://ics_historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
     depends_on:
-      historian:
-        condition: service_started
+      - redis
+      - physics_simulator
+      - historian
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "/app/plc/healthcheck.py"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 20s
 
-  # ── S7comm PLC Honeypot (Siemens S7 emulation) ───────────────────────────────
+  # ── S7comm PLC Honeypot (Siemens S7-300 emulation) ───────────────────────────
   ics_s7_plc:
     build:
       context: .
@@ -38,15 +59,20 @@ services:
     command: python /app/plc/s7_server.py
     networks:
       - dmz-net
+      - ot-net
+      - monitor-net
     ports:
       - "102:102"
+    environment:
+      - REDIS_HOST=redis
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
+    depends_on:
+      - redis
+      - physics_simulator
     restart: always
-    healthcheck:
-      test: ["CMD", "python", "/app/plc/s7_healthcheck.py"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 20s
 
   # ── DNP3 Honeypot (power/water utility protocol) ─────────────────────────────
   ics_dnp3:
@@ -67,29 +93,32 @@ services:
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
     depends_on:
-      historian:
-        condition: service_started
+      - historian
     restart: unless-stopped
 
-  # ── HMI Web Dashboard ─────────────────────────────────────────────────────────
+  # ── HMI Web Dashboard (Purdue Level 2) ────────────────────────────────────────
   hmi:
     build:
       context: ./hmi
     container_name: ics_hmi
     depends_on:
       plc_simulator:
-        condition: service_healthy
+        condition: service_started
     networks:
       - ot-net
-      - dmz-net
+      - monitor-net
     ports:
       - "8060:8060"
     environment:
       - PLC_IP=plc_simulator
+      - REDIS_HOST=redis
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
-    command: >
-      sh -c "sleep 5 && python hmi_app.py"
+    command: python hmi_app.py
 
   # ── Historian Bridge (Modbus → InfluxDB) ─────────────────────────────────────
   historian_bridge:
@@ -99,11 +128,12 @@ services:
     command: python hmi_simulator.py
     depends_on:
       plc_simulator:
-        condition: service_healthy
+        condition: service_started
       historian:
         condition: service_started
     networks:
       - dmz-net
+      - ot-net
       - monitor-net
     environment:
       - PLC_IP=plc_simulator
@@ -114,7 +144,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ── ML Anomaly Detection Engine ───────────────────────────────────────────────
+  # ── ML Anomaly Detection Engine (Isolated Monitoring) ───────────────────────
   ml_engine:
     build:
       context: ./ml-engine
@@ -134,7 +164,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ── Network Sniffer / Logger ──────────────────────────────────────────────────
+  # ── Network Sniffer / Logger (Full Interface Capture) ────────────────────────
   network_sniffer:
     build:
       context: ./logger
@@ -143,14 +173,14 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    network_mode: host # Must see actual network traffic
+    network_mode: host
     volumes:
       - shared-data:/data
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
 
-  # ── Cross-Layer Correlator ────────────────────────────────────────────────────
+  # ── Cross-Layer Correlator (Sniffer → InfluxDB) ───────────────────────────────
   correlator:
     build:
       context: ./logger
@@ -173,7 +203,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ── InfluxDB Historian ─────────────────────────────────────────────────────────
+  # ── InfluxDB Historian (Data Store) ──────────────────────────────────────────
   historian:
     image: influxdb:latest
     container_name: ics_historian
@@ -190,9 +220,10 @@ services:
       - influx-data:/var/lib/influxdb2
     networks:
       - monitor-net
+      - ot-net
     restart: unless-stopped
 
-  # ── Grafana Dashboard ──────────────────────────────────────────────────────────
+  # ── Grafana Dashboard (Visualization) ─────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     container_name: ics_grafana

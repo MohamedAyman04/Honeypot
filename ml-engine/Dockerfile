@@ -5,7 +5,8 @@ RUN pip install --no-cache-dir \
     pandas \
     numpy \
     joblib \
-    influxdb-client
+    influxdb-client \
+    redis
 
 WORKDIR /app
 
