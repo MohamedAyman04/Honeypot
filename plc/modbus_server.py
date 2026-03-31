@@ -52,11 +52,22 @@ def log_forced_write(address, value):
     try:
         api = get_influx()
         if not api: return
+        # 1. Log to forced_writes (ML semantic injection trigger)
         p = (Point("forced_writes").tag("source", "modbus_write")
              .tag("session_id", SESSION_ID)
              .field("register", address).field("value", float(value))
              .time(time.time_ns(), WritePrecision.NS))
         api.write(bucket=INFLUX_BUCKET, record=p)
+        # 2. Also write injected value to pipeline_metrics so Grafana shows the spike
+        if address == 100:  # pressure register
+            spike = (Point("pipeline_metrics")
+                     .tag("location",   "pump_station_01")
+                     .tag("source",     "attacker")
+                     .tag("session_id", SESSION_ID)
+                     .field("pressure", float(value))
+                     .time(time.time_ns(), WritePrecision.NS))
+            api.write(bucket=INFLUX_BUCKET, record=spike)
+            log.warning(f"[INJECTION] Wrote {value} PSI to pipeline_metrics (Grafana spike)")
     except Exception: pass
 
 def log_auth_attempt(src_ip, service="modbus", detail="connection"):
@@ -98,8 +109,9 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
             self.physics_engine.set_valve_pos(1.0 if int(values[0]) == 1 else 0.0)
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
         elif 100 <= address <= 103:
-            log_forced_write(address, values[0])
+            log_forced_write(address, values[0])   # writes to forced_writes + pipeline_metrics
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
+            log.warning(f"[FORCED WRITE] Sensor register {address} = {values[0]} (SEMANTIC INJECTION)")
 
     def getValues(self, address, count=1):
         with self._lock:

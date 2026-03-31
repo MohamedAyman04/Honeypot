@@ -370,8 +370,82 @@
     },
 
     {
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": { "text": "NOT LOGGED" },
+                "1": { "text": "LOGGED (no alert)" }
+              },
+              "type": "value"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 41 },
+      "id": 14,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_results\" and r[\"attack_type\"] == \"reconnaissance_only\" and r[\"_field\"] == \"success\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "title": "Reconnaissance Scan (FC3 Read-Only)",
+      "type": "stat"
+    },
+
+    {
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": { "text": "BLOCKED" },
+                "1": { "text": "DRIFT EXECUTED" }
+              },
+              "type": "value"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 41 },
+      "id": 15,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_results\" and r[\"attack_type\"] == \"ewma_stealth_drift\" and r[\"_field\"] == \"success\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "title": "EWMA Stealth Drift (CUSUM Detection)",
+      "type": "stat"
+    },
+
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 47 },
       "id": 103,
       "title": "Protocol Honeypot Events",
       "type": "row"
@@ -380,7 +454,7 @@
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
       "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 42 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 48 },
       "id": 13,
       "options": {
         "frameIndex": 0,

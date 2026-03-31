@@ -250,7 +250,7 @@ def reconnaissance_only():
         if client.connect():
             # Scan key register ranges
             for start_reg in [0, 100, 200, 250]:
-                res = client.read_holding_registers(start_reg, 4)
+                res = client.read_holding_registers(address=start_reg, count=4)
                 if hasattr(res, 'registers') and not res.isError():
                     regs_found.append(f"[{start_reg}-{start_reg+3}]: {res.registers}")
                     print(f"  [+] FC3 Read reg {start_reg}-{start_reg+3}: {res.registers}")
