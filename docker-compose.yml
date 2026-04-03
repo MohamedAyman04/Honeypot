@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # ── Shared State Store (Redis) ────────────────────────────────────────────────
   redis:
@@ -144,7 +142,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ── ML Anomaly Detection Engine (Isolated Monitoring) ───────────────────────
+  # ── ML Anomaly Detection Engine (Purdue Level 2 - Isolated Monitoring) ────────
   ml_engine:
     build:
       context: ./ml-engine
@@ -156,11 +154,35 @@ services:
         condition: service_started
     networks:
       - monitor-net
+    ports:
+      - "8001:8000"      # ML Engine REST API — accessible from host and Level-3 consumers
     environment:
       - INFLUX_URL=http://ics_historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # ── Historian API (Purdue Level 3 Integration Bridge) ─────────────────────────
+  historian_api:
+    build:
+      context: ./historian_api
+    container_name: ics_historian_api
+    depends_on:
+      - historian
+      - ml_engine
+    networks:
+      - monitor-net
+      - enterprise-net
+    ports:
+      - "5001:5000"      # Exposed for Level-3 system integration
+    environment:
+      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_TOKEN=supersecrettoken
+      - INFLUX_ORG=my_refinery
+      - INFLUX_BUCKET=sensor_logs
+      - ML_ENGINE_URL=http://ics_ml_engine:8000
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
@@ -203,7 +225,7 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
-  # ── InfluxDB Historian (Data Store) ──────────────────────────────────────────
+  # ── InfluxDB Historian (Purdue Level 2/3 Data Store) ─────────────────────────
   historian:
     image: influxdb:latest
     container_name: ics_historian
@@ -221,6 +243,7 @@ services:
     networks:
       - monitor-net
       - ot-net
+      - enterprise-net     # accessible from Level-3 historian_api
     restart: unless-stopped
 
   # ── Grafana Dashboard (Visualization) ─────────────────────────────────────────
@@ -242,14 +265,40 @@ services:
       - monitor-net
     restart: unless-stopped
 
+  # ── Attacker Node (Purdue Level 3.5 / External Threat Simulation) ─────────────
+  # Kali Linux container with nmap, pymodbus, snap7, scapy.
+  # Use: docker exec -it attacker_node bash
+  # Demo: nmap -sV -p 502,102,20000 plc_simulator
+  attacker_node:
+    build:
+      context: ./attacker_node
+    container_name: attacker_node
+    networks:
+      - dmz-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
 volumes:
   shared-data:
   influx-data:
 
 networks:
-  dmz-net:
-    driver: bridge
+  # Purdue Level 1/2 — OT process network (physics, PLCs, Redis)
   ot-net:
     driver: bridge
+
+  # Purdue Level 3.5 — DMZ (external-facing protocols: Modbus, S7, DNP3)
+  dmz-net:
+    driver: bridge
+
+  # Purdue Level 2 — Monitoring network (historian, ML engine, Grafana)
   monitor-net:
+    driver: bridge
+
+  # Purdue Level 3 — Enterprise network (historian API, external integrations)
+  enterprise-net:
     driver: bridge

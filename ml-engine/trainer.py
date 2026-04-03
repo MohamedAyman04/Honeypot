@@ -1,6 +1,6 @@
 """
-ML Engine / Trainer
-====================
+ML Engine / Trainer  (v2 – false-positive hardened + REST API)
+==============================================================
 Reads pipeline telemetry from InfluxDB, trains an IsolationForest during warm-up,
 then runs anomaly detection and writes results back to InfluxDB.
 
@@ -10,11 +10,21 @@ Detection layers (per thesis §4.6.1):
   3. EWMA/CUSUM drift – stealth manipulation detector (§4.6.1 point 3)
   4. forced_writes    – semantic injection via direct register writes
   5. Recon logging    – read-only FC events flagged but NOT anomaly-scored
+
+False-positive mitigations added in v2:
+  • STARTUP_GRACE_SECONDS (120 s) – no alerts written during startup transient
+  • Stale model deleted on boot (avoids old-distribution mismatch)
+  • IsolationForest contamination lowered → 0.02
+  • Expert-rule thresholds raised to operational values
+  • CUSUM threshold raised → 40.0 PSI × cycles
+  • EWMA/CUSUM suppressed during grace period
+  • Embedded FastAPI server on port 8000 for Level-3 integration
 """
 
 import time
 import os
 import uuid
+import threading
 import numpy as np
 import pandas as pd
 import joblib
@@ -30,31 +40,70 @@ INFLUX_BUCKET = os.environ.get("INFLUX_BUCKET", "sensor_logs")
 
 MODEL_FILE          = "/data/model.pkl"
 TRAINING_START_FILE = "/data/training_start.txt"
-WARMUP_PERIOD       = 180   # seconds of training before locking model
-MIN_SAMPLES         = 30    # minimum InfluxDB rows before training
+WARMUP_PERIOD       = 180   # seconds before model is locked
+MIN_SAMPLES         = 30    # minimum InfluxDB rows before training begins
 LOOP_INTERVAL       = 10    # seconds between ML cycles
 
-# ── EWMA/CUSUM parameters ──────────────────────────────────────────────────────
-# EWMA exponential weight (λ): smaller = slower to react = detects slow drift
-EWMA_LAMBDA         = 0.1
-# CUSUM drift threshold: signal is anomalous if CUSUM exceeds this
-CUSUM_THRESHOLD     = 25.0
-# Minimum consecutive EWMA deviation before declaring drift
-EWMA_DEVIATION_THRESHOLD = 10.0   # PSI
+# ── False-positive guard ───────────────────────────────────────────────────────
+# Suppress ALL detections for this many seconds after container start.
+# Physics engine needs ~60 s to converge from initial conditions.
+STARTUP_GRACE_SECONDS = 120
 
-# Persistent EWMA/CUSUM state across cycles
-_ewma_state  = None   # current EWMA estimate
-_cusum_pos   = 0.0    # cumulative upward sum
-_cusum_neg   = 0.0    # cumulative downward sum
-_cusum_k     = 2.0    # allowance parameter (slack, in PSI units)
+_boot_time = time.time()
+
+def in_grace_period() -> bool:
+    return (time.time() - _boot_time) < STARTUP_GRACE_SECONDS
+
+# Delete stale model from a previous Docker session so we always retrain
+if os.path.exists(MODEL_FILE):
+    os.remove(MODEL_FILE)
+    print("[ML] Removed stale model from previous session.")
+if os.path.exists(TRAINING_START_FILE):
+    os.remove(TRAINING_START_FILE)
+    print("[ML] Removed stale training-start marker.")
+
+# ── EWMA/CUSUM parameters (tuned to reduce false positives) ───────────────────
+EWMA_LAMBDA              = 0.1    # slower tracking = less sensitive to brief spikes
+CUSUM_THRESHOLD          = 40.0   # raised from 25.0 – needs sustained drift to trigger
+EWMA_DEVIATION_THRESHOLD = 10.0   # PSI
+_cusum_k                 = 2.5    # allowance / slack (raised from 2.0)
+
+_ewma_state  = None
+_cusum_pos   = 0.0
+_cusum_neg   = 0.0
+
+# ── IsolationForest parameters ─────────────────────────────────────────────────
+IF_CONTAMINATION = 0.02    # was 0.05; lower → fewer false positives
+IF_N_ESTIMATORS  = 150     # more trees → more stable scoring
+
+# ── Expert-rule thresholds (raised to operational values) ─────────────────────
+EXPERT_PRESSURE_DELTA_THRESHOLD = 15.0   # was 5.0 PSI
+EXPERT_PRESSURE_MEAN_DEV        = 25.0   # was 15.0 PSI
+EXPERT_PRESSURE_MAX             = 200.0  # safety ceiling (unchanged)
 
 SESSION_ID = os.environ.get('SESSION_ID', str(uuid.uuid4())[:8])
 
-print(f"--- ML ENGINE STARTING [session={SESSION_ID}] ---")
+print(f"--- ML ENGINE v2 STARTING [session={SESSION_ID}] ---")
+print(f"    Grace period: {STARTUP_GRACE_SECONDS}s, CUSUM threshold: {CUSUM_THRESHOLD}")
 
 db_client  = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 write_api  = db_client.write_api(write_options=SYNCHRONOUS)
 query_api  = db_client.query_api()
+
+# Shared state for the API server thread
+_api_state = {
+    "model_ready":      False,
+    "in_warmup":        True,
+    "in_grace":         True,
+    "sample_count":     0,
+    "last_score":       None,
+    "last_anomaly":     None,
+    "ewma":             None,
+    "cusum_pos":        0.0,
+    "cusum_neg":        0.0,
+    "recent_alerts":    [],   # last 100 alerts written
+}
+_api_lock = threading.Lock()
 
 
 # ── Feature extraction ─────────────────────────────────────────────────────────
@@ -80,7 +129,6 @@ from(bucket: "{INFLUX_BUCKET}")
         print(f"InfluxDB fetch error: {e}")
         return pd.DataFrame()
 
-    # Ensure expected columns exist
     for col in ["pressure", "flow_rate", "temperature", "pump_rpm"]:
         if col not in result.columns:
             result[col] = 0.0
@@ -88,17 +136,13 @@ from(bucket: "{INFLUX_BUCKET}")
     result["_time"] = pd.to_datetime(result["_time"]).dt.tz_localize(None)
     result = result.sort_values("_time").reset_index(drop=True)
 
-    # Time-domain features
     result["inter_arrival_time"] = (
         result["_time"].diff().dt.total_seconds().fillna(0)
     )
-
-    # Physical-layer features
     result["pressure_delta"]        = result["pressure"].diff().fillna(0)
     result["pressure_rolling_mean"] = result["pressure"].rolling(10, min_periods=1).mean()
     result["pressure_mean_dev"]     = result["pressure"] - result["pressure_rolling_mean"]
 
-    # Network-layer features (from correlator, joined best-effort)
     result["write_freq_10s"] = 0.0
     result["is_write"]       = 0
     result["func_code"]      = 0
@@ -121,11 +165,9 @@ from(bucket: "{INFLUX_BUCKET}")
             net["is_write"]  = 1
             net["func_code"] = 6
             net["length"]    = net.get("value", pd.Series([0]*len(net))).astype(int)
-
             net_idx = net.set_index("_time")
             net_idx["write_freq_10s"] = net_idx["is_write"].rolling("10s").sum().fillna(0)
             net["write_freq_10s"] = net_idx["write_freq_10s"].values
-
             result = pd.merge_asof(
                 result, net[["_time", "is_write", "func_code", "length", "write_freq_10s"]],
                 on="_time", direction="backward"
@@ -152,13 +194,8 @@ from(bucket: "{INFLUX_BUCKET}")
 # ── EWMA / CUSUM stealth drift detector ───────────────────────────────────────
 def run_ewma_cusum(current_pressure: float) -> tuple[bool, str]:
     """
-    Stealth manipulation detector using EWMA + CUSUM.
-
-    EWMA tracks a slow exponential average of pressure.
-    CUSUM accumulates deviations above/below the EWMA.
-    If CUSUM exceeds CUSUM_THRESHOLD the process is drifting without writes.
-
-    Returns (is_drift, detail_string).
+    Stealth manipulation detector using EWMA + CUSUM (false-positive hardened).
+    Suppressed during grace period and warm-up.
     """
     global _ewma_state, _cusum_pos, _cusum_neg
 
@@ -166,13 +203,9 @@ def run_ewma_cusum(current_pressure: float) -> tuple[bool, str]:
         _ewma_state = current_pressure
         return False, "EWMA initialised"
 
-    # Update EWMA
     _ewma_state = EWMA_LAMBDA * current_pressure + (1 - EWMA_LAMBDA) * _ewma_state
+    deviation   = current_pressure - _ewma_state
 
-    # Deviation from EWMA
-    deviation = current_pressure - _ewma_state
-
-    # Update CUSUM accumulators (two-sided)
     _cusum_pos = max(0, _cusum_pos + deviation - _cusum_k)
     _cusum_neg = max(0, _cusum_neg - deviation - _cusum_k)
 
@@ -180,8 +213,12 @@ def run_ewma_cusum(current_pressure: float) -> tuple[bool, str]:
     detail = (f"EWMA={_ewma_state:.2f} PSI  deviation={deviation:.2f}  "
               f"CUSUM+={_cusum_pos:.2f}  CUSUM-={_cusum_neg:.2f}")
 
+    with _api_lock:
+        _api_state["ewma"]      = round(_ewma_state, 2)
+        _api_state["cusum_pos"] = round(_cusum_pos, 2)
+        _api_state["cusum_neg"] = round(_cusum_neg, 2)
+
     if drift_detected:
-        # Reset accumulators after alert to avoid repeat flooding
         _cusum_pos = 0.0
         _cusum_neg = 0.0
 
@@ -196,39 +233,57 @@ def apply_expert_rules(features: pd.DataFrame) -> list[dict]:
 
     row = features.iloc[-1]
 
-    # Cross-layer: big pressure jump but no write commands observed
-    if abs(row["pressure_delta"]) > 5.0 and row["write_freq_10s"] == 0:
+    if abs(row["pressure_delta"]) > EXPERT_PRESSURE_DELTA_THRESHOLD and row["write_freq_10s"] == 0:
         alerts.append({
             "type":   "CROSS_LAYER_ANOMALY",
-            "detail": f"pressure_delta={row['pressure_delta']:.2f} with no writes"
+            "detail": f"pressure_delta={row['pressure_delta']:.2f} PSI with no write commands"
         })
 
-    # Stealth drift: sustained deviation from rolling mean
-    if abs(row["pressure_mean_dev"]) > 15.0:
+    if abs(row["pressure_mean_dev"]) > EXPERT_PRESSURE_MEAN_DEV:
         alerts.append({
             "type":   "STEALTH_DRIFT",
-            "detail": f"pressure_mean_dev={row['pressure_mean_dev']:.2f}"
+            "detail": f"pressure_mean_dev={row['pressure_mean_dev']:.2f} PSI"
         })
 
-    # Pressure injected to extreme value (semantic injection)
-    if row["pressure"] > 200.0:
+    if row["pressure"] > EXPERT_PRESSURE_MAX:
         alerts.append({
             "type":   "SEMANTIC_INJECTION",
-            "detail": f"pressure={row['pressure']:.1f} PSI (above 200 PSI safety threshold)"
+            "detail": f"pressure={row['pressure']:.1f} PSI (above {EXPERT_PRESSURE_MAX} PSI safety threshold)"
         })
 
     return alerts
+
+
+# ── Record alert in shared state for API ──────────────────────────────────────
+def _record_alert(alert_type: str, detail: str, score: float):
+    entry = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "alert_type": alert_type,
+        "detail":     detail,
+        "score":      round(score, 4),
+        "session_id": SESSION_ID,
+    }
+    with _api_lock:
+        _api_state["recent_alerts"].append(entry)
+        # Keep only last 100 alerts in memory
+        if len(_api_state["recent_alerts"]) > 100:
+            _api_state["recent_alerts"] = _api_state["recent_alerts"][-100:]
+        _api_state["last_anomaly"] = entry
 
 
 # ── Main ML loop ───────────────────────────────────────────────────────────────
 def run_ml_cycle():
     features = fetch_pipeline_features(lookback="-2h")
 
+    with _api_lock:
+        _api_state["sample_count"] = len(features)
+        _api_state["in_grace"]     = in_grace_period()
+
     if len(features) < MIN_SAMPLES:
         print(f"Collecting samples... ({len(features)}/{MIN_SAMPLES})")
         return
 
-    # ── Warm-up / training phase ─────────────────────────────────────────────
+    # ── Warm-up / training phase ──────────────────────────────────────────────
     if not os.path.exists(TRAINING_START_FILE):
         with open(TRAINING_START_FILE, "w") as f:
             f.write(str(time.time()))
@@ -239,38 +294,48 @@ def run_ml_cycle():
 
     in_warmup = (time.time() - start_time) < WARMUP_PERIOD
 
+    with _api_lock:
+        _api_state["in_warmup"] = in_warmup
+
+    # Always train/update model during warm-up
+    model = IsolationForest(contamination=IF_CONTAMINATION, random_state=42, n_estimators=IF_N_ESTIMATORS)
+    model.fit(features)
+    joblib.dump(model, MODEL_FILE)
+
     if in_warmup:
         remaining = WARMUP_PERIOD - (time.time() - start_time)
-        print(f"Training Mode: {remaining:.0f}s remaining in warm-up.")
-        model = IsolationForest(contamination=0.05, random_state=42, n_estimators=100)
-        model.fit(features)
-        joblib.dump(model, MODEL_FILE)
+        print(f"Training Mode: {remaining:.0f}s remaining in warm-up — NO alerts will fire.")
         return   # No detection during warm-up
 
-    # ── Detection phase ──────────────────────────────────────────────────────
-    if not os.path.exists(MODEL_FILE):
-        print("Warm-up ended but model missing – training now.")
-        model = IsolationForest(contamination=0.05, random_state=42, n_estimators=100)
-        model.fit(features)
-        joblib.dump(model, MODEL_FILE)
+    with _api_lock:
+        _api_state["model_ready"] = True
+
+    # ── Detection phase ───────────────────────────────────────────────────────
+    if in_grace_period():
+        remaining_grace = STARTUP_GRACE_SECONDS - (time.time() - _boot_time)
+        print(f"[GRACE PERIOD] {remaining_grace:.0f}s remaining — suppressing alerts.")
+        return
 
     model = joblib.load(MODEL_FILE)
 
-    # Score most recent 5 samples
     recent      = features.tail(5)
     predictions = model.predict(recent)
     scores      = model.decision_function(recent)
+
+    with _api_lock:
+        if len(scores) > 0:
+            _api_state["last_score"] = round(float(scores[-1]), 4)
 
     for i, (pred, score) in enumerate(zip(predictions, scores)):
         is_anomaly = 1 if pred == -1 else 0
         score_val  = float(score)
 
-        # Expert rules override
         expert_alerts = apply_expert_rules(recent.iloc[[i]])
         for alert in expert_alerts:
             print(f"!!! {alert['type']} !!! {alert['detail']}")
             is_anomaly = 1
             score_val  = min(score_val, -0.5)
+            _record_alert(alert["type"], alert["detail"], score_val)
 
             a_point = (Point("security_alerts")
                        .tag("alert_type", alert["type"])
@@ -280,8 +345,10 @@ def run_ml_cycle():
                        .time(time.time_ns(), WritePrecision.NS))
             write_api.write(bucket=INFLUX_BUCKET, record=a_point)
 
-        if is_anomaly:
+        if is_anomaly and not expert_alerts:
+            # Pure IF anomaly (no expert rule triggered it)
             print(f"!!! ML ANOMALY DETECTED !!! score={score_val:.4f}")
+            _record_alert("ISOLATION_FOREST", f"anomaly_score={score_val:.4f}", score_val)
 
         point = (Point("security_metrics")
                  .tag("sensor",     "ml_engine")
@@ -291,16 +358,16 @@ def run_ml_cycle():
                  .time(time.time_ns(), WritePrecision.NS))
         write_api.write(bucket=INFLUX_BUCKET, record=point)
 
-    print(f"ML cycle complete: {len(recent)} samples scored, "
+    print(f"ML cycle complete — {len(recent)} samples scored, "
           f"anomalies={sum(1 for p in predictions if p == -1)}")
 
 
-# ── EWMA/CUSUM cycle (runs every loop, independent of warm-up) ────────────────
+# ── EWMA/CUSUM cycle ──────────────────────────────────────────────────────────
 def run_drift_cycle():
-    """
-    Fetch latest pressure sample and run EWMA/CUSUM drift detection.
-    Writes alert to InfluxDB if stealth drift detected.
-    """
+    """Fetch latest pressure sample and run EWMA/CUSUM drift detection."""
+    if in_grace_period():
+        return   # Suppressed during grace period
+
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
   |> range(start: -30s)
@@ -315,6 +382,7 @@ from(bucket: "{INFLUX_BUCKET}")
                 drift, detail = run_ewma_cusum(pressure)
                 if drift:
                     print(f"!!! EWMA/CUSUM DRIFT DETECTED !!! {detail}")
+                    _record_alert("STEALTH_DRIFT_EWMA", detail, -0.8)
                     a_point = (Point("security_alerts")
                                .tag("alert_type", "STEALTH_DRIFT_EWMA")
                                .tag("session_id", SESSION_ID)
@@ -333,9 +401,12 @@ from(bucket: "{INFLUX_BUCKET}")
         print(f"EWMA/CUSUM cycle error: {e}")
 
 
-# ── Forced-write check (semantic injection) ────────────────────────────────────
+# ── Forced-write check ────────────────────────────────────────────────────────
 def check_forced_writes() -> list[dict]:
     """Return any forced sensor-register writes from the last 60 s."""
+    if in_grace_period():
+        return []  # Suppressed during grace period
+
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
   |> range(start: -60s)
@@ -353,20 +424,106 @@ from(bucket: "{INFLUX_BUCKET}")
             for _, row in result.iterrows():
                 val = float(row.get('value', 0))
                 reg = int(row.get('register', -1))
-                alerts.append({
-                    "type":   "SEMANTIC_INJECTION",
-                    "detail": f"Direct write to sensor reg {reg} value={val:.0f}"
-                })
+                detail = f"Direct write to sensor reg {reg} value={val:.0f}"
+                alerts.append({"type": "SEMANTIC_INJECTION", "detail": detail})
                 print(f"!!! SEMANTIC INJECTION DETECTED !!! Reg={reg} Val={val:.0f}")
+                _record_alert("SEMANTIC_INJECTION", detail, -1.0)
     except Exception as e:
         print(f"forced_writes query error: {e}")
     return alerts
 
 
+# ── API Server (FastAPI, runs in a background thread) ─────────────────────────
+def _start_api_server():
+    """Start the FastAPI REST server on port 8000 in a daemon thread."""
+    try:
+        from fastapi import FastAPI, Query
+        from fastapi.middleware.cors import CORSMiddleware
+        import uvicorn
+
+        app = FastAPI(
+            title="ICS Honeypot ML Engine API",
+            description="Alert and metrics endpoint for Purdue Level 3 integration",
+            version="2.0.0"
+        )
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+        @app.get("/health")
+        def health():
+            with _api_lock:
+                return {
+                    "status":      "ok",
+                    "session_id":  SESSION_ID,
+                    "model_ready": _api_state["model_ready"],
+                    "in_warmup":   _api_state["in_warmup"],
+                    "in_grace":    _api_state["in_grace"],
+                    "sample_count": _api_state["sample_count"],
+                    "uptime_seconds": round(time.time() - _boot_time, 1),
+                }
+
+        @app.get("/alerts")
+        def get_alerts(
+            limit: int = Query(default=50, le=100, description="Max alerts to return"),
+            alert_type: str = Query(default=None, description="Filter by alert_type")
+        ):
+            with _api_lock:
+                alerts = list(_api_state["recent_alerts"])
+            if alert_type:
+                alerts = [a for a in alerts if a["alert_type"] == alert_type]
+            alerts = alerts[-limit:][::-1]   # newest first
+            return {"count": len(alerts), "alerts": alerts}
+
+        @app.get("/metrics")
+        def get_metrics():
+            with _api_lock:
+                return {
+                    "last_anomaly_score": _api_state["last_score"],
+                    "ewma_pressure":     _api_state["ewma"],
+                    "cusum_pos":         _api_state["cusum_pos"],
+                    "cusum_neg":         _api_state["cusum_neg"],
+                    "last_anomaly":      _api_state["last_anomaly"],
+                    "total_alerts":      len(_api_state["recent_alerts"]),
+                }
+
+        @app.post("/reset-model")
+        def reset_model():
+            """Force model retrain by deleting model and training marker."""
+            for f in [MODEL_FILE, TRAINING_START_FILE]:
+                if os.path.exists(f):
+                    os.remove(f)
+            with _api_lock:
+                _api_state["model_ready"] = False
+                _api_state["in_warmup"]   = True
+            return {"status": "reset", "message": "Model will retrain on next cycle."}
+
+        print("[ML-API] Starting FastAPI server on port 8000...")
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+
+    except ImportError:
+        print("[ML-API] FastAPI/uvicorn not installed — API server disabled.")
+    except Exception as e:
+        print(f"[ML-API] Failed to start: {e}")
+
+
+# Start API in background daemon thread
+api_thread = threading.Thread(target=_start_api_server, daemon=True)
+api_thread.start()
+
+# Give the API a moment to start before the main loop
+time.sleep(2)
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
+print(f"[ML] Entering main detection loop. Grace period ends in {STARTUP_GRACE_SECONDS}s.")
 while True:
     try:
-        # 1. Semantic injection check (immediate, no warm-up dependency)
+        # 1. Semantic injection check (suppressed during grace period)
         fw_alerts = check_forced_writes()
         for alert in fw_alerts:
             a_point = (Point("security_alerts")
@@ -384,10 +541,10 @@ while True:
                        .time(time.time_ns(), WritePrecision.NS))
             write_api.write(bucket=INFLUX_BUCKET, record=m_point)
 
-        # 2. EWMA/CUSUM stealth drift detection (always running)
+        # 2. EWMA/CUSUM stealth drift detection (suppressed during grace period)
         run_drift_cycle()
 
-        # 3. Isolation Forest ML cycle (post warm-up)
+        # 3. Isolation Forest ML cycle (suppressed during grace + warm-up)
         run_ml_cycle()
 
     except Exception as e:

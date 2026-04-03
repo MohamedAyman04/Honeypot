@@ -6,11 +6,15 @@ RUN pip install --no-cache-dir \
     numpy \
     joblib \
     influxdb-client \
-    redis
+    redis \
+    fastapi \
+    uvicorn[standard]
 
 WORKDIR /app
 
 COPY trainer.py .
 COPY detector.py .
+
+EXPOSE 8000
 
 CMD ["python", "-u", "trainer.py"]
