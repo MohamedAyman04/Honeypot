@@ -73,8 +73,14 @@ _cusum_pos   = 0.0
 _cusum_neg   = 0.0
 
 # ── IsolationForest parameters ─────────────────────────────────────────────────
-IF_CONTAMINATION = 0.02    # was 0.05; lower → fewer false positives
-IF_N_ESTIMATORS  = 150     # more trees → more stable scoring
+IF_CONTAMINATION = 0.01    # was 0.05; very low → only clear outliers flagged
+IF_N_ESTIMATORS  = 200     # more trees → more stable scoring
+IF_SCORE_THRESHOLD = -0.15  # IF score must be below this to count as anomaly
+                            # (IsolationForest scores normal data near 0..+0.1)
+                            # Values between -0.15 and 0 are borderline → ignored
+
+# In-memory model reference (avoids disk I/O race between train and load)
+_if_model = None
 
 # ── Expert-rule thresholds (raised to operational values) ─────────────────────
 EXPERT_PRESSURE_DELTA_THRESHOLD = 15.0   # was 5.0 PSI
@@ -297,15 +303,18 @@ def run_ml_cycle():
     with _api_lock:
         _api_state["in_warmup"] = in_warmup
 
-    # Always train/update model during warm-up
-    model = IsolationForest(contamination=IF_CONTAMINATION, random_state=42, n_estimators=IF_N_ESTIMATORS)
-    model.fit(features)
-    joblib.dump(model, MODEL_FILE)
-
-    if in_warmup:
-        remaining = WARMUP_PERIOD - (time.time() - start_time)
-        print(f"Training Mode: {remaining:.0f}s remaining in warm-up — NO alerts will fire.")
-        return   # No detection during warm-up
+    # Train / update model ONLY during warm-up
+    # Once warm-up ends the model is frozen to avoid learning attack patterns
+    global _if_model
+    if in_warmup or _if_model is None:
+        model = IsolationForest(contamination=IF_CONTAMINATION, random_state=42, n_estimators=IF_N_ESTIMATORS)
+        model.fit(features)
+        _if_model = model
+        joblib.dump(model, MODEL_FILE)
+        if in_warmup:
+            remaining = WARMUP_PERIOD - (time.time() - start_time)
+            print(f"Training Mode: {remaining:.0f}s remaining in warm-up — NO alerts will fire.")
+            return   # No detection during warm-up
 
     with _api_lock:
         _api_state["model_ready"] = True
@@ -316,9 +325,18 @@ def run_ml_cycle():
         print(f"[GRACE PERIOD] {remaining_grace:.0f}s remaining — suppressing alerts.")
         return
 
-    model = joblib.load(MODEL_FILE)
+    # Use in-memory model; fall back to disk model if not yet in memory
+    model = _if_model
+    if model is None:
+        if os.path.exists(MODEL_FILE):
+            model = joblib.load(MODEL_FILE)
+            _if_model = model
+        else:
+            print("[ML] No model available yet — skipping detection.")
+            return
 
-    recent      = features.tail(5)
+    # Score only the MOST RECENT sample (not the last 5 which include warm-up data)
+    recent      = features.tail(1)
     predictions = model.predict(recent)
     scores      = model.decision_function(recent)
 
@@ -327,10 +345,11 @@ def run_ml_cycle():
             _api_state["last_score"] = round(float(scores[-1]), 4)
 
     for i, (pred, score) in enumerate(zip(predictions, scores)):
-        is_anomaly = 1 if pred == -1 else 0
+        # Gate: only treat as anomaly if IF score is clearly below normal range
         score_val  = float(score)
+        is_anomaly = 1 if (pred == -1 and score_val < IF_SCORE_THRESHOLD) else 0
 
-        expert_alerts = apply_expert_rules(recent.iloc[[i]])
+        expert_alerts = apply_expert_rules(features)  # uses full DataFrame for context
         for alert in expert_alerts:
             print(f"!!! {alert['type']} !!! {alert['detail']}")
             is_anomaly = 1
@@ -358,8 +377,9 @@ def run_ml_cycle():
                  .time(time.time_ns(), WritePrecision.NS))
         write_api.write(bucket=INFLUX_BUCKET, record=point)
 
-    print(f"ML cycle complete — {len(recent)} samples scored, "
-          f"anomalies={sum(1 for p in predictions if p == -1)}")
+    print(f"ML cycle complete — 1 sample scored, "
+          f"anomaly={int(predictions[0] == -1 and float(scores[0]) < IF_SCORE_THRESHOLD)}, "
+          f"score={float(scores[0]):.4f}")
 
 
 # ── EWMA/CUSUM cycle ──────────────────────────────────────────────────────────
@@ -391,7 +411,7 @@ from(bucket: "{INFLUX_BUCKET}")
                                .time(time.time_ns(), WritePrecision.NS))
                     write_api.write(bucket=INFLUX_BUCKET, record=a_point)
                     m_point = (Point("security_metrics")
-                               .tag("sensor",     "ewma_cusum")
+                               .tag("sensor",     "ml_engine")
                                .tag("session_id", SESSION_ID)
                                .field("anomaly_score", -0.8)
                                .field("is_anomaly",    1)
@@ -546,6 +566,18 @@ while True:
 
         # 3. Isolation Forest ML cycle (suppressed during grace + warm-up)
         run_ml_cycle()
+
+        # 4. Inform Grafana that we are in Training Mode
+        with _api_lock:
+            warmup = _api_state.get("in_warmup", True)
+        if in_grace_period() or warmup:
+            m_point = (Point("security_metrics")
+                       .tag("sensor",     "ml_engine")
+                       .tag("session_id", SESSION_ID)
+                       .field("anomaly_score", 0.0)
+                       .field("is_anomaly",    2)
+                       .time(time.time_ns(), WritePrecision.NS))
+            write_api.write(bucket=INFLUX_BUCKET, record=m_point)
 
     except Exception as e:
         print(f"ML loop error: {e}")

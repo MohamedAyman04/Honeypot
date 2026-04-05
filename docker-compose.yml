@@ -38,7 +38,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - REDIS_HOST=redis
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -63,7 +63,7 @@ services:
       - "102:102"
     environment:
       - REDIS_HOST=redis
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -86,7 +86,7 @@ services:
       - "20000:20000"
     environment:
       - PYTHONUNBUFFERED=1
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -110,7 +110,7 @@ services:
     environment:
       - PLC_IP=plc_simulator
       - REDIS_HOST=redis
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -135,7 +135,7 @@ services:
       - monitor-net
     environment:
       - PLC_IP=plc_simulator
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -157,7 +157,7 @@ services:
     ports:
       - "8001:8000"      # ML Engine REST API — accessible from host and Level-3 consumers
     environment:
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -178,7 +178,7 @@ services:
     ports:
       - "5001:5000"      # Exposed for Level-3 system integration
     environment:
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
@@ -218,7 +218,7 @@ services:
       - NET_RAW
     environment:
       - PLC_IP=plc_simulator
-      - INFLUX_URL=http://ics_historian:8086
+      - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs

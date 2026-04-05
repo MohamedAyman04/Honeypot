@@ -89,6 +89,15 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
         self.physics_engine = physics_engine
         self._lock = threading.Lock()
         self._current_rpm = 1200 # Initial seed
+        
+        # Pre-seed registers with realistic startup values instead of 0
+        state = self.physics_engine.get_state()
+        p = int(state["pressure"])
+        f = int(state["flow_rate"]*10)
+        t = int(state["temperature"])
+        r = int(state["pump_rpm"])
+        super().setValues(100, [p, f, t, r])
+        super().setValues(200, [1200, 500, 1])
 
     def setValues(self, address, values):
         super().setValues(address, values)

@@ -49,12 +49,12 @@ The honeypot is entirely containerised with Docker Compose and requires no speci
 
 Four Docker bridge networks emulate the full Purdue Model:
 
-| Network | Docker Name | Connected Services | Purdue Level |
-|---|---|---|---|
-| Enterprise | `enterprise-net` | `historian_api`, `historian` | L3 |
-| Monitoring | `monitor-net` | `ml_engine`, `historian`, `grafana`, `correlator`, `historian_api` | L2–L3 passive |
-| OT / Process | `ot-net` | `plc_simulator`, `ics_s7_plc`, `hmi`, `historian_bridge`, `redis`, `physics_simulator` | L1–L2 |
-| DMZ | `dmz-net` | `plc_simulator`, `ics_s7_plc`, `ics_dnp3`, `correlator`, `attacker_node` | L3.5 |
+| Network      | Docker Name      | Connected Services                                                                     | Purdue Level  |
+| ------------ | ---------------- | -------------------------------------------------------------------------------------- | ------------- |
+| Enterprise   | `enterprise-net` | `historian_api`, `historian`                                                           | L3            |
+| Monitoring   | `monitor-net`    | `ml_engine`, `historian`, `grafana`, `correlator`, `historian_api`                     | L2–L3 passive |
+| OT / Process | `ot-net`         | `plc_simulator`, `ics_s7_plc`, `hmi`, `historian_bridge`, `redis`, `physics_simulator` | L1–L2         |
+| DMZ          | `dmz-net`        | `plc_simulator`, `ics_s7_plc`, `ics_dnp3`, `correlator`, `attacker_node`               | L3.5          |
 
 An attacker entering via `dmz-net` can reach the PLCs but **cannot** directly reach InfluxDB or Grafana. The `historian_api` sits on `enterprise-net` and acts as the only sanctioned Level-3 read path.
 
@@ -93,13 +93,13 @@ The `PipelineSimulator` class models an oil refinery pipeline. State is persiste
 
 ### 3.1 State Variables
 
-| Variable | Units | Modbus Register | S7 DB1 Offset |
-|---|---|---|---|
-| `pressure` | PSI | HR 100 | DBD0 (REAL) |
-| `flow_rate` | L/s | HR 101 | DBD8 (REAL) |
-| `temperature` | °C | HR 102 | DBD4 (REAL) |
-| `pump_rpm` | RPM | HR 103 | DBD12 (REAL) |
-| `valve_pos` | 0.0–1.0 | Writeable: HR 201 | — |
+| Variable      | Units   | Modbus Register   | S7 DB1 Offset |
+| ------------- | ------- | ----------------- | ------------- |
+| `pressure`    | PSI     | HR 100            | DBD0 (REAL)   |
+| `flow_rate`   | L/s     | HR 101            | DBD8 (REAL)   |
+| `temperature` | °C      | HR 102            | DBD4 (REAL)   |
+| `pump_rpm`    | RPM     | HR 103            | DBD12 (REAL)  |
+| `valve_pos`   | 0.0–1.0 | Writeable: HR 201 | —             |
 
 ### 3.2 Physics Equations
 
@@ -132,11 +132,11 @@ Uses `pymodbus`. The `PhysicsAwareDataBlock` overrides both `getValues` (reads) 
 
 **Actuation registers (writable):**
 
-| Register | Effect |
-|---|---|
-| HR 200 | Set pump RPM (0–3000) |
-| HR 201 | Set valve position (0–1000 mapped to 0.0–1.0) |
-| HR 202 | Valve on/off toggle (0 or 1) |
+| Register | Effect                                        |
+| -------- | --------------------------------------------- |
+| HR 200   | Set pump RPM (0–3000)                         |
+| HR 201   | Set valve position (0–1000 mapped to 0.0–1.0) |
+| HR 202   | Valve on/off toggle (0 or 1)                  |
 
 ### 4.2 S7comm / ISO-on-TCP (Port 102)
 
@@ -163,18 +163,18 @@ Implements a minimal DNP3 link-layer outstation:
 
 All services write to InfluxDB v2 bucket `sensor_logs`. All writes include a **`session_id`** tag (8-character UUID prefix) for cross-session forensic correlation.
 
-| Measurement | Key Tags | Key Fields | Written By |
-|---|---|---|---|
-| `pipeline_metrics` | `location`, `source`, `session_id` | `pressure`, `flow_rate`, `temperature`, `pump_rpm`, `pump_state`, `setpoint` | `historian_bridge` |
-| `modbus_events` | `session_id`, `fc_type`, `src_ip` | `func_code`, `register`, `value` | `modbus_server` |
-| `forced_writes` | `session_id`, `source` | `register`, `value` | `modbus_server` |
-| `hmi_access` | `session_id`, `src_ip`, `endpoint` | `http_code` | `hmi_app` |
-| `auth_attempts` | `session_id`, `src_ip`, `service` | `detail` | modbus, s7, dnp3 |
-| `honeypot_events` | `session_id`, `protocol`, `remote_ip` | `event_type`, `detail`, `raw_data` | dnp3, s7 |
-| `correlation_logs` | `session_id`, `src_ip` | `func_code`, `value`, `phys_pressure`, `is_anomalous` | `correlator` |
-| `security_metrics` | `session_id`, `sensor` | `anomaly_score`, `is_anomaly` | `ml_engine` |
-| `security_alerts` | `session_id`, `alert_type` | `detail`, `score` | `ml_engine` |
-| `attack_results` | `attack_type` | `success`, `detail` | `attack_simulation.py` |
+| Measurement        | Key Tags                              | Key Fields                                                                   | Written By             |
+| ------------------ | ------------------------------------- | ---------------------------------------------------------------------------- | ---------------------- |
+| `pipeline_metrics` | `location`, `source`, `session_id`    | `pressure`, `flow_rate`, `temperature`, `pump_rpm`, `pump_state`, `setpoint` | `historian_bridge`     |
+| `modbus_events`    | `session_id`, `fc_type`, `src_ip`     | `func_code`, `register`, `value`                                             | `modbus_server`        |
+| `forced_writes`    | `session_id`, `source`                | `register`, `value`                                                          | `modbus_server`        |
+| `hmi_access`       | `session_id`, `src_ip`, `endpoint`    | `http_code`                                                                  | `hmi_app`              |
+| `auth_attempts`    | `session_id`, `src_ip`, `service`     | `detail`                                                                     | modbus, s7, dnp3       |
+| `honeypot_events`  | `session_id`, `protocol`, `remote_ip` | `event_type`, `detail`, `raw_data`                                           | dnp3, s7               |
+| `correlation_logs` | `session_id`, `src_ip`                | `func_code`, `value`, `phys_pressure`, `is_anomalous`                        | `correlator`           |
+| `security_metrics` | `session_id`, `sensor`                | `anomaly_score`, `is_anomaly`                                                | `ml_engine`            |
+| `security_alerts`  | `session_id`, `alert_type`            | `detail`, `score`                                                            | `ml_engine`            |
+| `attack_results`   | `attack_type`                         | `success`, `detail`                                                          | `attack_simulation.py` |
 
 ---
 
@@ -185,39 +185,44 @@ All services write to InfluxDB v2 bucket `sensor_logs`. All writes include a **`
 ### 6.1 False-Positive Fix (v2)
 
 Previous versions fired anomalies immediately on startup. This was caused by:
+
 - **Stale model** (`/data/model.pkl` from a previous session) scoring new data from a different distribution.
 - **EWMA/CUSUM** firing on the physics engine's natural startup transient (pressure converging from 0 → ~60 PSI).
 - **Expert rules** triggering on the first two samples where `pressure_delta` naturally exceeded 5 PSI.
 
 **v2 mitigations:**
 
-| Parameter | Old | New | Effect |
-|-----------|-----|-----|--------|
-| `STARTUP_GRACE_SECONDS` | none | **120 s** | All detectors silenced during startup transient |
-| Stale model on boot | loaded | **deleted** | Forces full retrain every session |
-| `contamination` | 0.05 | **0.02** | Fewer statistical false positives |
-| `CUSUM_THRESHOLD` | 25.0 | **40.0** | Only sustained drift triggers |
-| `pressure_delta` rule | 5.0 PSI | **15.0 PSI** | Ignores normal convergence jumps |
-| `pressure_mean_dev` rule | 15.0 PSI | **25.0 PSI** | Higher bar for stealth drift |
+| Parameter                | Old      | New          | Effect                                          |
+| ------------------------ | -------- | ------------ | ----------------------------------------------- |
+| `STARTUP_GRACE_SECONDS`  | none     | **120 s**    | All detectors silenced during startup transient |
+| Stale model on boot      | loaded   | **deleted**  | Forces full retrain every session               |
+| `contamination`          | 0.05     | **0.02**     | Fewer statistical false positives               |
+| `CUSUM_THRESHOLD`        | 25.0     | **40.0**     | Only sustained drift triggers                   |
+| `pressure_delta` rule    | 5.0 PSI  | **15.0 PSI** | Ignores normal convergence jumps                |
+| `pressure_mean_dev` rule | 15.0 PSI | **25.0 PSI** | Higher bar for stealth drift                    |
 
 ### 6.2 Detection Layers
 
 The engine runs four independent detection layers simultaneously, every 10 seconds:
 
 **Layer 1 — Isolation Forest** (statistical, post-warmup):
+
 - Warmup: 180 seconds of baseline telemetry, minimum 30 samples.
 - Feature vector (10 dimensions): `pressure`, `flow_rate`, `temperature`, `pressure_delta`, `pressure_mean_dev`, `inter_arrival_time`, `write_freq_10s`, `is_write`, `func_code`, `length`.
 - Contamination factor: 2%. Scores below −0.5 are flagged as anomalous.
 
 **Layer 2 — Expert Rules** (active after grace period):
+
 - `CROSS_LAYER_ANOMALY`: Pressure jump `|Δp| > 15 PSI` with zero write commands in the last 10 s.
 - `STEALTH_DRIFT`: Sustained deviation > 25 PSI from the 10-sample rolling mean.
 - `SEMANTIC_INJECTION`: Pressure value > 200 PSI (above safety threshold).
 
 **Layer 3 — EWMA/CUSUM Drift Detector** (active after grace period):
+
 - See Section 6.3 below.
 
 **Layer 4 — Forced Write Check** (active after grace period):
+
 - Queries `forced_writes` every 10 seconds.
 - Any direct write to sensor registers (HR 100–103) triggers `SEMANTIC_INJECTION`.
 
@@ -253,12 +258,12 @@ Alert fires when `C+_t > h` or `C−_t > h`. Accumulators reset after each alert
 
 **Container:** `ics_ml_engine` — embedded FastAPI server running as a background thread inside `trainer.py`.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Liveness: `{status, session_id, model_ready, in_warmup, in_grace, uptime_seconds}` |
-| GET | `/alerts` | Recent anomaly alerts (in-memory, newest first). Params: `limit`, `alert_type` |
-| GET | `/metrics` | Latest `{anomaly_score, ewma_pressure, cusum_pos, cusum_neg, last_anomaly}` |
-| POST | `/reset-model` | Delete model + retrain marker → forces full retrain on next cycle |
+| Method | Endpoint       | Description                                                                        |
+| ------ | -------------- | ---------------------------------------------------------------------------------- |
+| GET    | `/health`      | Liveness: `{status, session_id, model_ready, in_warmup, in_grace, uptime_seconds}` |
+| GET    | `/alerts`      | Recent anomaly alerts (in-memory, newest first). Params: `limit`, `alert_type`     |
+| GET    | `/metrics`     | Latest `{anomaly_score, ewma_pressure, cusum_pos, cusum_neg, last_anomaly}`        |
+| POST   | `/reset-model` | Delete model + retrain marker → forces full retrain on next cycle                  |
 
 ```bash
 curl http://localhost:8000/health
@@ -272,13 +277,13 @@ curl -X POST http://localhost:8000/reset-model
 **Container:** `ics_historian_api` — Flask service reading from InfluxDB and proxying the ML engine.
 Sits on both `monitor-net` and `enterprise-net` for Level-3 access isolation.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Service health + ML engine health proxied |
-| GET | `/api/alerts` | Paginated alerts from InfluxDB. Params: `lookback`, `limit`, `alert_type`, `source` |
-| GET | `/api/metrics` | Physical telemetry snapshot + ML engine metrics |
-| GET | `/api/summary` | High-level dashboard: alert counts by type, latest alert, ML status |
-| POST | `/api/external-event` | Push an event from a Level-3 IDS into InfluxDB |
+| Method | Endpoint              | Description                                                                         |
+| ------ | --------------------- | ----------------------------------------------------------------------------------- |
+| GET    | `/api/health`         | Service health + ML engine health proxied                                           |
+| GET    | `/api/alerts`         | Paginated alerts from InfluxDB. Params: `lookback`, `limit`, `alert_type`, `source` |
+| GET    | `/api/metrics`        | Physical telemetry snapshot + ML engine metrics                                     |
+| GET    | `/api/summary`        | High-level dashboard: alert counts by type, latest alert, ML status                 |
+| POST   | `/api/external-event` | Push an event from a Level-3 IDS into InfluxDB                                      |
 
 ```bash
 # Colleagues on Level-3 call:
@@ -316,18 +321,18 @@ A Plotly Dash web application simulating a Purdue Level 2 SCADA operator console
 
 **Dashboard:** "ICS Honeypot — Full Monitoring"
 
-| Panel | Type | Source |
-|---|---|---|
-| Pressure (PSI) | Time series | `pipeline_metrics.pressure` |
-| Flow Rate (L/s) | Time series | `pipeline_metrics.flow_rate` |
-| Temperature (°C) | Time series | `pipeline_metrics.temperature` |
-| Pump RPM | Time series | `pipeline_metrics.pump_rpm` |
-| ML Anomaly Status | Stat (0 = NORMAL, 1 = ANOMALY) | `security_metrics.is_anomaly` |
-| Anomaly Score Timeline | Time series | `security_metrics.is_anomaly` |
-| Cross-Layer Correlation | Time series | `correlation_logs` |
-| Replay Attack Delta | Time series | `security_alerts.delta` |
-| Semantic Injection / Replay / DNP3 / S7 Results | Stat | `attack_results` |
-| Protocol Honeypot Events | Table | `honeypot_events` |
+| Panel                                           | Type                           | Source                         |
+| ----------------------------------------------- | ------------------------------ | ------------------------------ |
+| Pressure (PSI)                                  | Time series                    | `pipeline_metrics.pressure`    |
+| Flow Rate (L/s)                                 | Time series                    | `pipeline_metrics.flow_rate`   |
+| Temperature (°C)                                | Time series                    | `pipeline_metrics.temperature` |
+| Pump RPM                                        | Time series                    | `pipeline_metrics.pump_rpm`    |
+| ML Anomaly Status                               | Stat (0 = NORMAL, 1 = ANOMALY) | `security_metrics.is_anomaly`  |
+| Anomaly Score Timeline                          | Time series                    | `security_metrics.is_anomaly`  |
+| Cross-Layer Correlation                         | Time series                    | `correlation_logs`             |
+| Replay Attack Delta                             | Time series                    | `security_alerts.delta`        |
+| Semantic Injection / Replay / DNP3 / S7 Results | Stat                           | `attack_results`               |
+| Protocol Honeypot Events                        | Table                          | `honeypot_events`              |
 
 **Note on session deduplication:** All Flux queries include `|> group(columns: ["_measurement", "_field"])` before aggregation. Without this, restarting any service creates a new `session_id` tag, which InfluxDB treats as a distinct time series — resulting in duplicate lines in Grafana. Grouping collapses all sessions into a single series per metric.
 
@@ -368,25 +373,25 @@ docker compose down -v
 
 ### Access Points
 
-| Service | URL | Notes |
-|---|---|---|
-| HMI Dashboard | http://localhost:8060 | Operator SCADA console |
-| Grafana | http://localhost:3000 | admin / admin |
-| InfluxDB UI | http://localhost:8086 | admin / password123 |
-| ML Engine API | http://localhost:8000/health | FastAPI docs: `/docs` |
-| Historian API | http://localhost:5000/api/health | Level-3 integration |
-| Modbus PLC | localhost:502 | pymodbus / mbpoll / nmap |
-| S7comm PLC | localhost:102 | s7comm_probe.py / nmap |
-| DNP3 Outstation | localhost:20000 | dnp3_probe.py |
+| Service         | URL                              | Notes                    |
+| --------------- | -------------------------------- | ------------------------ |
+| HMI Dashboard   | http://localhost:8060            | Operator SCADA console   |
+| Grafana         | http://localhost:3000            | admin / admin            |
+| InfluxDB UI     | http://localhost:8086            | admin / password123      |
+| ML Engine API   | http://localhost:8000/health     | FastAPI docs: `/docs`    |
+| Historian API   | http://localhost:5000/api/health | Level-3 integration      |
+| Modbus PLC      | localhost:502                    | pymodbus / mbpoll / nmap |
+| S7comm PLC      | localhost:102                    | s7comm_probe.py / nmap   |
+| DNP3 Outstation | localhost:20000                  | dnp3_probe.py            |
 
 ### InfluxDB Credentials
 
-| Parameter | Value |
-|---|---|
-| Organization | `my_refinery` |
-| Bucket | `sensor_logs` |
-| API Token | `supersecrettoken` |
-| Admin login | admin / password123 |
+| Parameter    | Value               |
+| ------------ | ------------------- |
+| Organization | `my_refinery`       |
+| Bucket       | `sensor_logs`       |
+| API Token    | `supersecrettoken`  |
+| Admin login  | admin / password123 |
 
 ---
 
@@ -395,6 +400,7 @@ docker compose down -v
 ### 11.0 Attacker Node (Recommended for Booth Demos)
 
 A **Debian-based attacker container** (`attacker_node`) is pre-loaded with:
+
 - `nmap` — port scanning and protocol fingerprinting
 - `pymodbus` — Modbus read/write attacks
 - `scapy` — raw packet crafting
@@ -423,14 +429,14 @@ pip install pymodbus requests influxdb-client
 python attack_simulation.py
 ```
 
-| # | Attack Name | Technique | Expected Detection |
-|---|---|---|---|
-| 1 | **Semantic Injection** | Modbus FC6: write HR100 = 5000 PSI | `forced_writes` → `SEMANTIC_INJECTION` alert |
-| 2 | **Historian Replay** | HTTP POST fake telemetry directly to InfluxDB | Replay detector in `hmi_simulator` |
-| 3 | **DNP3 Probe** | Raw link-layer frame to port 20000 | `honeypot_events` + `auth_attempts` logged |
-| 4 | **S7comm Probe** | COTP+S7 handshake to port 102 | `honeypot_events` + `auth_attempts` logged |
-| 5 | **Reconnaissance Only** | Modbus FC3 read scan (read HR 100–103, no writes) | Logged but **no anomaly** (correct FPR behaviour) |
-| 6 | **EWMA Stealth Drift** | 15 × RPM increment, +50 RPM every 3 s | CUSUM fires after ~45 s of cumulative drift |
+| #   | Attack Name             | Technique                                         | Expected Detection                                |
+| --- | ----------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| 1   | **Semantic Injection**  | Modbus FC6: write HR100 = 5000 PSI                | `forced_writes` → `SEMANTIC_INJECTION` alert      |
+| 2   | **Historian Replay**    | HTTP POST fake telemetry directly to InfluxDB     | Replay detector in `hmi_simulator`                |
+| 3   | **DNP3 Probe**          | Raw link-layer frame to port 20000                | `honeypot_events` + `auth_attempts` logged        |
+| 4   | **S7comm Probe**        | COTP+S7 handshake to port 102                     | `honeypot_events` + `auth_attempts` logged        |
+| 5   | **Reconnaissance Only** | Modbus FC3 read scan (read HR 100–103, no writes) | Logged but **no anomaly** (correct FPR behaviour) |
+| 6   | **EWMA Stealth Drift**  | 15 × RPM increment, +50 RPM every 3 s             | CUSUM fires after ~45 s of cumulative drift       |
 
 ---
 
@@ -616,13 +622,13 @@ pip install influxdb-client pandas numpy
 python scripts/export_results.py
 ```
 
-| Metric | Formula | Interpretation |
-|---|---|---|
-| **TPR** (True Positive Rate) | Detected attacks / Total attacks × 100 | Overall detection effectiveness |
-| **FPR** (False Positive Rate) | Anomalies during benign ops / Total samples × 100 | False alarm rate (target: < 10%) |
-| **Detection Latency** | Mean time from attack start → first alert (s) | System response speed |
-| **Attacker Dwell Time** | Last attack event − First attack event (s) | Campaign duration in the system |
-| **Correlation Accuracy** | Valid cross-layer records / Total write records × 100 | Network-to-physics link quality |
+| Metric                        | Formula                                               | Interpretation                   |
+| ----------------------------- | ----------------------------------------------------- | -------------------------------- |
+| **TPR** (True Positive Rate)  | Detected attacks / Total attacks × 100                | Overall detection effectiveness  |
+| **FPR** (False Positive Rate) | Anomalies during benign ops / Total samples × 100     | False alarm rate (target: < 10%) |
+| **Detection Latency**         | Mean time from attack start → first alert (s)         | System response speed            |
+| **Attacker Dwell Time**       | Last attack event − First attack event (s)            | Campaign duration in the system  |
+| **Correlation Accuracy**      | Valid cross-layer records / Total write records × 100 | Network-to-physics link quality  |
 
 Output is printed to the console and saved to `thesis_evaluation_summary.csv`.
 
@@ -633,7 +639,7 @@ Output is printed to the console and saved to `thesis_evaluation_summary.csv`.
 ### Step 1 — Show Normal Operations (2 min)
 
 1. Open **Grafana** at `http://localhost:3000`.
-2. Navigate to *"ICS Honeypot — Full Monitoring"* dashboard.
+2. Navigate to _"ICS Honeypot — Full Monitoring"_ dashboard.
 3. Point out: stable pressure ~60 PSI, consistent flow ~12 L/s, temperature rising slowly.
 4. Open **HMI** at `http://localhost:8060`.
 5. Move the **Pump RPM slider** — show pressure and flow updating in both HMI and Grafana within 5 seconds.
@@ -739,16 +745,75 @@ Honeypot/
 
 ## 15. Key Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| **Redis for shared physics state** | Allows Modbus, S7, and HMI to read a single consistent physics snapshot without each running an independent simulation loop, preventing state drift between protocols. |
-| **`session_id` tagging** | All InfluxDB writes include a session UUID prefix, enabling post-attack forensic reconstruction of the full attacker timeline across all protocols and services. |
-| **Isolation Forest + EWMA/CUSUM** | Isolation Forest handles statistical outliers (injection, replay, sudden anomalies); EWMA/CUSUM handles slow drift attacks that evade single-point thresholds. The two layers are complementary. |
-| **120-second startup grace period** | Physics engine needs ~60 s to converge from initial conditions. The grace period suppresses all detectors during this transient, giving zero false positives on startup without weakening steady-state detection. |
-| **Stale model deleted on boot** | The `model.pkl` Docker volume from a previous session was trained on different data distribution. Deleting it on boot forces a full retrain, eliminating the mismatch that caused instant false anomalies. |
-| **CUSUM reset on alert** | After a CUSUM trigger, accumulators reset to zero. This prevents repeated alerts on the same drift event and keeps `security_alerts` readable. |
-| **No authentication on honeypot services** | By design — a deception environment must accept all connections to maximise attacker engagement and logging fidelity. |
-| **`group()` in all Grafana queries** | Without grouping, InfluxDB returns one time series per unique tag combination. A new `session_id` on restart creates a new series, appearing as a duplicate line in Grafana. Grouping by `_measurement` + `_field` collapses all sessions into a single continuous line per metric. |
-| **Physics-aware semantic validation** | The cross-layer correlator joins write events with the physical state at the time of the write. This enables detection of commands that are syntactically valid Modbus packets but semantically dangerous (e.g., writing 5000 PSI to a sensor register). |
-| **Debian slim for attacker_node** | Kali Linux rolling mirrors are unreliable in isolated networks. Debian stable provides nmap, pymodbus, and scapy with dependable package availability. |
-| **Four-network Purdue topology** | `enterprise-net` isolates Level-3 API traffic from the OT and DMZ networks, mirroring real industrial network segmentation and demonstrating defence-in-depth. |
+| Decision                                   | Rationale                                                                                                                                                                                                                                                                           |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Redis for shared physics state**         | Allows Modbus, S7, and HMI to read a single consistent physics snapshot without each running an independent simulation loop, preventing state drift between protocols.                                                                                                              |
+| **`session_id` tagging**                   | All InfluxDB writes include a session UUID prefix, enabling post-attack forensic reconstruction of the full attacker timeline across all protocols and services.                                                                                                                    |
+| **Isolation Forest + EWMA/CUSUM**          | Isolation Forest handles statistical outliers (injection, replay, sudden anomalies); EWMA/CUSUM handles slow drift attacks that evade single-point thresholds. The two layers are complementary.                                                                                    |
+| **120-second startup grace period**        | Physics engine needs ~60 s to converge from initial conditions. The grace period suppresses all detectors during this transient, giving zero false positives on startup without weakening steady-state detection.                                                                   |
+| **Stale model deleted on boot**            | The `model.pkl` Docker volume from a previous session was trained on different data distribution. Deleting it on boot forces a full retrain, eliminating the mismatch that caused instant false anomalies.                                                                          |
+| **CUSUM reset on alert**                   | After a CUSUM trigger, accumulators reset to zero. This prevents repeated alerts on the same drift event and keeps `security_alerts` readable.                                                                                                                                      |
+| **No authentication on honeypot services** | By design — a deception environment must accept all connections to maximise attacker engagement and logging fidelity.                                                                                                                                                               |
+| **`group()` in all Grafana queries**       | Without grouping, InfluxDB returns one time series per unique tag combination. A new `session_id` on restart creates a new series, appearing as a duplicate line in Grafana. Grouping by `_measurement` + `_field` collapses all sessions into a single continuous line per metric. |
+| **Physics-aware semantic validation**      | The cross-layer correlator joins write events with the physical state at the time of the write. This enables detection of commands that are syntactically valid Modbus packets but semantically dangerous (e.g., writing 5000 PSI to a sensor register).                            |
+| **Debian slim for attacker_node**          | Kali Linux rolling mirrors are unreliable in isolated networks. Debian stable provides nmap, pymodbus, and scapy with dependable package availability.                                                                                                                              |
+| **Four-network Purdue topology**           | `enterprise-net` isolates Level-3 API traffic from the OT and DMZ networks, mirroring real industrial network segmentation and demonstrating defence-in-depth.                                                                                                                      |
+
+---
+
+## 16. Methodology & ML Anomaly Detection Fixes
+
+This section outlines the final methodological fixes implemented to ensure stable, robust, and presentation-ready anomaly detection for the thesis demonstration:
+
+### 16.1 Grace Period & Warm-Up Freezing
+
+Previously, the ML engine continuously retrained its Isolation Forest on live data while simultaneously trying to score it. This caused a feedback loop where attacked data became the "new normal," leading to constant false positives and skewed baselines.
+
+**Methodological Fix:**
+The Isolation Forest is now strictly configured to train **only** during a designated `WARMUP_PERIOD` (180s) on verified, clean baseline data. Once the warm-up concludes, the model freezes into memory (`model.pkl`) and does not update further. To ensure the ML engine doesn't fire false anomalies during the turbulent physics simulator boot-up (where pressure converges from 0 to 60 PSI), a `STARTUP_GRACE_SECONDS` (120s) suppresses all alerts ensuring pristine operational baselines.
+
+_(Note: Because of this grace period, if you restart the containers and immediately run the attack suite within the first 2 minutes, the ML engine will intentionally suppress the alerts from saving to Grafana.)_
+
+### 16.2 Visualization Improvements (Grafana)
+
+The Grafana dashboard historically utilized `max()` aggregations for the Anomaly Status, meaning a single anomaly would permanently flip the dashboard red.
+**Methodological Fix:** The panel now evaluates using `lastNotNull()` to reflect the real-time active status of the pipeline correctly. Furthermore, the telemetry charts explicitly query and separate groups by `source`, ensuring attacker injection spikes (`pressure=350`) plot as independent, highly visible lines (colored red in the dashboard) instead of being mathematically diluted by the background HMI polling data.
+
+### 16.3 Pump RPM Initialization
+
+Previously, the Modbus registers initialized as `0` by default before the physics engine propagated its setpoints, causing the SCADA HMI to briefly chart a process dropout.
+**Methodological Fix:** The `PhysicsAwareDataBlock` has been updated to explicitly pre-seed registers `100-103` (Sensors) and `200-202` (Actuators) with the exact `PipelineSimulator` runtime defaults via `super().setValues()`, meaning the system is mathematically stable and completely zero-free from the exact millisecond of boot.
+
+---
+
+## 17. Manual Bash Attack Commands
+
+For your exhibition and testing without running the automated `attack_suite.py`, you can enter your `attacker_node` terminal (`docker exec -it attacker_node bash`) and run these single-line manual commands to test seamlessly:
+
+**1. Fast Reconnaissance & Footprinting (Phase 1):**
+
+```bash
+# Uses the custom fast-nmap alias (no DNS slowdowns)
+fast-nmap -p 502,102,20000 plc_simulator ics_s7_plc ics_dnp3
+```
+
+**2. Semantic Injection (Phase 4):**
+Force the pressure exactly to 350 PSI (Triggers SEMANTIC_INJECTION alert in Grafana exactly as a red line).
+
+```bash
+python3 -c "from pymodbus.client import ModbusTcpClient; c = ModbusTcpClient('plc_simulator', port=502); c.connect(); c.write_register(100, value=350); print('Injected 350 PSI'); c.close()"
+```
+
+**3. Sabotage / Privilege Escalation (Phase 7):**
+Force the Pump RPM to 3000 (Maximum limits). This disrupts the physics mechanics and shows the physical drift anomaly.
+
+```bash
+python3 -c "from pymodbus.client import ModbusTcpClient; c = ModbusTcpClient('plc_simulator', port=502); c.connect(); c.write_register(200, value=3000); print('Overclocked Pump to 3000 RPM'); c.close()"
+```
+
+**4. Stealth EWMA/CUSUM Drift Attack:**
+A slow loop increasing pressure artificially in small increments (bypasses strict thresholds, but triggers CUSUM stealth-drift after ~45s).
+
+```bash
+python3 -c "from pymodbus.client import ModbusTcpClient; import time; c=ModbusTcpClient('plc_simulator', port=502); c.connect(); [c.write_register(100, value=100 + i*5) or time.sleep(5) for i in range(10)]; c.close()"
+```
