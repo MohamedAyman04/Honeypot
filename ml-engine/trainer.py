@@ -64,33 +64,33 @@ if os.path.exists(TRAINING_START_FILE):
 
 # ── EWMA/CUSUM parameters (tuned to reduce false positives) ───────────────────
 EWMA_LAMBDA              = 0.1    # slower tracking = less sensitive to brief spikes
-CUSUM_THRESHOLD          = 40.0   # raised from 25.0 – needs sustained drift to trigger
-EWMA_DEVIATION_THRESHOLD = 10.0   # PSI
-_cusum_k                 = 2.5    # allowance / slack (raised from 2.0)
+CUSUM_THRESHOLD          = 65.0   # raised from 40.0 – requires strong sustained drift
+EWMA_DEVIATION_THRESHOLD = 15.0   # PSI (raised from 10.0)
+_cusum_k                 = 4.0    # allowance / slack (raised from 2.5 – absorbs noise)
 
 _ewma_state  = None
 _cusum_pos   = 0.0
 _cusum_neg   = 0.0
 
 # ── IsolationForest parameters ─────────────────────────────────────────────────
-IF_CONTAMINATION = 0.01    # was 0.05; very low → only clear outliers flagged
-IF_N_ESTIMATORS  = 200     # more trees → more stable scoring
-IF_SCORE_THRESHOLD = -0.15  # IF score must be below this to count as anomaly
+IF_CONTAMINATION   = 0.01   # very low → only clear outliers flagged
+IF_N_ESTIMATORS    = 200    # more trees → more stable scoring
+IF_SCORE_THRESHOLD = -0.20  # raised from -0.15; deeper below normal before flagging
                             # (IsolationForest scores normal data near 0..+0.1)
-                            # Values between -0.15 and 0 are borderline → ignored
+                            # Values between -0.20 and 0 are borderline → ignored
 
 # In-memory model reference (avoids disk I/O race between train and load)
 _if_model = None
 
 # ── Expert-rule thresholds (raised to operational values) ─────────────────────
-EXPERT_PRESSURE_DELTA_THRESHOLD = 15.0   # was 5.0 PSI
-EXPERT_PRESSURE_MEAN_DEV        = 25.0   # was 15.0 PSI
+EXPERT_PRESSURE_DELTA_THRESHOLD = 20.0   # was 15.0 PSI – needs a real spike
+EXPERT_PRESSURE_MEAN_DEV        = 35.0   # was 25.0 PSI – noise won't reach this
 EXPERT_PRESSURE_MAX             = 200.0  # safety ceiling (unchanged)
 
 SESSION_ID = os.environ.get('SESSION_ID', str(uuid.uuid4())[:8])
 
 print(f"--- ML ENGINE v2 STARTING [session={SESSION_ID}] ---")
-print(f"    Grace period: {STARTUP_GRACE_SECONDS}s, CUSUM threshold: {CUSUM_THRESHOLD}")
+print(f"    Grace period: {STARTUP_GRACE_SECONDS}s, CUSUM threshold: {CUSUM_THRESHOLD}, IF threshold: {IF_SCORE_THRESHOLD}")
 
 db_client  = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 write_api  = db_client.write_api(write_options=SYNCHRONOUS)
@@ -239,22 +239,31 @@ def apply_expert_rules(features: pd.DataFrame) -> list[dict]:
 
     row = features.iloc[-1]
 
+    # Rule 1: Pressure jump with NO concurrent Modbus write commands
+    # (cross-layer inconsistency — physics changed without a PLC command)
     if abs(row["pressure_delta"]) > EXPERT_PRESSURE_DELTA_THRESHOLD and row["write_freq_10s"] == 0:
         alerts.append({
             "type":   "CROSS_LAYER_ANOMALY",
             "detail": f"pressure_delta={row['pressure_delta']:.2f} PSI with no write commands"
         })
 
+    # Rule 2: Sustained mean deviation — slow drift from baseline
     if abs(row["pressure_mean_dev"]) > EXPERT_PRESSURE_MEAN_DEV:
         alerts.append({
             "type":   "STEALTH_DRIFT",
             "detail": f"pressure_mean_dev={row['pressure_mean_dev']:.2f} PSI"
         })
 
-    if row["pressure"] > EXPERT_PRESSURE_MAX:
+    # Rule 3: OVER_PRESSURE — only fires above 300 PSI, which is physically
+    # impossible from normal pump operation (max physics output ~330 PSI at
+    # 3000 RPM / valve closed, but pipeline register 100 is sensor-write only).
+    # NOTE: Real semantic injection is detected by check_forced_writes() via
+    # the forced_writes InfluxDB measurement — NOT by this pressure rule.
+    # This rule only catches extreme out-of-range values that go beyond physics.
+    if row["pressure"] > 300.0:
         alerts.append({
-            "type":   "SEMANTIC_INJECTION",
-            "detail": f"pressure={row['pressure']:.1f} PSI (above {EXPERT_PRESSURE_MAX} PSI safety threshold)"
+            "type":   "OVER_PRESSURE",
+            "detail": f"pressure={row['pressure']:.1f} PSI (beyond physical engine maximum)"
         })
 
     return alerts

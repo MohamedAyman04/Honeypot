@@ -157,7 +157,8 @@ app.layout = dbc.Container([
     ]),
 
     dcc.Interval(id='interval-component', interval=2000, n_intervals=0),
-    dcc.Store(id='valve-state-store', data=0)
+    dcc.Store(id='valve-state-store', data=0),
+    dcc.Store(id='commanded-rpm-store', data=1200)   # tracks slider-set RPM instantly
 ], fluid=True)
 
 @app.callback(
@@ -169,9 +170,10 @@ app.layout = dbc.Container([
      Output('temp-display', 'children'),
      Output('rpm-display', 'children')],
     [Input('interval-component', 'n_intervals')],
-    [State('valve-state-store', 'data')]
+    [State('valve-state-store', 'data'),
+     State('commanded-rpm-store', 'data')]
 )
-def update_metrics(n, valve_state):
+def update_metrics(n, valve_state, commanded_rpm):
     pressure, flow, temp, pump_rpm = get_plc_data()
 
     now = datetime.datetime.now()
@@ -203,9 +205,13 @@ def update_metrics(n, valve_state):
     valve_text = "🟢 Valve: OPEN" if valve_state == 1 else "🔴 Valve: CLOSED"
     valve_color = "success" if valve_state == 1 else "danger"
 
+    # commanded_rpm is set instantly when slider moves; use it to avoid 2s lag
+    display_rpm = commanded_rpm if commanded_rpm is not None else int(pump_rpm)
+
     return (f"{pressure:.1f}", f"{flow:.2f}", fig,
             valve_text, valve_color,
-            f"{temp:.1f}", f"{int(pump_rpm)}")
+            f"{temp:.1f}", f"{display_rpm}")
+
 
 @app.callback(
     Output('valve-state-store', 'data'),
@@ -231,11 +237,12 @@ def toggle_valve(n, current_state):
     return new_state
 
 @app.callback(
-    Output('valve-status', 'className'),  # dummy output
+    Output('commanded-rpm-store', 'data'),   # instantly reflects slider position
     Input('pump-slider', 'value'),
     prevent_initial_call=True
 )
 def set_pump_rpm(value):
+    """Write slider RPM to Modbus reg 200 and record the commanded value in the store."""
     client = ModbusTcpClient(PLC_IP, port=502)
     try:
         if client.connect():
@@ -247,7 +254,7 @@ def set_pump_rpm(value):
             client.close()
         except Exception:
             pass
-    return "mt-2 text-center fw-bold"
+    return int(value)   # stored → used immediately by update_metrics for rpm-display
 
 if __name__ == '__main__':
     print(f"HMI dashboard started [session={SESSION_ID}]")

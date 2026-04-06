@@ -72,6 +72,17 @@ class PipelineSimulator:
 
     def save_state(self):
         if not self.r: return
+        # Re-read the latest actuator setpoints (pump_rpm, valve_pos) from Redis
+        # before persisting.  This prevents physics_process.update() from silently
+        # overwriting a concurrent Modbus register write with a stale snapshot.
+        try:
+            live = self.r.get("pipeline_state")
+            if live:
+                live_state = json.loads(live)
+                self.pump_rpm  = live_state.get("pump_rpm",  self.pump_rpm)
+                self.valve_pos = live_state.get("valve_pos", self.valve_pos)
+        except Exception:
+            pass
         state = self.get_state()
         self.r.set("pipeline_state", json.dumps(state))
 

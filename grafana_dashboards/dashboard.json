@@ -359,7 +359,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"dnp3\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"DNP3\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -401,7 +401,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"s7comm\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"S7comm\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -485,7 +485,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
