@@ -156,7 +156,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"is_anomaly\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -20s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"is_anomaly\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> max()",
           "refId": "A"
         }
       ],
@@ -317,7 +317,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"REPLAY_ATTACK\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and (r[\"alert_type\"] == \"REPLAY_ATTACK\" or r[\"alert_type\"] == \"replay_attack\"))\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
           "refId": "A"
         }
       ],

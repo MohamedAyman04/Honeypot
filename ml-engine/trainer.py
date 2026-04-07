@@ -462,6 +462,37 @@ from(bucket: "{INFLUX_BUCKET}")
     return alerts
 
 
+# ── DNP3 Probe Check ────────────────────────────────────────────────────────
+def check_dnp3_probes() -> list[dict]:
+    """Return any DNP3 probes logged in the last 60 s."""
+    if in_grace_period():
+        return []
+
+    query = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -60s)
+  |> filter(fn: (r) => r["_measurement"] == "honeypot_events" and r["protocol"] == "DNP3")
+  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> sort(columns: ["_time"], desc: true)
+  |> limit(n: 5)
+'''
+    alerts = []
+    try:
+        result = query_api.query_data_frame(query)
+        if isinstance(result, list):
+            result = pd.concat(result) if result else pd.DataFrame()
+        if not result.empty:
+            for _, row in result.iterrows():
+                ip = row.get('remote_ip', 'unknown')
+                detail = f"DNP3 Probe Detected from IP={ip}"
+                alerts.append({"type": "DNP3_PROBE", "detail": detail})
+                print(f"!!! DNP3 PROBE DETECTED !!! IP={ip}")
+                _record_alert("DNP3_PROBE", detail, -0.9)
+    except Exception as e:
+        print(f"DNP3 probe query error: {e}")
+    return alerts
+
+
 # ── API Server (FastAPI, runs in a background thread) ─────────────────────────
 def _start_api_server():
     """Start the FastAPI REST server on port 8000 in a daemon thread."""
@@ -566,6 +597,24 @@ while True:
                        .tag("sensor",     "ml_engine")
                        .tag("session_id", SESSION_ID)
                        .field("anomaly_score", -1.0)
+                       .field("is_anomaly",    1)
+                       .time(time.time_ns(), WritePrecision.NS))
+            write_api.write(bucket=INFLUX_BUCKET, record=m_point)
+
+        # 1B. DNP3 probe check (suppressed during grace period)
+        d_alerts = check_dnp3_probes()
+        for alert in d_alerts:
+            a_point = (Point("security_alerts")
+                       .tag("alert_type", alert["type"])
+                       .tag("session_id", SESSION_ID)
+                       .field("detail",   alert["detail"])
+                       .field("score",    -0.9)
+                       .time(time.time_ns(), WritePrecision.NS))
+            write_api.write(bucket=INFLUX_BUCKET, record=a_point)
+            m_point = (Point("security_metrics")
+                       .tag("sensor",     "ml_engine")
+                       .tag("session_id", SESSION_ID)
+                       .field("anomaly_score", -0.9)
                        .field("is_anomaly",    1)
                        .time(time.time_ns(), WritePrecision.NS))
             write_api.write(bucket=INFLUX_BUCKET, record=m_point)

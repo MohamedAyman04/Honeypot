@@ -79,6 +79,42 @@ def log_s7_event(event_type: str, detail: str = "", src_ip: str = "unknown"):
         print(f"[S7] InfluxDB log error: {e}")
 
 
+# ── Connection Event Tailer (Fallback for snap7 missing callbacks) ──────────────
+def tail_network_logs():
+    import json
+    log_file = "/data/network_logs.json"
+    print(f"[S7] Starting connection sniffer via {log_file}")
+    
+    # Wait for the file to be created by logger.py
+    while not os.path.exists(log_file):
+        time.sleep(1)
+        
+    try:
+        with open(log_file, "r") as f:
+            f.seek(0, os.SEEK_END)
+            last_ip = ""
+            last_time = 0
+            while True:
+                line = f.readline()
+                if not line:
+                    time.sleep(0.1)
+                    continue
+                try:
+                    record = json.loads(line)
+                    if record.get("dport") == 102:
+                        src_ip = record.get("src", "unknown")
+                        now = time.time()
+                        # Deduplicate frequent TCP connections from same IP within 2 seconds
+                        if src_ip != last_ip or (now - last_time) > 2.0:
+                            log_s7_event("probe", "Incoming S7/COTP connection", src_ip)
+                            last_ip = src_ip
+                            last_time = now
+                except json.JSONDecodeError:
+                    pass
+    except Exception as e:
+        print(f"[S7] Tailer error: {e}")
+
+
 def run_s7_server():
     # Use Redis to read state updated by physical process simulator 
     simulator = PipelineSimulator(use_redis=True)
@@ -89,7 +125,10 @@ def run_s7_server():
 
     server.start(102)
     print(f"[S7] S7comm Honeypot (emulated S7-300) listening on port 102 [session={SESSION_ID}]")
-    log_s7_event("startup", "S7comm honeypot started", src_ip="localhost")
+
+    import threading
+    tail_thread = threading.Thread(target=tail_network_logs, daemon=True)
+    tail_thread.start()
 
     try:
         while True:

@@ -61,6 +61,8 @@ services:
       - monitor-net
     ports:
       - "102:102"
+    volumes:
+      - shared-data:/data
     environment:
       - REDIS_HOST=redis
       - INFLUX_URL=http://historian:8086
@@ -238,8 +240,8 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=supersecrettoken
       - DOCKER_INFLUXDB_INIT_ORG=my_refinery
       - DOCKER_INFLUXDB_INIT_BUCKET=sensor_logs
-    volumes:
-      - influx-data:/var/lib/influxdb2
+    # volumes:
+    #   - influx-data:/var/lib/influxdb2
     networks:
       - monitor-net
       - ot-net
@@ -275,6 +277,7 @@ services:
     container_name: attacker_node
     networks:
       - dmz-net
+      - monitor-net
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -284,7 +287,7 @@ services:
 
 volumes:
   shared-data:
-  influx-data:
+  # influx-data:
 
 networks:
   # Purdue Level 1/2 — OT process network (physics, PLCs, Redis)

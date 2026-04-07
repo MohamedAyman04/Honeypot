@@ -132,8 +132,9 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
             p, f, t, r = int(state["pressure"]), int(state["flow_rate"]*10), int(state["temperature"]), int(state["pump_rpm"])
             super().setValues(100, [p, f, t, r])
             
-            # Log read (reconnaissance)
-            log_modbus_event("attacker", 3, address, None, is_write=False)
+            # Log read (reconnaissance) if it's not the normal HMI poll
+            if not (address == 100 and count == 4):
+                log_modbus_event("attacker", 3, address, None, is_write=False)
             
             return super().getValues(address, count)
 
