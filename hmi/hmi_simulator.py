@@ -60,7 +60,7 @@ def read_plc():
 
 
 def get_last_historian_pressures(n: int = 5):
-    """Return the last n pressure values from InfluxDB."""
+    """Return the last n pressure values from InfluxDB (excluding attacker writes)."""
     query = f'''
 from(bucket: "{BUCKET}")
   |> range(start: -2m)
@@ -79,21 +79,60 @@ from(bucket: "{BUCKET}")
         return []
 
 
-def check_replay_attack(live_pressure: float) -> bool:
+def get_historian_write_count(seconds: int = 10) -> int:
     """
-    Detect replay: historian shows repeated flat values while PLC is at a
-    very different reading (attacker froze the historian feed).
+    Count writes tagged source=historian_bridge in the last N seconds.
+    Normal rate: 1 write / 2 s = ~5 writes in 10 s.
+    Replay attack: 15 writes in 1.5 s -- detectable as a flood.
+    """
+    query = f'''
+from(bucket: "{BUCKET}")
+  |> range(start: -{seconds}s)
+  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics"
+            and r["_field"] == "pressure"
+            and r["source"] == "historian_bridge")
+  |> group()
+  |> count()
+'''
+    try:
+        tables = query_api.query(query)
+        for table in tables:
+            for record in table.records:
+                return int(record.get_value())
+    except Exception:
+        pass
+    return 0
+
+
+def check_replay_attack(live_pressure: float) -> tuple:
+    """
+    Detect replay attack via TWO independent signals (either alone fires alert):
+      1. FLAT FEED: historian shows >= REPLAY_FLAT_COUNT identical values while
+         the live PLC reading differs by > REPLAY_PLC_DELTA PSI.
+      2. WRITE FLOOD: historian_bridge writes arrive at > 2x the normal rate
+         (normal = 1 write / 2 s; attack = 15 writes / 1.5 s).
+
+    Returns (detected: bool, delta: float).
     """
     hist = get_last_historian_pressures(REPLAY_FLAT_COUNT)
-    if len(hist) < REPLAY_FLAT_COUNT:
-        return False
-    # All historian values the same (within 1 PSI)?
-    if max(hist) - min(hist) > 1.0:
-        return False   # historian IS changing, not a replay
-    # PLC value differs significantly from the flat historian value?
-    if abs(live_pressure - hist[0]) > REPLAY_PLC_DELTA:
-        return True
-    return False
+    hist_mean = (sum(hist) / len(hist)) if hist else live_pressure
+    delta = abs(live_pressure - hist_mean)
+
+    # Signal 1: flat historian feed + PLC divergence
+    if len(hist) >= REPLAY_FLAT_COUNT:
+        flat = (max(hist) - min(hist)) <= 1.0
+        if flat and delta > REPLAY_PLC_DELTA:
+            print(f"[REPLAY] Flat feed detected: hist_mean={hist_mean:.1f} PLC={live_pressure:.1f} delta={delta:.1f}")
+            return True, delta
+
+    # Signal 2: write flood (attack sprays 15 writes in 1.5 s)
+    # Normal: ~5 writes in 10 s; threshold 10 = 2x normal
+    write_count = get_historian_write_count(seconds=10)
+    if write_count > 10:
+        print(f"[REPLAY] Write flood detected: {write_count} writes in 10 s (normal ~5)")
+        return True, delta
+
+    return False, delta
 
 
 def check_for_anomaly():
@@ -142,13 +181,15 @@ while True:
             pump_state   = "running" if data['pump_rpm'] > 0 else "stopped"
 
             # ── Replay attack detection ──────────────────────────────────────
-            if check_replay_attack(pressure_val):
-                print(f"!!! REPLAY ATTACK ALERT !!! PLC={pressure_val:.1f} but historian is flat")
+            replay_detected, replay_delta = check_replay_attack(pressure_val)
+            if replay_detected:
+                print(f"!!! REPLAY ATTACK ALERT !!! PLC={pressure_val:.1f} PSI  delta={replay_delta:.1f} PSI")
                 alert = (Point("security_alerts")
-                         .tag("alert_type", "replay_attack")
+                         .tag("alert_type", "REPLAY_ATTACK")
                          .tag("session_id", SESSION_ID)
                          .field("live_pressure", pressure_val)
-                         .field("detail", "Historian frozen while PLC changed")
+                         .field("delta", replay_delta)          # Grafana panel 8 queries this field
+                         .field("detail", "Historian frozen/flooded while PLC changed")
                          .time(time.time_ns(), WritePrecision.NS))
                 write_api.write(bucket=BUCKET, record=alert)
 
