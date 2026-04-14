@@ -1,0 +1,5 @@
+[DNP3] Honeypot outstation listening on port 20000 [session=3e181e5c]
+[DNP3] Connection from 172.21.0.3:52818
+[DNP3] RX 10b from 172.21.0.3
+[DNP3] TX ACK to 172.21.0.3
+[DNP3] 172.21.0.3 disconnected

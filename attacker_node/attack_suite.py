@@ -98,8 +98,9 @@ def run_cmd(cmd: str, timeout: int = 20) -> str:
         return ""
 
 def sleep_label(s: float, label: str = ""):
+    # Brief pause between phases — command IS running; will continue automatically.
     desc = f" ({label})" if label else ""
-    print(f"  ... waiting {s}s{desc}")
+    print(f"  [ Pausing {s}s between phases — continuing automatically... ]{desc}")
     time.sleep(s)
 
 def _tcp_open(host, port, timeout=2) -> bool:

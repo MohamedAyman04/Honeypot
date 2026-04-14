@@ -384,7 +384,13 @@
       },
       "id": 102,
       "title": "Attack Simulation Results",
-      "type": "row"
+      "type": "row",
+      "targets": [
+        {
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -4h)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"_field\"] == \"score\")\n  |> keep(columns: [\"_time\",\"alert_type\",\"_value\"])\n  |> rename(columns: {\"_time\": \"Time\", \"alert_type\": \"Attack Detected\", \"_value\": \"Score\"})\n  |> sort(columns: [\"Time\"], desc: true)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "datasource": {
@@ -434,10 +440,31 @@
             },
             {
               "options": {
-                "1": {
-                  "text": "EXECUTED",
-                  "color": "red",
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
                   "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "1": {
+                  "text": "DETECTED",
+                  "color": "red",
+                  "index": 4
                 }
               },
               "type": "value"
@@ -457,12 +484,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"SEMANTIC_INJECTION\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\"\n                   and r[\"alert_type\"] == \"SEMANTIC_INJECTION\"\n                   and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -495,20 +524,53 @@
           "mappings": [
             {
               "options": {
-                "WAITING": {
+                "match": "null",
+                "result": {
                   "text": "WAITING",
                   "color": "green",
                   "index": 0
-                },
-                "DETECTED": {
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "empty",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 1
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 1
-                },
-                "COOLDOWN": {
-                  "text": "COOLDOWN",
-                  "color": "orange",
-                  "index": 2
+                  "index": 4
                 }
               },
               "type": "value"
@@ -528,12 +590,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\")\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\"\n                   and r[\"attack_type\"] == \"REPLAY\"\n                   and r[\"_field\"] == \"detected\")\n  |> max()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] >= 1 then 1 else 0}))",
           "refId": "A"
         }
       ],
@@ -588,10 +652,31 @@
             },
             {
               "options": {
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
                 "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 2
+                  "index": 4
                 }
               },
               "type": "value"
@@ -611,12 +696,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"DNP3_PROBE\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\"\n                   and r[\"protocol\"] == \"DNP3\"\n                   and r[\"_field\"] == \"event_type\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -671,10 +758,31 @@
             },
             {
               "options": {
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
                 "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 2
+                  "index": 4
                 }
               },
               "type": "value"
@@ -694,12 +802,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"S7comm\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\"\n                   and r[\"protocol\"] == \"S7comm\"\n                   and r[\"_field\"] == \"event_type\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -754,10 +864,31 @@
             },
             {
               "options": {
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
                 "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 2
+                  "index": 4
                 }
               },
               "type": "value"
@@ -777,12 +908,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"modbus_events\" and r[\"fc_type\"] == \"read\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\"\n                   and r[\"alert_type\"] == \"RECON_SCAN\"\n                   and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -837,10 +970,31 @@
             },
             {
               "options": {
-                "1": {
-                  "text": "EXECUTED",
-                  "color": "red",
+                "match": "nan",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
                   "index": 2
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "0": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "1": {
+                  "text": "DETECTED",
+                  "color": "red",
+                  "index": 4
                 }
               },
               "type": "value"
@@ -860,12 +1014,14 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         }
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\"\n                   and r[\"attack_type\"] == \"STEALTH_DRIFT\"\n                   and r[\"_field\"] == \"detected\")\n  |> max()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] >= 1 then 1 else 0}))",
           "refId": "A"
         }
       ],
@@ -882,7 +1038,13 @@
       },
       "id": 103,
       "title": "Protocol Honeypot Events",
-      "type": "row"
+      "type": "row",
+      "targets": [
+        {
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\"\n                   and (r[\"protocol\"] == \"S7comm\" or r[\"protocol\"] == \"DNP3\")\n                   and r[\"_field\"] == \"event_type\")\n  |> keep(columns: [\"_time\",\"protocol\",\"_value\",\"remote_ip\"])\n  |> rename(columns: {\"_time\": \"Time\", \"_value\": \"Event\", \"protocol\": \"Protocol\", \"remote_ip\": \"Attacker IP\"})\n  |> sort(columns: [\"Time\"], desc: true)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "datasource": {
@@ -908,11 +1070,11 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\")\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 50)",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -1h)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\"\n                   and (r[\"protocol\"] == \"S7comm\" or r[\"protocol\"] == \"DNP3\")\n                   and r[\"_field\"] == \"event_type\")\n  |> keep(columns: [\"_time\",\"protocol\",\"_value\",\"remote_ip\"])\n  |> rename(columns: {\"_time\": \"Time\", \"_value\": \"Event\", \"protocol\": \"Protocol\", \"remote_ip\": \"Attacker IP\"})\n  |> sort(columns: [\"Time\"], desc: true)",
           "refId": "A"
         }
       ],
-      "title": "DNP3 Honeypot Events",
+      "title": "Honeypot Events",
       "type": "table"
     }
   ],

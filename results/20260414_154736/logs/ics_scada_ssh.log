@@ -1,0 +1,23 @@
+iptables v1.8.9 (nf_tables): host/network `plc_simulator' not found
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.9 (nf_tables): host/network `ics_s7_plc' not found
+Try `iptables -h' or 'iptables --help' for more information.
+iptables v1.8.9 (nf_tables): host/network `ics_dnp3' not found
+Try `iptables -h' or 'iptables --help' for more information.
+Server listening on 0.0.0.0 port 2222.
+Server listening on :: port 2222.
+Accepted password for engineer from 172.18.0.3 port 44854 ssh2
+Received disconnect from 172.18.0.3 port 44854:11: disconnected by user
+Disconnected from user engineer 172.18.0.3 port 44854
+Accepted password for engineer from 172.18.0.3 port 44864 ssh2
+Received disconnect from 172.18.0.3 port 44864:11: disconnected by user
+Disconnected from user engineer 172.18.0.3 port 44864
+Accepted password for engineer from 172.18.0.3 port 44872 ssh2
+Received disconnect from 172.18.0.3 port 44872:11: disconnected by user
+Disconnected from user engineer 172.18.0.3 port 44872
+Accepted password for engineer from 172.18.0.3 port 44878 ssh2
+Received disconnect from 172.18.0.3 port 44878:11: disconnected by user
+Disconnected from user engineer 172.18.0.3 port 44878
+Accepted password for operator from 172.18.0.3 port 44886 ssh2
+Received disconnect from 172.18.0.3 port 44886:11: disconnected by user
+Disconnected from user operator 172.18.0.3 port 44886

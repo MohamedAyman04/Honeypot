@@ -1,0 +1,63 @@
+=================================================================
+  ICS HONEYPOT — THESIS RESULTS SNAPSHOT
+  Timestamp : 20260414_144952
+  Lookback  : -6h
+  InfluxDB  : http://localhost:8086
+=================================================================
+
+── Per-Attack Detection Counts ─────────────────────────────────
+  Phase 4 — Semantic Injection                      0 alerts  [NO]
+  Phase 5 — Stealth Drift (EWMA/CUSUM)              0 alerts  [NO]
+  Phase 5 — Stealth Drift (Expert Rule)             0 alerts  [NO]
+  Phase 5 — Cross-Layer Anomaly                     0 alerts  [NO]
+  Phase 1/3 — DNP3 Protocol Probe                   0 alerts  [NO]
+  Phase 8 — Replay Attack                           0 alerts  [NO]
+  ML Engine — IsolationForest Anomaly               0 alerts  [NO]
+  Expert Rule — Over Pressure                       0 alerts  [NO]
+
+── CSV Rows Exported ───────────────────────────────────────────
+  pipeline_metrics                         0 rows
+  security_metrics                         0 rows
+  security_alerts                          0 rows
+  modbus_events                            0 rows
+  honeypot_events                          0 rows
+  auth_attempts                            0 rows
+  forced_writes                            0 rows
+  correlation_logs                         0 rows
+  process_state                            0 rows
+  attack_status                            0 rows
+
+── Grafana PNG Screenshots (run from project root) ─────────────
+  # Note: Requires grafana_renderer running (see docker-compose.yml)
+
+  # Pipeline_Pressure
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=1&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/Pipeline_Pressure.png
+
+  # ML_Anomaly_Status
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=5&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/ML_Anomaly_Status.png
+
+  # ML_Anomaly_Score
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=6&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/ML_Anomaly_Score.png
+
+  # Replay_Delta
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=8&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/Replay_Delta.png
+
+  # Semantic_Injection
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=9&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/Semantic_Injection.png
+
+  # Replay_Status
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=10&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/Replay_Status.png
+
+  # DNP3_Probe
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=11&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/DNP3_Probe.png
+
+  # S7comm_Probe
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=12&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/S7comm_Probe.png
+
+  # Recon_Scan
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=14&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/Recon_Scan.png
+
+  # EWMA_CUSUM_Drift
+  curl -s -u admin:admin 'http://localhost:3000/render/d-solo/ics-honeypot-full/ics-honeypot?orgId=1&panelId=15&from=now-4h&to=now&width=1200&height=500&theme=dark' -o results/20260414_144952/EWMA_CUSUM_Drift.png
+
+=================================================================

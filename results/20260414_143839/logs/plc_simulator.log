@@ -1,0 +1,63 @@
+[PHYSICS] Connected to Redis at redis:6379
+INFO:modbus_server:Starting Modbus PLC Simulator on port 502 with Redis session 3c1e6079
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=3
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:MODBUS write address=100 values=[350]
+WARNING:modbus_server:[INJECTION] Wrote 350 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 350 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[125]
+WARNING:modbus_server:[INJECTION] Wrote 125 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 125 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[130]
+WARNING:modbus_server:[INJECTION] Wrote 130 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 130 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[135]
+WARNING:modbus_server:[INJECTION] Wrote 135 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 135 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[140]
+WARNING:modbus_server:[INJECTION] Wrote 140 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 140 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[145]
+WARNING:modbus_server:[INJECTION] Wrote 145 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 145 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[150]
+WARNING:modbus_server:[INJECTION] Wrote 150 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 150 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[155]
+WARNING:modbus_server:[INJECTION] Wrote 155 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 155 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[160]
+WARNING:modbus_server:[INJECTION] Wrote 160 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 160 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[165]
+WARNING:modbus_server:[INJECTION] Wrote 165 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 165 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[170]
+WARNING:modbus_server:[INJECTION] Wrote 170 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 170 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[175]
+WARNING:modbus_server:[INJECTION] Wrote 175 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 175 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[180]
+WARNING:modbus_server:[INJECTION] Wrote 180 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 180 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[185]
+WARNING:modbus_server:[INJECTION] Wrote 185 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 185 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[190]
+WARNING:modbus_server:[INJECTION] Wrote 190 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 190 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[195]
+WARNING:modbus_server:[INJECTION] Wrote 195 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 195 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1100]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+INFO:modbus_server:MODBUS write address=202 values=[1]

@@ -1,0 +1,333 @@
+[ML] Removed stale model from previous session.
+[ML] Removed stale training-start marker.
+--- ML ENGINE v2 STARTING [session=3f30a3ef] ---
+    Grace period: 120s, CUSUM threshold: 20.0, IF threshold: -0.2
+[ML-API] Starting FastAPI server on port 8000...
+[ML] Entering main detection loop. Grace period ends in 120s.
+Warm-up phase started.
+Training Mode: 180s remaining in warm-up — NO alerts will fire.
+Training Mode: 168s remaining in warm-up — NO alerts will fire.
+Training Mode: 157s remaining in warm-up — NO alerts will fire.
+Training Mode: 146s remaining in warm-up — NO alerts will fire.
+Training Mode: 134s remaining in warm-up — NO alerts will fire.
+Training Mode: 123s remaining in warm-up — NO alerts will fire.
+Training Mode: 111s remaining in warm-up — NO alerts will fire.
+Training Mode: 100s remaining in warm-up — NO alerts will fire.
+Training Mode: 89s remaining in warm-up — NO alerts will fire.
+Training Mode: 77s remaining in warm-up — NO alerts will fire.
+Training Mode: 66s remaining in warm-up — NO alerts will fire.
+Training Mode: 55s remaining in warm-up — NO alerts will fire.
+Training Mode: 43s remaining in warm-up — NO alerts will fire.
+Training Mode: 32s remaining in warm-up — NO alerts will fire.
+Training Mode: 20s remaining in warm-up — NO alerts will fire.
+Training Mode: 9s remaining in warm-up — NO alerts will fire.
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3892
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3786
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3498
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3759
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3717
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3867
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3867
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3593
+ML cycle complete — 1 sample scored, anomaly=0, score=0.2804
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3829
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3540
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3867
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3528
+ML cycle complete — 1 sample scored, anomaly=0, score=0.3711
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1643
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1167
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1847
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1625
+!!! REPLAY ATTACK DETECTED !!! Replay Attack: High frequency conflicting signals detected (Delta=64.0 PSI, 10 writes in 5s)
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0358
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0700
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1393
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1252
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0908
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0775
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0842
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0825
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0766
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0731
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0778
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+!!! DNP3 PROBE DETECTED !!! IP=172.18.0.3
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0665
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1367
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1483
+ML cycle complete — 1 sample scored, anomaly=0, score=0.2080
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1820
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1678
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1624
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0896
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1420
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1371
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1392
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1242
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1379
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1389
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1292
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1376
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=350
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1281
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=160
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=155
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=150
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=145
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=140
+!!! REPLAY ATTACK DETECTED !!! Replay Attack: High frequency conflicting signals detected (Delta=39.0 PSI, 15 writes in 5s)
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0907
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=195
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=190
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=185
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=180
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=175
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1231
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=195
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=190
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=185
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=180
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=175
+!!! STEALTH_DRIFT !!! pressure_mean_dev=76.40 PSI
+!!! OVER_PRESSURE !!! pressure=413.0 PSI (beyond physical engine maximum)
+ML cycle complete — 1 sample scored, anomaly=0, score=-0.0547
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=195
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=190
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=185
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=180
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=175
+!!! OVER_PRESSURE !!! pressure=446.0 PSI (beyond physical engine maximum)
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0013
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=195
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=190
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=185
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=180
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=175
+!!! OVER_PRESSURE !!! pressure=449.0 PSI (beyond physical engine maximum)
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0182
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=195
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=190
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=185
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=180
+!!! SEMANTIC INJECTION DETECTED !!! Reg=100 Val=175
+!!! OVER_PRESSURE !!! pressure=450.0 PSI (beyond physical engine maximum)
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0047
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0275
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0851
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1183
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1215
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1026
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1215
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1124
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1223
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1232
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1323
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1340
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1375
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1372
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1214
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1282
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1340
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0804
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1222
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1230
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1178
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1085
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1388
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1349
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1289
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1369
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1273
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1289
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1271
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1388
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1314
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1310
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1221
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1276
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1164
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1264
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1263
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1324
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1262
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1402
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1123
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0885
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1166
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1231
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1110
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1302
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1351
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1376
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1205
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1084
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1332
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0868
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1282
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0825
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0879
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1393
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1402
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1334
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1302
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0900
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1332
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1376
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1287
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1078
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1354
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1302
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1216
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1403
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1364
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1279
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0931
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1376
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0921
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1164
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1266
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1251
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1115
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1139
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1238
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1181
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1275
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1340
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1354
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1291
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1397
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0978
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1335
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1376
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1330
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1396
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1385
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0908
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0813
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1389
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1336
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1379
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1275
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1074
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1389
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1245
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0830
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1251
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0906
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1239
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1324
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1324
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1327
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1288
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1088
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1390
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1396
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1253
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1123
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1361
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0973
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0944
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1010
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1248
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1371
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0966
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1288
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0528
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1106
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1319
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0925
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1276
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1229
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0758
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1325
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1305
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0868
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1396
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0925
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0775
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1275
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1228
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1236
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1358
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1178
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1292
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1281
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1299
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1371
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1048
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1383
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1008
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1379
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1152
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1264
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1336
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1056
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1370
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1210
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0867
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0883
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1390
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0866
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1325
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1332
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0871
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1287
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1099
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1281
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1070
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1123
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0812
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0972
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1139
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0813
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1245
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0848
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1287
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1391
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1170
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1224
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1402
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1241
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1336
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1390
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1321
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1084
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1403
+ML cycle complete — 1 sample scored, anomaly=0, score=0.0866
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1175
+ML cycle complete — 1 sample scored, anomaly=0, score=0.1106

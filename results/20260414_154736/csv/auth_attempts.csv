@@ -1,0 +1,19 @@
+table,_time,_value,_field,_measurement
+0,2026-04-14T09:56:41.962754339Z,TCP Connection established,detail,auth_attempts
+0,2026-04-14T09:56:42.451577524Z,TCP Connection closed,detail,auth_attempts
+0,2026-04-14T09:57:03.115891357Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T09:59:30.368790514Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T09:59:52.327088325Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T10:00:24.359930074Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T12:20:27.109648611Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T12:22:12.036647009Z,TCP Connection established,detail,auth_attempts
+0,2026-04-14T12:22:12.527524904Z,TCP Connection closed,detail,auth_attempts
+0,2026-04-14T12:32:56.922717965Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T12:33:19.087098227Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T12:33:50.921350199Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T13:02:39.597995902Z,TCP Connection established,detail,auth_attempts
+0,2026-04-14T13:02:40.088428932Z,TCP Connection closed,detail,auth_attempts
+0,2026-04-14T13:07:19.270274385Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T13:09:06.638041411Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T13:09:28.799153399Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts
+0,2026-04-14T13:10:00.632896461Z,probe: S7/COTP connection (tcp-monitor(state=01)),detail,auth_attempts

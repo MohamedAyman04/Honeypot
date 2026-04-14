@@ -19,9 +19,9 @@ class PipelineSimulator:
                 self.use_redis = False
 
         self.pump_rpm = 1200
-        self.valve_pos = 0.5
-        self.pressure = 50.0  # approximate starting pressure
-        self.flow_rate = 12.0 # approximate starting flow
+        self.valve_pos = 0.0
+        self.pressure = 0.0   # start at 0; converges naturally once pump starts
+        self.flow_rate = 0.0  # start at 0 so HMI valve-closed view is consistent
         self.temperature = 18.5
         self.viscosity = 1.0
         self.last_update = time.time()

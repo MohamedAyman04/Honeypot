@@ -1,0 +1,13 @@
+
+===== ICS Honeypot Attacker Node =====
+Tools : nmap, hping3, hydra, sshpass, netcat, tcpdump, scapy, pymodbus
+Targets:
+  plc_simulator:502    (Modbus PLC)
+  ics_s7_plc:102       (Siemens S7-300)
+  ics_dnp3:20000       (DNP3 RTU)
+  ics_scada_ssh:2222   (SCADA SSH pivot — Level 2)
+  ics_historian_api:5000 (Level 3 REST API)
+
+Kill chain:  python3 /tools/attack_suite.py --phase 0
+Single phase: python3 /tools/attack_suite.py --phase 6  (lateral movement)
+

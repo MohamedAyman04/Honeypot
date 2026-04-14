@@ -1,0 +1,13 @@
+--- HISTORIAN API starting on port 5000 [session=1cb9c74b] ---
+[WARN] /api/debug endpoint is ACTIVE — credential leak risk!
+ * Serving Flask app 'app'
+ * Debug mode: off
+[HIST-API][WARN] /api/debug accessed from 172.18.0.3 — credential leak!
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.18.0.5:5000
+[33mPress CTRL+C to quit[0m
+172.18.0.1 - - [14/Apr/2026 13:05:00] "GET /api/alerts HTTP/1.1" 200 -
+172.18.0.1 - - [14/Apr/2026 13:05:00] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.18.0.3 - - [14/Apr/2026 13:10:35] "GET /api/debug HTTP/1.1" 200 -

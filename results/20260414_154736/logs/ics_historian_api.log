@@ -1,0 +1,21 @@
+--- HISTORIAN API starting on port 5000 [session=d3ff06e5] ---
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.21.0.4:5000
+[33mPress CTRL+C to quit[0m
+172.21.0.1 - - [14/Apr/2026 13:05:08] "GET /api/health HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:05:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 13:05:11] "GET /api/summary HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:05:11] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 13:05:15] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:05:15] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 13:05:57] "GET /api/health HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:07:34] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:07:34] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 13:07:35] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:07:35] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 13:07:36] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 13:07:36] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -

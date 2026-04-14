@@ -300,10 +300,25 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      # Image renderer (for PNG panel exports)
+      - GF_RENDERING_SERVER_URL=http://grafana_renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://ics_grafana:3000/
+      - GF_LOG_FILTERS=rendering:debug
     depends_on:
       - historian
+      - grafana_renderer
     networks:
       - monitor-net
+    restart: unless-stopped
+
+  # ── Grafana Image Renderer ────────────────────────────────────────────────────
+  grafana_renderer:
+    image: grafana/grafana-image-renderer:latest
+    container_name: grafana_renderer
+    networks:
+      - monitor-net
+    environment:
+      - ENABLE_METRICS=true
     restart: unless-stopped
 
   # ── Attacker Node (Purdue Level 3.5 / External Threat Simulation) ─────────────

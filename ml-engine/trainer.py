@@ -461,98 +461,65 @@ from(bucket: "{INFLUX_BUCKET}")
                                .field("is_anomaly",    1)
                                .time(time.time_ns(), WritePrecision.NS))
                     write_api.write(bucket=INFLUX_BUCKET, record=m_point)
+                     s_point = (Point("attack_status")
+                                .tag("attack_type", "STEALTH_DRIFT")
+                                .tag("session_id", SESSION_ID)
+                                .field("detected", 1)
+                                .time(time.time_ns(), WritePrecision.NS))
+                     write_api.write(bucket=INFLUX_BUCKET, record=s_point)
     except Exception as e:
         print(f"EWMA/CUSUM cycle error: {e}")
 
 
 # ── Replay Attack Detector ────────────────────────────────────────────────────
-_replay_cooldown_until = 0.0   # seconds since epoch; avoid duplicate alerts
+_replay_cooldown_until = 0.0
 
 def check_replay_attack() -> list[dict]:
     """
-    Detect Phase-8 replay: attacker writes a frozen pressure value directly to
-    InfluxDB. The giveaway is near-zero variance in pressure over a short window
-    despite normal variance being present in earlier history.
-
-    Logic:
-      1. Query the last 60 s of pipeline_metrics pressure values.
-      2. If there are ≥ 8 data points AND std_dev < 0.8 PSI → frozen telemetry.
-      3. Write to security_alerts (alert_type=REPLAY_ATTACK) and
-         attack_status (for the Grafana stat panel) with a 60-second cooldown.
+    Detect Phase-8 Replay Attack by detecting Conflicting Signal Injection.
+    The normal physics engine writes 1 value/sec.
+    The attacker floods `120.0` 15 times in ~1.5s while the real PLC is still writing.
+    This creates an instant massive delta (max - min > 10 PSI) and an abnormally high
+    sample count ( > 10 writes in a 5-second window).
     """
     global _replay_cooldown_until
-    if in_grace_period():
-        return []
-    if time.time() < _replay_cooldown_until:
+    if in_grace_period() or time.time() < _replay_cooldown_until:
         return []
 
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: -60s)
-  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics"
-                   and r["_field"] == "pressure")
+  |> range(start: -5s)
+  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics" and r["_field"] == "pressure")
   |> sort(columns: ["_time"])
 '''
     alerts = []
     try:
         tables = query_api.query(query)
-        values = []
-        for table in tables:
-            for record in table.records:
-                v = record.get_value()
-                if v is not None:
-                    values.append(float(v))
-        if len(values) >= 8:
-            import statistics
-            std = statistics.stdev(values)
-            mean = statistics.mean(values)
-            if std < 0.8:
-                detail = (f"Frozen telemetry detected: {len(values)} samples at "
-                          f"mean={mean:.1f} PSI, stdev={std:.3f} – replay attack")
+        values = [float(rec.get_value()) for t in tables for rec in t.records if rec.get_value() is not None]
+
+        if len(values) >= 10:
+            delta = round(max(values) - min(values), 2)
+            # Replay attack introduces immediate massive variance due to conflicting values
+            if delta > 8.0:
+                detail = f"Replay Attack: High frequency conflicting signals detected (Delta={delta} PSI, {len(values)} writes in 5s)"
                 print(f"!!! REPLAY ATTACK DETECTED !!! {detail}")
                 _record_alert("REPLAY_ATTACK", detail, -0.95)
-                _replay_cooldown_until = time.time() + 60.0
+                _replay_cooldown_until = time.time() + 90.0
 
-                # ── Write to security_alerts
-                a_point = (Point("security_alerts")
-                           .tag("alert_type", "REPLAY_ATTACK")
-                           .tag("session_id", SESSION_ID)
-                           .field("detail", detail)
-                           .field("score",  -0.95)
-                           .time(time.time_ns(), WritePrecision.NS))
-                write_api.write(bucket=INFLUX_BUCKET, record=a_point)
+                # security_alerts
+                write_api.write(bucket=INFLUX_BUCKET, record=Point("security_alerts").tag("alert_type", "REPLAY_ATTACK").tag("session_id", SESSION_ID).field("detail", detail).field("score", -0.95).time(time.time_ns(), WritePrecision.NS))
 
-                # ── Write delta to security_alerts for the time-series panel
-                d_point = (Point("security_alerts")
-                           .tag("alert_type", "REPLAY_DELTA_LOG")
-                           .tag("session_id", SESSION_ID)
-                           .field("delta",  round(max(values) - min(values), 2))
-                           .field("score",  -0.95)
-                           .time(time.time_ns(), WritePrecision.NS))
-                write_api.write(bucket=INFLUX_BUCKET, record=d_point)
+                # REPLAY_DELTA_LOG
+                write_api.write(bucket=INFLUX_BUCKET, record=Point("security_alerts").tag("alert_type", "REPLAY_DELTA_LOG").tag("session_id", SESSION_ID).field("delta", delta).field("score", -0.95).time(time.time_ns(), WritePrecision.NS))
 
-                # ── Write to attack_status for the Grafana stat panel (id=10)
-                s_point = (Point("attack_status")
-                           .tag("attack_type", "REPLAY")
-                           .tag("session_id", SESSION_ID)
-                           .field("status", "DETECTED")
-                           .time(time.time_ns(), WritePrecision.NS))
-                write_api.write(bucket=INFLUX_BUCKET, record=s_point)
-
-                # ── Also mark in security_metrics
-                m_point = (Point("security_metrics")
-                           .tag("sensor",     "ml_engine")
-                           .tag("session_id", SESSION_ID)
-                           .field("anomaly_score", -0.95)
-                           .field("is_anomaly",    1)
-                           .time(time.time_ns(), WritePrecision.NS))
-                write_api.write(bucket=INFLUX_BUCKET, record=m_point)
+                # attack_status
+                write_api.write(bucket=INFLUX_BUCKET, record=Point("attack_status").tag("attack_type", "REPLAY").tag("session_id", SESSION_ID).field("detected", 1).time(time.time_ns(), WritePrecision.NS))
 
                 alerts.append({"type": "REPLAY_ATTACK", "detail": detail})
-    except Exception as e:
-        print(f"Replay detection error: {e}")
-    return alerts
 
+    except Exception as e:
+        print(f"Replay error: {e}")
+    return alerts
 
 # ── Forced-write check ────────────────────────────────────────────────────────
 def check_forced_writes() -> list[dict]:

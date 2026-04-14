@@ -1,0 +1,25 @@
+--- HISTORIAN API starting on port 5000 [session=f008dd81] ---
+[WARN] /api/debug endpoint is ACTIVE — credential leak risk!
+ * Serving Flask app 'app'
+ * Debug mode: off
+[HIST-API][WARN] /api/debug accessed from 172.21.0.3 — credential leak!
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.21.0.5:5000
+[33mPress CTRL+C to quit[0m
+172.21.0.1 - - [14/Apr/2026 11:12:09] "GET /api/health HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 11:12:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:18:44] "GET /api/health HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:18:44] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:18:45] "GET /api/health HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:18:45] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:19:09] "GET /api/summary HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:19:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:19:45] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:19:45] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:33:36] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:33:36] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.1 - - [14/Apr/2026 12:33:37] "GET /api/alerts HTTP/1.1" 200 -
+172.21.0.1 - - [14/Apr/2026 12:33:37] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+172.21.0.3 - - [14/Apr/2026 12:34:25] "GET /api/debug HTTP/1.1" 200 -

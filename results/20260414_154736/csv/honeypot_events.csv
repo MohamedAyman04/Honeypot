@@ -1,0 +1,37 @@
+table,_time,_value,_field,_measurement
+0,2026-04-14T09:57:03.115891357Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T09:59:30.368790514Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T09:59:52.327088325Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T10:00:24.359930074Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T12:20:27.109648611Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T12:32:56.922717965Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T12:33:19.087098227Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T12:33:50.921350199Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T13:07:19.270274385Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T13:09:06.638041411Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T13:09:28.799153399Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+0,2026-04-14T13:10:00.632896461Z,S7/COTP connection (tcp-monitor(state=01)),detail,honeypot_events
+1,2026-04-14T09:56:41.966483072Z,1,dst_addr,honeypot_events
+1,2026-04-14T12:22:12.040247831Z,1,dst_addr,honeypot_events
+1,2026-04-14T13:02:39.603294457Z,1,dst_addr,honeypot_events
+2,2026-04-14T09:57:03.115891357Z,probe,event_type,honeypot_events
+2,2026-04-14T09:59:30.368790514Z,probe,event_type,honeypot_events
+2,2026-04-14T09:59:52.327088325Z,probe,event_type,honeypot_events
+2,2026-04-14T10:00:24.359930074Z,probe,event_type,honeypot_events
+2,2026-04-14T12:20:27.109648611Z,probe,event_type,honeypot_events
+2,2026-04-14T12:32:56.922717965Z,probe,event_type,honeypot_events
+2,2026-04-14T12:33:19.087098227Z,probe,event_type,honeypot_events
+2,2026-04-14T12:33:50.921350199Z,probe,event_type,honeypot_events
+2,2026-04-14T13:07:19.270274385Z,probe,event_type,honeypot_events
+2,2026-04-14T13:09:06.638041411Z,probe,event_type,honeypot_events
+2,2026-04-14T13:09:28.799153399Z,probe,event_type,honeypot_events
+2,2026-04-14T13:10:00.632896461Z,probe,event_type,honeypot_events
+3,2026-04-14T09:56:41.966483072Z,05640540010003004e29,raw_data,honeypot_events
+3,2026-04-14T12:22:12.040247831Z,05640540010003004e29,raw_data,honeypot_events
+3,2026-04-14T13:02:39.603294457Z,05640540010003004e29,raw_data,honeypot_events
+4,2026-04-14T09:56:41.966483072Z,42116,remote_port,honeypot_events
+4,2026-04-14T12:22:12.040247831Z,52818,remote_port,honeypot_events
+4,2026-04-14T13:02:39.603294457Z,53004,remote_port,honeypot_events
+5,2026-04-14T09:56:41.966483072Z,3,src_addr,honeypot_events
+5,2026-04-14T12:22:12.040247831Z,3,src_addr,honeypot_events
+5,2026-04-14T13:02:39.603294457Z,3,src_addr,honeypot_events

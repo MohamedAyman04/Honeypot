@@ -1,0 +1,500 @@
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56692) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56708) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56714) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56716) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56718) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 56726) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52274) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52280) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52296) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52302) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52314) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52318) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52326) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52340) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52344) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52358) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52368) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52374) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52380) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52386) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52394) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52402) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52414) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52416) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52432) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52440) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34914) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34922) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34934) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34938) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34948) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34962) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34964) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34976) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34984) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35000) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35004) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35012) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35024) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35040) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35054) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35058) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35072) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35088) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35100) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35104) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48130) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48134) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48142) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48146) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48150) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48152) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48154) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48168) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48176) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48180) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48184) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48190) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48194) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48210) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48226) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48240) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48242) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48250) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48258) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 48268) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59348) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59352) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59358) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59366) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59370) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59380) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59392) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59406) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59422) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59432) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59448) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59454) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59456) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59468) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59476) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59488) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59498) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59512) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59526) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39586) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39596) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39602) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39610) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39626) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39634) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39646) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39656) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39660) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39676) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39682) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39692) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39702) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39708) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39710) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39726) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39736) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39750) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39762) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39766) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38868) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38872) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38882) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38888) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38896) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38906) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38920) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38926) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38930) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38942) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38946) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38954) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38956) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38968) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38974) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38978) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38992) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 38998) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39008) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 39014) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59694) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59706) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59710) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59726) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59730) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59734) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59736) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59742) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59756) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59768) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59774) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59784) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59788) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59798) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59810) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59812) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59816) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59824) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59840) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59848) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34656) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34666) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34678) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34690) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34700) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34706) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34710) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34722) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34728) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34742) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34752) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34764) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34776) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34782) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34784) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34792) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34806) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34822) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34836) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 34846) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57478) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57480) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57486) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57490) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57506) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57512) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57522) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57538) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57542) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57552) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57562) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57576) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57592) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57604) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57620) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57624) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57626) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57636) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57646) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 57660) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33416) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33426) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33442) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33444) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33456) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33468) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33478) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33482) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33498) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33512) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33526) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33536) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33550) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33562) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33572) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33574) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33590) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33600) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 33610) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52374) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52382) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52388) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52392) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52396) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52404) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52418) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52426) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52440) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52444) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52460) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52470) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52472) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52480) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52482) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52496) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52510) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52512) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52518) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 52524) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60570) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60578) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60592) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60606) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60622) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60634) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60642) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60658) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60660) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60666) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60674) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60690) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60696) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60706) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60712) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60724) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60736) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60746) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60760) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 60776) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54732) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54744) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54758) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54774) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54782) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54784) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54794) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54798) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54808) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54812) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54814) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54816) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54820) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54830) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54832) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54836) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54852) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54860) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54866) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 54880) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44142) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44144) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44150) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44162) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44172) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44176) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44188) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44194) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44200) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44202) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44216) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44224) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44238) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44250) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44254) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44260) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44264) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44266) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44274) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 44282) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35764) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35774) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35778) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35784) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35792) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35804) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35814) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35818) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35826) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35828) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35838) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35844) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35846) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35848) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35852) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35856) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35858) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35862) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35870) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 35880) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55388) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55400) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55404) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55416) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55430) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55434) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55444) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55456) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55462) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55478) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55482) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55488) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55494) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55498) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55506) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55508) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55520) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55534) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 55546) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59426) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59434) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59444) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59446) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59452) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59468) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59482) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59492) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59500) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59502) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59512) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59522) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59524) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59536) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59548) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59550) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59554) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59560) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59562) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 59566) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51296) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51300) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51308) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51312) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51316) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51320) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51328) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51330) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51332) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51344) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51356) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51370) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51386) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51392) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51406) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51410) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51422) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51432) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51440) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 51442) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 49970) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 49982) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 49990) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50004) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50012) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50016) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50020) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50024) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50028) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50030) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50036) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50052) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50060) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50076) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50086) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50096) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50112) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50116) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50132) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 50134) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47350) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47360) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47362) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47364) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47378) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47394) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47410) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47420) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47422) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47428) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47436) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47440) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47452) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47454) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47458) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47460) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47462) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47472) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47482) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 47492) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36176) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36190) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36200) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36210) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36226) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36240) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36254) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36256) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36260) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36266) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36274) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36288) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36300) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36310) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36316) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36326) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36338) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36350) forcing disconnect
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36360) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 36368) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45194) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45198) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45210) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45216) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45230) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45234) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45244) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45258) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45272) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45282) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45290) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45306) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45318) forcing disconnect
+ERROR:pymodbus.logging:Unknown exception "argument out of range" on stream ('172.18.0.10', 45330) forcing disconnect
+INFO:modbus_server:MODBUS write address=200 values=[1400]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=3
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:MODBUS write address=100 values=[350]
+WARNING:modbus_server:[INJECTION] Wrote 350 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 350 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[125]
+WARNING:modbus_server:[INJECTION] Wrote 125 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 125 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[130]
+WARNING:modbus_server:[INJECTION] Wrote 130 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 130 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[135]
+WARNING:modbus_server:[INJECTION] Wrote 135 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 135 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[140]
+WARNING:modbus_server:[INJECTION] Wrote 140 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 140 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[145]
+WARNING:modbus_server:[INJECTION] Wrote 145 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 145 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[150]
+WARNING:modbus_server:[INJECTION] Wrote 150 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 150 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[155]
+WARNING:modbus_server:[INJECTION] Wrote 155 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 155 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[160]
+WARNING:modbus_server:[INJECTION] Wrote 160 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 160 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[165]
+WARNING:modbus_server:[INJECTION] Wrote 165 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 165 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[170]
+WARNING:modbus_server:[INJECTION] Wrote 170 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 170 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[175]
+WARNING:modbus_server:[INJECTION] Wrote 175 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 175 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[180]
+WARNING:modbus_server:[INJECTION] Wrote 180 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 180 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[185]
+WARNING:modbus_server:[INJECTION] Wrote 185 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 185 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[190]
+WARNING:modbus_server:[INJECTION] Wrote 190 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 190 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[195]
+WARNING:modbus_server:[INJECTION] Wrote 195 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 195 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1100]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
