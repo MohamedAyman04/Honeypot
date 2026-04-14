@@ -51,56 +51,30 @@ app.config["JSON_SORT_KEYS"] = False
 
 
 def query_influx_alerts(lookback: str = "-1h", limit: int = 50, alert_type: str = None) -> list:
-    """Pull security_alerts from InfluxDB and return as list of dicts."""
-    type_filter = f'  |> filter(fn: (r) => r["alert_type"] == "{alert_type}")\n' if alert_type else ""
-    query = f'''
-from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: {lookback})
-  |> filter(fn: (r) => r["_measurement"] == "security_alerts")
-  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-  |> sort(columns: ["_time"], desc: true)
-{type_filter}  |> limit(n: {limit})
-'''
+    """Returns fake security alerts for the honeypot, so the attacker thinks it's a real API."""
+    import random
     alerts = []
-    try:
-        tables = query_api.query(query)
-        for table in tables:
-            for record in table.records:
-                alerts.append({
-                    "timestamp":  record.get_time().isoformat(),
-                    "alert_type": record.values.get("alert_type", "UNKNOWN"),
-                    "detail":     record.values.get("detail", ""),
-                    "score":      record.values.get("score", None),
-                    "session_id": record.values.get("session_id", ""),
-                })
-    except Exception as e:
-        print(f"[HIST-API] InfluxDB query error: {e}")
+    for _ in range(3):
+        alerts.append({
+            "timestamp":  time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - random.randint(100, 3000))),
+            "alert_type": "FAILED_LOGIN" if random.random() > 0.5 else "UNAUTHORIZED_ACCESS",
+            "detail":     "Multiple failed SSH attempts" if random.random() > 0.5 else "Connection from unknown IP",
+            "score":      random.uniform(0.5, 0.9),
+            "session_id": "honeypot_" + str(uuid.uuid4())[:8],
+        })
     return alerts
 
 
 def query_influx_metrics(lookback: str = "-10m") -> dict:
-    """Fetch latest pipeline_metrics snapshot."""
-    query = f'''
-from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: {lookback})
-  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics")
-  |> last()
-  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-'''
-    try:
-        tables = query_api.query(query)
-        for table in tables:
-            for record in table.records:
-                return {
-                    "timestamp":   record.get_time().isoformat(),
-                    "pressure":    record.values.get("pressure"),
-                    "flow_rate":   record.values.get("flow_rate"),
-                    "temperature": record.values.get("temperature"),
-                    "pump_rpm":    record.values.get("pump_rpm"),
-                }
-    except Exception as e:
-        print(f"[HIST-API] Metrics query error: {e}")
-    return {}
+    """Returns fake physical pipeline metrics for the honeypot API."""
+    import random
+    return {
+        "timestamp":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "pressure":    round(random.uniform(118.0, 122.0), 2),
+        "flow_rate":   round(random.uniform(49.0, 51.0), 2),
+        "temperature": round(random.uniform(44.0, 46.0), 2),
+        "pump_rpm":    round(random.uniform(1190.0, 1210.0), 2),
+    }
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
@@ -249,8 +223,108 @@ def get_summary():
     })
 
 
-# (Vulnerable endpoints removed to maintain architectural separation)
+# ── VULNERABILITY: Debug endpoint left in by developer ────────────────────────
+# This endpoint was used during development to inspect container state.
+# It was never removed before deployment — a realistic misconfiguration.
+# It leaks ALL environment variables, including SCADA SSH credentials,
+# the InfluxDB token, and internal service hostnames.
+# Attack vector: unauthenticated GET /api/debug  (CVE-class: CWE-215)
+
+@app.route("/api/debug", methods=["GET"])
+def debug_info():
+    """
+    !! DEVELOPER DEBUG ENDPOINT — SHOULD NOT BE IN PRODUCTION !!
+    Dumps environment configuration for troubleshooting.
+    Left enabled by mistake — exposes sensitive infrastructure details.
+    """
+    print(f"[HIST-API][WARN] /api/debug accessed from {request.remote_addr} — credential leak!")
+
+    # Log this access to InfluxDB as a suspicious event
+    try:
+        point = (Point("external_events")
+                 .tag("event_type", "DEBUG_ENDPOINT_ACCESS")
+                 .tag("source",     request.remote_addr or "unknown")
+                 .tag("severity",   "HIGH")
+                 .field("detail",   f"Unauthenticated access to /api/debug from {request.remote_addr}")
+                 .time(time.time_ns(), WritePrecision.NS))
+        write_api.write(bucket=INFLUX_BUCKET, record=point)
+    except Exception:
+        pass
+
+    hostname = socket.gethostname()
+    try:
+        local_ip = socket.gethostbyname(hostname)
+    except Exception:
+        local_ip = "unknown"
+
+    return jsonify({
+        "_warning": "DEBUG ENDPOINT — remove before production",
+        "host": {
+            "hostname": hostname,
+            "ip":       local_ip,
+        },
+        "environment": {
+            # InfluxDB historian connection (Purdue Level 2/3)
+            "INFLUX_URL":       INFLUX_URL,
+            "INFLUX_TOKEN":     INFLUX_TOKEN,
+            "INFLUX_ORG":       INFLUX_ORG,
+            "INFLUX_BUCKET":    INFLUX_BUCKET,
+            # ML engine
+            "ML_ENGINE_URL":    ML_ENGINE_URL,
+            # !! SCADA SSH — used by data-collection cron to pull process logs
+            "SCADA_SSH_HOST":   SCADA_SSH_HOST,
+            "SCADA_SSH_PORT":   SCADA_SSH_PORT,
+            "SCADA_SSH_USER":   SCADA_SSH_USER,
+            "SCADA_SSH_PASS":   SCADA_SSH_PASS,
+        },
+        "note": (
+            "SCADA_SSH_* vars are used by /opt/historian/collect_scada_logs.sh "
+            "which runs every 5 min via cron to pull process archives from "
+            "the Level-2 SCADA workstation into the historian database."
+        ),
+    })
+
+
+# ── VULNERABILITY: Unauthenticated network topology disclosure ─────────────────
+# Returns internal service map with no authentication.  (CWE-200)
+
+@app.route("/api/config", methods=["GET"])
+def config_info():
+    """
+    GET /api/config
+    Returns internal service topology — no authentication required.
+    Exposes Purdue-level network layout to any caller.
+    """
+    print(f"[HIST-API][WARN] /api/config accessed from {request.remote_addr} — topology leak!")
+
+    return jsonify({
+        "site":    "Pump Station 01 — ICS Refinery Control System",
+        "purdue_layout": {
+            "level_3_enterprise": {
+                "historian_api":  f"http://ics_historian_api:5000  (this service)",
+                "influxdb":       "http://ics_historian:8086",
+                "grafana":        "http://ics_grafana:3000",
+                "ml_engine":      "http://ics_ml_engine:8000",
+            },
+            "level_2_control": {
+                "scada_workstation": f"ssh://{SCADA_SSH_HOST}:{SCADA_SSH_PORT}  (operator access)",
+                "hmi":               "http://ics_hmi:8060",
+            },
+            "level_2_ot": {
+                "modbus_plc":  "plc_simulator:502   (Modbus TCP — SIMATIC gateway)",
+                "s7_plc":      "ics_s7_plc:102      (Siemens S7-300)",
+                "dnp3_rtu":    "ics_dnp3:20000      (DNP3 outstation)",
+            },
+        },
+        "data_flows": [
+            "SCADA workstation → historian_api (SSH pull every 5 min)",
+            "Modbus PLC → historian (direct write via hmi_simulator)",
+            "historian_api → Grafana (InfluxDB datasource)",
+        ],
+    })
+
 
 if __name__ == "__main__":
     print(f"--- HISTORIAN API starting on port 5000 [session={SESSION_ID}] ---")
+    print(f"[WARN] /api/debug endpoint is ACTIVE — credential leak risk!")
     app.run(host="0.0.0.0", port=5000, debug=False)

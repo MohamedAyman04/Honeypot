@@ -68,25 +68,38 @@ pressures = deque(maxlen=MAX_POINTS)
 flows     = deque(maxlen=MAX_POINTS)
 temps     = deque(maxlen=MAX_POINTS)
 
-def get_plc_data():
-    """Connect fresh each time to avoid stale socket issues."""
-    client = ModbusTcpClient(PLC_IP, port=502)
-    try:
-        if client.connect():
-            res = client.read_holding_registers(100, 4)
-            if hasattr(res, 'registers') and not res.isError():
-                pressure = float(res.registers[0])
-                flow     = float(res.registers[1]) / 10.0
-                temp     = float(res.registers[2])
-                pump_rpm = float(res.registers[3])
-                return pressure, flow, temp, pump_rpm
-    except Exception as e:
-        print(f"Modbus read error: {e}")
-    finally:
+_query_api = None
+
+def get_query_api():
+    global _influx_client, _query_api
+    if _query_api is None:
         try:
-            client.close()
-        except Exception:
-            pass
+            if _influx_client is None:
+                _influx_client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+            _query_api = _influx_client.query_api()
+        except Exception: pass
+    return _query_api
+
+def get_plc_data():
+    """Pull live data from InfluxDB to mirror Grafana perfectly."""
+    try:
+        api = get_query_api()
+        if not api: return 0.0, 0.0, 0.0, 0.0
+        query = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -5s)
+  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics" or r["_measurement"] == "process_state")
+  |> last()
+'''
+        tables = api.query(query)
+        data = {}
+        for table in tables:
+            for record in table.records:
+                data[record.get_field()] = record.get_value()
+        if data:
+            return float(data.get('pressure', 0)), float(data.get('flow_rate', 0)), float(data.get('temperature', 0)), float(data.get('pump_rpm', 0))
+    except Exception as e:
+        print(f"Influx read error: {e}")
     return 0.0, 0.0, 0.0, 0.0
 
 app.layout = dbc.Container([
@@ -156,7 +169,7 @@ app.layout = dbc.Container([
         ], width=9)
     ]),
 
-    dcc.Interval(id='interval-component', interval=2000, n_intervals=0),
+    dcc.Interval(id='interval-component', interval=1000, n_intervals=0),
     dcc.Store(id='valve-state-store', data=0),
     dcc.Store(id='commanded-rpm-store', data=1200)   # tracks slider-set RPM instantly
 ], fluid=True)

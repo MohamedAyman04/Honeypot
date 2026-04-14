@@ -391,11 +391,36 @@ def run_ml_cycle():
           f"score={float(scores[0]):.4f}")
 
 
+def has_recent_writes() -> bool:
+    query = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -60s)
+  |> filter(fn: (r) => r["_measurement"] == "modbus_events" and r["fc_type"] == "write")
+  |> count()
+    '''
+    try:
+        tables = query_api.query(query)
+        for table in tables:
+            for record in table.records:
+                if record.get_value() > 0:
+                    return True
+    except Exception:
+        pass
+    return False
+
 # ── EWMA/CUSUM cycle ──────────────────────────────────────────────────────────
 def run_drift_cycle():
     """Fetch latest pressure sample and run EWMA/CUSUM drift detection."""
+    global _ewma_state, _cusum_pos, _cusum_neg
     if in_grace_period():
         return   # Suppressed during grace period
+
+    if has_recent_writes():
+        # Reset baseline to adapt to legitimate operator changes
+        _ewma_state = None
+        _cusum_pos = 0.0
+        _cusum_neg = 0.0
+        return
 
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")

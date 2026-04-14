@@ -124,18 +124,37 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
 
     def getValues(self, address, count=1):
         with self._lock:
-            # We don't call update() anymore, it is done by physics_process.py 
-            # We just load the state from Redis
-            self.physics_engine.load_state() 
+            # Refresh registers from Redis (physics engine keeps this updated)
+            self.physics_engine.load_state()
             state = self.physics_engine.get_state()
-            
-            p, f, t, r = int(state["pressure"]), int(state["flow_rate"]*10), int(state["temperature"]), int(state["pump_rpm"])
+
+            p, f, t, r = (int(state["pressure"]),
+                          int(state["flow_rate"] * 10),
+                          int(state["temperature"]),
+                          int(state["pump_rpm"]))
             super().setValues(100, [p, f, t, r])
-            
-            # Log read (reconnaissance) if it's not the normal HMI poll
-            if not (address == 100 and count == 4):
-                log_modbus_event("attacker", 3, address, None, is_write=False)
-            
+
+            # ── Recon detection (false-positive-resistant) ────────────────────
+            # A read is considered suspicious reconnaissance when:
+            #   (a) it targets registers OUTSIDE the normal sensor block (100-103), OR
+            #   (b) it scans an unusual address with a large count (port-sweep style), OR
+            #   (c) it probes the actuator block (200+) which HMI never reads directly.
+            # Normal HMI poll: address=100, count=4  →  always ignored.
+            # Normal physics reads: address=200, count≤3 done by THIS server, not remote.
+            is_hmi_sensor_poll = (address == 100 and count == 4)
+            is_actuator_probe  = (address >= 200)
+            is_unusual_address = (address < 100 or (103 < address < 200))
+            is_wide_scan       = (count > 10)
+
+            if not is_hmi_sensor_poll and (is_actuator_probe or is_unusual_address or is_wide_scan):
+                # Throttle: max one log per (address) per 5 seconds to stop floods
+                now = time.time()
+                last_key = f"_last_recon_{address}"
+                if now - getattr(self, last_key, 0) > 5:
+                    setattr(self, last_key, now)
+                    log_modbus_event("attacker", 3, address, None, is_write=False)
+                    log.info(f"[RECON] Suspicious read: address={address} count={count}")
+
             return super().getValues(address, count)
 
 async def run_server():

@@ -21,14 +21,16 @@ ORG        = os.environ.get('INFLUX_ORG',     'my_refinery')
 BUCKET     = os.environ.get('INFLUX_BUCKET',  'sensor_logs')
 INFLUX_URL = os.environ.get('INFLUX_URL',     'http://ics_historian:8086')
 
-POLL_INTERVAL = 2
+POLL_INTERVAL = 0.5   # 500 ms — high-frequency OT historian (was 2 s)
 
 # Session ID – matches the modbus_server session for cross-referencing
 SESSION_ID = os.environ.get('SESSION_ID', str(uuid.uuid4())[:8])
 
 # Replay detection thresholds
-REPLAY_FLAT_COUNT = 3     # how many identical historian rows = suspect
-REPLAY_PLC_DELTA  = 8.0  # PLC must also have moved this much
+# At 0.5 s poll: normal rate = 2 writes/s = ~20 writes/10 s
+# Replay flood = 15 writes in 1.5 s = 10/s → threshold 30 = 1.5x normal
+REPLAY_FLAT_COUNT = 6     # how many identical historian rows = suspect (3s window at 0.5s)
+REPLAY_PLC_DELTA  = 8.0   # PLC must also have moved this much
 
 print(f"HMI/Historian Bridge started [session={SESSION_ID}]...")
 

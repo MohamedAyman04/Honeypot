@@ -54,10 +54,10 @@ class PipelineSimulator:
         target_flow     = (self.pump_rpm / 50.0) * self.valve_pos
         
         # Thermodynamic Logic
-        temp_gain = (self.pump_rpm / 3000.0) * 0.5 * dt
-        temp_loss = (self.temperature - 25.0) * 0.1 * dt
+        temp_gain = (self.pump_rpm / 1000.0) * 0.5 * dt
+        temp_loss = (self.flow_rate * 0.05) * dt + (self.temperature - 25.0) * 0.02 * dt
         self.temperature += temp_gain - temp_loss
-        
+
         # Viscosity (Oil behavior)
         self.viscosity = max(0.2, 1.0 - (self.temperature - 25.0) * 0.02)
         
@@ -72,17 +72,6 @@ class PipelineSimulator:
 
     def save_state(self):
         if not self.r: return
-        # Re-read the latest actuator setpoints (pump_rpm, valve_pos) from Redis
-        # before persisting.  This prevents physics_process.update() from silently
-        # overwriting a concurrent Modbus register write with a stale snapshot.
-        try:
-            live = self.r.get("pipeline_state")
-            if live:
-                live_state = json.loads(live)
-                self.pump_rpm  = live_state.get("pump_rpm",  self.pump_rpm)
-                self.valve_pos = live_state.get("valve_pos", self.valve_pos)
-        except Exception:
-            pass
         state = self.get_state()
         self.r.set("pipeline_state", json.dumps(state))
 
