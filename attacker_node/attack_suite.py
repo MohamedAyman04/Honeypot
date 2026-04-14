@@ -424,5 +424,10 @@ def main():
         print("Invalid phase")
         sys.exit(1)
 
+    # ── Restore terminal after hping3 --flood may have corrupted stty ─────────
+    # hping3 puts the tty into raw/no-echo mode; 'stty sane' restores it so the
+    # bash prompt is usable immediately after the script exits.
+    os.system("stty sane 2>/dev/null || true")
+
 if __name__ == "__main__":
     main()

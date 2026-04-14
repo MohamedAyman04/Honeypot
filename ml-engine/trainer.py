@@ -62,11 +62,13 @@ if os.path.exists(TRAINING_START_FILE):
     os.remove(TRAINING_START_FILE)
     print("[ML] Removed stale training-start marker.")
 
-# ── EWMA/CUSUM parameters (tuned to reduce false positives) ───────────────────
-EWMA_LAMBDA              = 0.1    # slower tracking = less sensitive to brief spikes
-CUSUM_THRESHOLD          = 65.0   # raised from 40.0 – requires strong sustained drift
-EWMA_DEVIATION_THRESHOLD = 15.0   # PSI (raised from 10.0)
-_cusum_k                 = 4.0    # allowance / slack (raised from 2.5 – absorbs noise)
+# ── EWMA/CUSUM parameters ─────────────────────────────────────────────────────
+# Calibrated for the phase-5 stealth drift: 15 steps × 5 PSI each starting ~120 PSI.
+# With k=2.0 and threshold=20 detection fires within 3-4 steps of sustained drift.
+EWMA_LAMBDA              = 0.1    # slow tracker; large deviations build up in CUSUM
+CUSUM_THRESHOLD          = 20.0   # lowered: catches 15-step drift reliably
+EWMA_DEVIATION_THRESHOLD = 10.0   # PSI – sustained drift alarm
+_cusum_k                 = 2.0    # allowance / slack; normal physics noise stays below this
 
 _ewma_state  = None
 _cusum_pos   = 0.0
@@ -75,7 +77,7 @@ _cusum_neg   = 0.0
 # ── IsolationForest parameters ─────────────────────────────────────────────────
 IF_CONTAMINATION   = 0.01   # very low → only clear outliers flagged
 IF_N_ESTIMATORS    = 200    # more trees → more stable scoring
-IF_SCORE_THRESHOLD = -0.20  # raised from -0.15; deeper below normal before flagging
+IF_SCORE_THRESHOLD = -0.20  # deeper below normal before flagging
                             # (IsolationForest scores normal data near 0..+0.1)
                             # Values between -0.20 and 0 are borderline → ignored
 
@@ -392,10 +394,18 @@ def run_ml_cycle():
 
 
 def has_recent_writes() -> bool:
+    """
+    Returns True ONLY for LEGITIMATE ACTUATOR commands (registers 200+: pump RPM,
+    valve position, valve toggle). Sensor-register writes (100-103) are the ATTACK
+    itself and must NOT reset the EWMA baseline — doing so would blind the detector.
+    """
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
   |> range(start: -60s)
-  |> filter(fn: (r) => r["_measurement"] == "modbus_events" and r["fc_type"] == "write")
+  |> filter(fn: (r) => r["_measurement"] == "modbus_events"
+                   and r["fc_type"] == "write"
+                   and r["_field"] == "register")
+  |> filter(fn: (r) => r["_value"] >= 200.0)
   |> count()
     '''
     try:
@@ -453,6 +463,95 @@ from(bucket: "{INFLUX_BUCKET}")
                     write_api.write(bucket=INFLUX_BUCKET, record=m_point)
     except Exception as e:
         print(f"EWMA/CUSUM cycle error: {e}")
+
+
+# ── Replay Attack Detector ────────────────────────────────────────────────────
+_replay_cooldown_until = 0.0   # seconds since epoch; avoid duplicate alerts
+
+def check_replay_attack() -> list[dict]:
+    """
+    Detect Phase-8 replay: attacker writes a frozen pressure value directly to
+    InfluxDB. The giveaway is near-zero variance in pressure over a short window
+    despite normal variance being present in earlier history.
+
+    Logic:
+      1. Query the last 60 s of pipeline_metrics pressure values.
+      2. If there are ≥ 8 data points AND std_dev < 0.8 PSI → frozen telemetry.
+      3. Write to security_alerts (alert_type=REPLAY_ATTACK) and
+         attack_status (for the Grafana stat panel) with a 60-second cooldown.
+    """
+    global _replay_cooldown_until
+    if in_grace_period():
+        return []
+    if time.time() < _replay_cooldown_until:
+        return []
+
+    query = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -60s)
+  |> filter(fn: (r) => r["_measurement"] == "pipeline_metrics"
+                   and r["_field"] == "pressure")
+  |> sort(columns: ["_time"])
+'''
+    alerts = []
+    try:
+        tables = query_api.query(query)
+        values = []
+        for table in tables:
+            for record in table.records:
+                v = record.get_value()
+                if v is not None:
+                    values.append(float(v))
+        if len(values) >= 8:
+            import statistics
+            std = statistics.stdev(values)
+            mean = statistics.mean(values)
+            if std < 0.8:
+                detail = (f"Frozen telemetry detected: {len(values)} samples at "
+                          f"mean={mean:.1f} PSI, stdev={std:.3f} – replay attack")
+                print(f"!!! REPLAY ATTACK DETECTED !!! {detail}")
+                _record_alert("REPLAY_ATTACK", detail, -0.95)
+                _replay_cooldown_until = time.time() + 60.0
+
+                # ── Write to security_alerts
+                a_point = (Point("security_alerts")
+                           .tag("alert_type", "REPLAY_ATTACK")
+                           .tag("session_id", SESSION_ID)
+                           .field("detail", detail)
+                           .field("score",  -0.95)
+                           .time(time.time_ns(), WritePrecision.NS))
+                write_api.write(bucket=INFLUX_BUCKET, record=a_point)
+
+                # ── Write delta to security_alerts for the time-series panel
+                d_point = (Point("security_alerts")
+                           .tag("alert_type", "REPLAY_DELTA_LOG")
+                           .tag("session_id", SESSION_ID)
+                           .field("delta",  round(max(values) - min(values), 2))
+                           .field("score",  -0.95)
+                           .time(time.time_ns(), WritePrecision.NS))
+                write_api.write(bucket=INFLUX_BUCKET, record=d_point)
+
+                # ── Write to attack_status for the Grafana stat panel (id=10)
+                s_point = (Point("attack_status")
+                           .tag("attack_type", "REPLAY")
+                           .tag("session_id", SESSION_ID)
+                           .field("status", "DETECTED")
+                           .time(time.time_ns(), WritePrecision.NS))
+                write_api.write(bucket=INFLUX_BUCKET, record=s_point)
+
+                # ── Also mark in security_metrics
+                m_point = (Point("security_metrics")
+                           .tag("sensor",     "ml_engine")
+                           .tag("session_id", SESSION_ID)
+                           .field("anomaly_score", -0.95)
+                           .field("is_anomaly",    1)
+                           .time(time.time_ns(), WritePrecision.NS))
+                write_api.write(bucket=INFLUX_BUCKET, record=m_point)
+
+                alerts.append({"type": "REPLAY_ATTACK", "detail": detail})
+    except Exception as e:
+        print(f"Replay detection error: {e}")
+    return alerts
 
 
 # ── Forced-write check ────────────────────────────────────────────────────────
@@ -643,6 +742,9 @@ while True:
                        .field("is_anomaly",    1)
                        .time(time.time_ns(), WritePrecision.NS))
             write_api.write(bucket=INFLUX_BUCKET, record=m_point)
+
+        # 1C. Replay attack detection (frozen telemetry injected into InfluxDB)
+        check_replay_attack()
 
         # 2. EWMA/CUSUM stealth drift detection (suppressed during grace period)
         run_drift_cycle()

@@ -4,7 +4,7 @@
   "annotations": {
     "list": []
   },
-  "description": "ICS Honeypot \u2013 Full cross-layer pipeline telemetry and security monitoring",
+  "description": "ICS Honeypot – Full cross-layer pipeline telemetry and security monitoring",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -90,7 +90,7 @@
           "refId": "A"
         }
       ],
-      "title": "Pressure (PSI) \u2014 attacker series shows injections",
+      "title": "Pressure (PSI) — attacker series shows injections",
       "type": "timeseries"
     },
     {
@@ -154,7 +154,7 @@
           "refId": "A"
         }
       ],
-      "title": "Temperature (\u00b0C)",
+      "title": "Temperature (°C)",
       "type": "timeseries"
     },
     {
@@ -371,7 +371,7 @@
           "refId": "A"
         }
       ],
-      "title": "Replay Attack \u2013 Pressure Delta (PSI)",
+      "title": "Replay Attack – Pressure Delta (PSI)",
       "type": "timeseries"
     },
     {
@@ -533,7 +533,7 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\")\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\")\n  |> last()",
           "refId": "A"
         }
       ],
@@ -566,19 +566,31 @@
           "mappings": [
             {
               "options": {
-                "WAITING": {
+                "match": "null",
+                "result": {
                   "text": "WAITING",
                   "color": "green",
                   "index": 0
-                },
-                "DETECTED": {
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "empty",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 1
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 1
-                },
-                "COOLDOWN": {
-                  "text": "COOLDOWN",
-                  "color": "orange",
                   "index": 2
                 }
               },
@@ -604,7 +616,7 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"DNP3\")\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"DNP3_PROBE\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -931,7 +943,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "ICS Honeypot \u2013 Full Monitoring",
+  "title": "ICS Honeypot – Full Monitoring",
   "uid": "ics-honeypot-full",
   "version": 1
 }
