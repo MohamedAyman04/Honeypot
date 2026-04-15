@@ -19,11 +19,26 @@ Usage (from attacker_node bash):
 import sys
 import os
 import json
+import csv
 import socket
 import struct
 import time
 import subprocess
 import argparse
+import datetime
+
+# ── Results accumulator (Fix 6: CSV export) ────────────────────────────────────
+_results: list[dict] = []
+
+def _record_result(phase: int, name: str, status: str, detail: str = "") -> None:
+    """Append a result row to the in-memory results list."""
+    _results.append({
+        "timestamp":  datetime.datetime.utcnow().isoformat() + "Z",
+        "phase":      phase,
+        "phase_name": name,
+        "status":     status,
+        "detail":     detail,
+    })
 
 # ── Optional dependencies ──────────────────────────────────────────────────────
 try:
@@ -101,6 +116,44 @@ def sleep_label(s: float, label: str = ""):
     desc = f" ({label})" if label else ""
     print(f"  ... waiting {s}s{desc}")
     time.sleep(s)
+
+
+# ── Fix 6: CSV export helper ───────────────────────────────────────────────────
+def save_results_csv() -> None:
+    """
+    Write accumulated attack results to CSV.
+    Primary path : /app/results/<timestamp>.csv  (Docker volume ./results)
+    Fallback path: /tmp/results_<timestamp>.csv
+    Logs success or failure explicitly.
+    """
+    ts       = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"attack_results_{ts}.csv"
+    primary  = f"/app/results/{filename}"
+    fallback = f"/tmp/{filename}"
+
+    fieldnames = ["timestamp", "phase", "phase_name", "status", "detail"]
+
+    def _write(path: str) -> bool:
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", newline="", encoding="utf-8") as fh:
+                writer = csv.DictWriter(fh, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(_results)
+                fh.flush()
+                os.fsync(fh.fileno())   # guarantee data is on disk
+            print(f"  {_c('1;32','[CSV]')} Results saved → {path} ({len(_results)} rows)")
+            return True
+        except Exception as e:
+            print(f"  {_c('1;31','[CSV]')} Failed to write {path}: {e}")
+            return False
+
+    if not _write(primary):
+        print(f"  {_c('1;33','[CSV]')} Primary path failed — trying fallback: {fallback}")
+        if not _write(fallback):
+            print(f"  {_c('1;31','[CSV]')} CSV export completely failed. Results printed below:")
+            for row in _results:
+                print(f"         {row}")
 
 def _tcp_open(host, port, timeout=2) -> bool:
     try:
@@ -413,21 +466,35 @@ def main():
 
     targets = DEFAULT_TARGETS
     if args.phase == 0:
-        for phase_fn in PHASES.values():
-            phase_fn(targets)
+        for phase_num, phase_fn in PHASES.items():
+            _record_result(phase_num, phase_fn.__name__, "started")
+            try:
+                phase_fn(targets)
+                _record_result(phase_num, phase_fn.__name__, "completed")
+            except Exception as e:
+                _record_result(phase_num, phase_fn.__name__, "failed", str(e))
+                warn(f"Phase {phase_num} error: {e}")
             sleep_label(2)
         print(SEPARATOR)
         print("  [DONE] Full MITRE ATT&CK Kill Chain Executed")
     elif args.phase in PHASES:
-        PHASES[args.phase](targets)
+        fn = PHASES[args.phase]
+        _record_result(args.phase, fn.__name__, "started")
+        try:
+            fn(targets)
+            _record_result(args.phase, fn.__name__, "completed")
+        except Exception as e:
+            _record_result(args.phase, fn.__name__, "failed", str(e))
     else:
         print("Invalid phase")
         sys.exit(1)
 
-    # ── Restore terminal after hping3 --flood may have corrupted stty ─────────
-    # hping3 puts the tty into raw/no-echo mode; 'stty sane' restores it so the
-    # bash prompt is usable immediately after the script exits.
+    # Fix 6: Save results to CSV (volume-mapped path → fallback)
+    save_results_csv()
+
+    # Restore terminal after hping3 --flood may have corrupted stty
     os.system("stty sane 2>/dev/null || true")
+
 
 if __name__ == "__main__":
     main()

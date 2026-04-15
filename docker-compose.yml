@@ -109,21 +109,18 @@ services:
     restart: unless-stopped
 
   # ── SCADA SSH Workstation (Purdue Level 2 — Lateral Movement Pivot) ───────────
-  # The attacker reaches this from Level 3 by abusing a historian API token.
-  # From here they can pivot directly to plc_simulator, ics_s7_plc, ics_dnp3.
-  # Weak default credentials:  operator / operator123   engineer / engineer456
   ics_scada_ssh:
     build:
       context: ./scada_ssh
     container_name: ics_scada_ssh
     networks:
-      - ot-net # can reach all Level 2 OT devices (Modbus, S7, DNP3)
-      - enterprise-net # reachable from Level 3 historian_api network segment
-      - dmz-net # reachable from attacker_node in DMZ
+      - ot-net
+      - enterprise-net
+      - dmz-net
     cap_add:
       - NET_ADMIN
     ports:
-      - "2222:2222" # SSH exposed to host for demo/thesis access
+      - "2222:2222"
     restart: unless-stopped
 
   # ── HMI Web Dashboard (Purdue Level 2) ────────────────────────────────────────
@@ -180,14 +177,14 @@ services:
       context: ./ml-engine
     container_name: ics_ml_engine
     volumes:
-      - shared-data:/data
+      - shared-data:/data           # model.pkl persisted here (Fix 0)
     depends_on:
       historian:
         condition: service_started
     networks:
       - monitor-net
     ports:
-      - "8001:8000" # ML Engine REST API — accessible from host and Level-3 consumers
+      - "8001:8000"
     environment:
       - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
@@ -197,8 +194,6 @@ services:
     restart: unless-stopped
 
   # ── Historian API (Purdue Level 3 Integration Bridge) ─────────────────────────
-  # VULNERABILITY: /api/debug leaks all env vars below, including SCADA_SSH_*
-  # credentials — the planned info-disclosure entry point for the thesis demo.
   historian_api:
     build:
       context: ./historian_api
@@ -206,12 +201,12 @@ services:
     depends_on:
       - historian
       - ml_engine
-      - ics_scada_ssh # historian cron SSHes here to pull process log archives
+      - ics_scada_ssh
     networks:
       - monitor-net
       - enterprise-net
     ports:
-      - "5001:5000" # Exposed for Level-3 system integration
+      - "5001:5000"
     environment:
       - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
@@ -219,8 +214,6 @@ services:
       - INFLUX_BUCKET=sensor_logs
       - ML_ENGINE_URL=http://ics_ml_engine:8000
       - PYTHONUNBUFFERED=1
-      # SCADA SSH — used by collect_scada_logs.sh cron job (every 5 min)
-      # Realistic path: historian pulls process archives from Level-2 SCADA workstation
       - SCADA_SSH_HOST=ics_scada_ssh
       - SCADA_SSH_PORT=2222
       - SCADA_SSH_USER=operator
@@ -284,7 +277,21 @@ services:
     networks:
       - monitor-net
       - ot-net
-      - enterprise-net # accessible from Level-3 historian_api
+      - enterprise-net
+    restart: unless-stopped
+
+  # ── Grafana Image Renderer (Fix 7 — enables curl screenshot endpoint) ─────────
+  grafana-image-renderer:
+    image: grafana/grafana-image-renderer:latest
+    container_name: ics_grafana_renderer
+    networks:
+      - monitor-net
+    environment:
+      - ENABLE_METRICS=true
+      - RENDERING_MODE=default
+      - RENDERING_CLUSTERING_MODE=context
+      - RENDERING_CLUSTERING_MAX_CONCURRENCY=5
+      - LOG_LEVEL=info
     restart: unless-stopped
 
   # ── Grafana Dashboard (Visualization) ─────────────────────────────────────────
@@ -300,51 +307,50 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      # Fix 7: Image renderer plugin configuration
+      - GF_RENDERING_SERVER_URL=http://grafana-image-renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
+      - GF_LOG_FILTERS=rendering:debug
     depends_on:
       - historian
+      - grafana-image-renderer   # Fix 7: prevents race condition at startup
     networks:
       - monitor-net
     restart: unless-stopped
 
   # ── Attacker Node (Purdue Level 3.5 / External Threat Simulation) ─────────────
-  # Debian-based container with nmap, hping3, pymodbus, scapy, sshpass.
-  # Use: docker exec -it attacker_node bash
-  # Kill chain: python3 /tools/attack_suite.py --phase 0
   attacker_node:
     build:
       context: ./attacker_node
     container_name: attacker_node
     networks:
-      - dmz-net     # L3.5 — reaches Modbus, S7, DNP3, SCADA SSH, honeypot historian
-      - monitor-net # direct InfluxDB access for Phase 8 replay attack only
+      - dmz-net
+      - monitor-net
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    volumes:
+      - ./results:/app/results     # Fix 6: persists CSV results across container restarts
     stdin_open: true
     tty: true
     restart: unless-stopped
 
-  # ── Honeypot Historian API (DMZ-facing decoy — attacker's entry point) ─────────
-  # Mimics the real historian_api but intentionally vulnerable.
-  # Exposed ONLY on dmz-net so attacker hits the decoy, NOT the real historian.
-  # Contains: /api/debug (env var leak), /api/config (topology leak),
-  #           synthetic telemetry, no real InfluxDB dependency.
+  # ── Honeypot Historian API (DMZ-facing decoy) ─────────────────────────────────
   honeypot_historian_api:
     build:
       context: ./honeypot_historian_api
     container_name: honeypot_historian_api
     networks:
-      - dmz-net     # reachable by attacker_node only
-      - monitor-net # writes honeypot_events to InfluxDB (for Grafana tracking)
+      - dmz-net
+      - monitor-net
     ports:
-      - "5002:5000" # host port 5002; internal 5000 matches real API layout
+      - "5002:5000"
     environment:
       - PYTHONUNBUFFERED=1
       - INFLUX_URL=http://historian:8086
       - INFLUX_TOKEN=supersecrettoken
       - INFLUX_ORG=my_refinery
       - INFLUX_BUCKET=sensor_logs
-      # Credentials that will be leaked via /api/debug (CWE-215)
       - SCADA_SSH_HOST=ics_scada_ssh
       - SCADA_SSH_PORT=2222
       - SCADA_SSH_USER=engineer
@@ -363,7 +369,7 @@ networks:
   ot-net:
     driver: bridge
 
-  # Purdue Level 3.5 — DMZ (external-facing protocols: Modbus, S7, DNP3, SCADA SSH)
+  # Purdue Level 3.5 — DMZ (external-facing: Modbus, S7, DNP3, SCADA SSH)
   dmz-net:
     driver: bridge
 
@@ -371,6 +377,6 @@ networks:
   monitor-net:
     driver: bridge
 
-  # Purdue Level 3 — Enterprise network (historian API, external integrations, SCADA SSH)
+  # Purdue Level 3 — Enterprise network (historian API, SCADA SSH)
   enterprise-net:
     driver: bridge
