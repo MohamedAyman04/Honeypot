@@ -56,8 +56,8 @@ EXPERT_PRESSURE_MEAN_DEV        = 35.0
 
 # ── EWMA/CUSUM parameters ─────────────────────────────────────────────────────
 EWMA_LAMBDA     = 0.1
-CUSUM_THRESHOLD = 15.0    # lower threshold for earlier drift detection
-_cusum_k        = 2.0
+CUSUM_THRESHOLD = 8.0     # lower threshold for earlier drift detection
+_cusum_k        = 1.0
 
 _ewma_state  = None
 _cusum_pos   = 0.0
@@ -69,6 +69,7 @@ SLOPE_THRESHOLD       = 0.3     # PSI/sample — minimum slope to consider
 SLOPE_DIRECTION_RATIO = 0.75    # ≥75% of recent slopes must agree on direction
 SLOPE_WINDOW_SIZE     = 20      # samples used in regression window
 CUMULATIVE_DEV_THRESH = 100.0   # cumulative |deviation| alarm threshold
+DRIFT_RANGE_THRESHOLD = 30.0
 
 _pressure_history = collections.deque(maxlen=SLOPE_WINDOW_SIZE)
 _slope_history    = collections.deque(maxlen=10)
@@ -82,7 +83,9 @@ _baseline_samples   = collections.deque(maxlen=BASELINE_WINDOW)
 REPLAY_WINDOW_SIZE  = 10        # samples per fingerprint window
 REPLAY_MATCH_RATIO  = 0.85      # ≥85% rounded values matching = replay
 REPLAY_BASELINE_DEV = 12.0      # % deviation from baseline to qualify gating
+ZERO_VAR_BASELINE_DEV_PCT = 8.0
 _replay_window_fps  = collections.deque(maxlen=20)  # window fingerprint history
+_frozen_fps         = collections.deque(maxlen=20)
 
 # ── Post-attack state (gates replay detection) ────────────────────────────────
 _semantic_injection_seen = False
@@ -288,7 +291,10 @@ def run_ewma_cusum(current_pressure: float) -> tuple[bool, str]:
             _baseline_samples.append(current_pressure)
 
     if _ewma_state is None:
-        _ewma_state = current_pressure
+        if len(_baseline_samples) >= 10:
+            _ewma_state = float(np.mean(list(_baseline_samples)))
+        else:
+            _ewma_state = current_pressure
         return False, "EWMA initialised"
 
     _ewma_state = EWMA_LAMBDA * current_pressure + (1 - EWMA_LAMBDA) * _ewma_state
@@ -322,8 +328,12 @@ def run_ewma_cusum(current_pressure: float) -> tuple[bool, str]:
     cusum_detected  = (_cusum_pos > CUSUM_THRESHOLD or _cusum_neg > CUSUM_THRESHOLD)
     cumdev_detected = (_cumulative_dev > CUMULATIVE_DEV_THRESH)
     
-    # Final drift condition: meaningful deviation AND (slope OR cusum)
-    drift_detected  = (abs(deviation) >= 5.0) and (slope_detected or cusum_detected)
+    range_detected = False
+    if len(_pressure_history) >= 8:
+        arr = list(_pressure_history)
+        range_detected = (max(arr) - min(arr)) > DRIFT_RANGE_THRESHOLD
+        
+    drift_detected  = slope_detected or cusum_detected or range_detected
 
     detail = (
         f"EWMA={_ewma_state:.2f} PSI  deviation={deviation:.2f}  "
@@ -548,6 +558,56 @@ from(bucket: "{INFLUX_BUCKET}")
     return False
 
 
+def _sensor_writes_detected() -> bool:
+    query = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -60s)
+  |> filter(fn: (r) => r["_measurement"] == "modbus_events"
+                   and r["fc_type"] == "write"
+                   and r["_field"] == "register")
+  |> filter(fn: (r) => r["_value"] < 200.0 and r["_value"] >= 100.0)
+  |> count()
+'''
+    try:
+        tables = query_api.query(query)
+        for table in tables:
+            for record in table.records:
+                if record.get_value() > 0:
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def _was_injection_seen_recently() -> bool:
+    query1 = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -10m)
+  |> filter(fn: (r) => r["_measurement"] == "forced_writes")
+  |> count()
+'''
+    query2 = f'''
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -10m)
+  |> filter(fn: (r) => r["_measurement"] == "security_alerts" and r["alert_type"] == "SEMANTIC_INJECTION")
+  |> count()
+'''
+    try:
+        tables1 = query_api.query(query1)
+        for table in tables1:
+            for record in table.records:
+                if record.get_value() > 0:
+                    return True
+        tables2 = query_api.query(query2)
+        for table in tables2:
+            for record in table.records:
+                if record.get_value() > 0:
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 # ── EWMA/CUSUM + Slope drift cycle ────────────────────────────────────────────
 def run_drift_cycle() -> None:
     global _ewma_state, _cusum_pos, _cusum_neg, _cumulative_dev, _drift_attack_seen
@@ -577,29 +637,34 @@ from(bucket: "{INFLUX_BUCKET}")
                 pressure = float(record.get_value())
                 drift, detail = run_ewma_cusum(pressure)
                 if drift:
-                    _drift_attack_seen = True
+                    is_critical = _sensor_writes_detected()
+                    if is_critical:
+                        _drift_attack_seen = True
+                    sev = "critical" if is_critical else "high"
+                    score_val = -1.0 if is_critical else -0.8
+                    
                     print(f"!!! STEALTH DRIFT DETECTED !!! {detail}")
-                    _record_alert("STEALTH_DRIFT_EWMA", detail, -0.8)
+                    _record_alert("STEALTH_DRIFT_EWMA", detail, score_val)
 
                     write_api.write(bucket=INFLUX_BUCKET, record=(
                         Point("security_alerts")
                         .tag("alert_type", "STEALTH_DRIFT_EWMA")
                         .tag("session_id", SESSION_ID)
                         .field("detail", detail)
-                        .field("score",  -0.8)
+                        .field("score",  score_val)
                         .time(time.time_ns(), WritePrecision.NS)
                     ))
                     write_api.write(bucket=INFLUX_BUCKET, record=(
                         Point("security_metrics")
                         .tag("sensor",     "ml_engine")
                         .tag("session_id", SESSION_ID)
-                        .field("anomaly_score", -0.8)
+                        .field("anomaly_score", score_val)
                         .field("is_anomaly",    1)
                         .time(time.time_ns(), WritePrecision.NS)
                     ))
                     _write_grafana_event(
                         metric_type="pressure", value=pressure,
-                        event_type="STEALTH_DRIFT", severity="high",
+                        event_type="STEALTH_DRIFT", severity=sev,
                         source="ml-engine", detail=detail
                     )
     except Exception as e:
@@ -617,19 +682,6 @@ def _fingerprint_window(values: list) -> tuple:
 
 
 def check_replay_attack() -> list[dict]:
-    """
-    Detect replay by MATCHING the current pressure window against previously
-    observed windows. A match means historical data is being re-injected.
-
-    Gates — at least ONE must be true to fire:
-      A) Post-attack: semantic injection OR drift already detected this session
-      B) Baseline deviation: mean pressure deviates >12% from rolling baseline
-      C) Fingerprint match: current window ≥85% matches a previous window
-         AND variance is near-zero (frozen telemetry signature)
-
-    Normal stable operation (same valve/pump setpoint) will NOT match because
-    it appears as a continuous stream, not a duplicate window fingerprint.
-    """
     global _replay_cooldown_until
     if in_grace_period():
         return []
@@ -659,8 +711,6 @@ from(bucket: "{INFLUX_BUCKET}")
             return []
 
         # Update baseline with all observed values
-        if (time.time() - _boot_time) >= (STARTUP_GRACE_SECONDS + 30):
-            _baseline_samples.extend(values)
         baseline = float(np.mean(list(_baseline_samples))) if len(_baseline_samples) > 5 else None
 
         mean_v = statistics.mean(values)
@@ -675,30 +725,40 @@ from(bucket: "{INFLUX_BUCKET}")
         current_fp = _fingerprint_window(values[-REPLAY_WINDOW_SIZE:])
 
         # ── Gate A: post-attack masking ───────────────────────────────────────
-        is_post_attack = _semantic_injection_seen or _drift_attack_seen
+        is_post_attack = _was_injection_seen_recently() or _drift_attack_seen
 
         has_baseline_dev = baseline_dev_pct > REPLAY_BASELINE_DEV
 
+        # ── Zero variance detection path ──────────────────────────────────────
+        zero_var_detected = (
+            std < 0.1
+            and baseline is not None
+            and baseline_dev_pct > ZERO_VAR_BASELINE_DEV_PCT
+        )
+
         # ── Gate C: fingerprint match + frozen telemetry ──────────────────────
         fp_match_found = False
-        if baseline_dev_pct >= 10.0 and std > 0.3:
-            if std < 1.0 and len(_replay_window_fps) >= 2:
-                for prev_fp in list(_replay_window_fps)[:-1]:
-                    if len(prev_fp) == len(current_fp):
-                        match_ratio = (
-                            sum(a == b for a, b in zip(current_fp, prev_fp))
-                            / len(current_fp)
-                        )
-                        if match_ratio >= REPLAY_MATCH_RATIO:
-                            fp_match_found = True
-                            break
+        all_fps = list(_replay_window_fps) + list(_frozen_fps)
+        if len(all_fps) >= 2:
+            for prev_fp in all_fps[:-1]:
+                if len(prev_fp) == len(current_fp):
+                    match_ratio = (
+                        sum(a == b for a, b in zip(current_fp, prev_fp))
+                        / len(current_fp)
+                    )
+                    if match_ratio >= REPLAY_MATCH_RATIO:
+                        fp_match_found = True
+                        break
 
         # Store fingerprint for future comparisons regardless
-        if not in_grace_period() and std >= 0.5:
-            _replay_window_fps.append(current_fp)
+        if not in_grace_period():
+            if std < 0.5:
+                _frozen_fps.append(current_fp)
+            else:
+                _replay_window_fps.append(current_fp)
 
         # ── Fire condition ────────────────────────────────────────────────────
-        should_fire = fp_match_found and (baseline_dev_pct >= 10.0) and (std < 1.0)
+        should_fire = zero_var_detected or (fp_match_found and (baseline_dev_pct >= 10.0) and (std < 1.0))
 
         if should_fire:
             detail = (
