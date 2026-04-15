@@ -616,7 +616,7 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"DNP3_PROBE\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"recon_scan_events\" and r[\"event_type\"] == \"recon_scan_detection\" and r[\"_field\"] == \"port\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
@@ -865,7 +865,7 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and (r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" or r[\"alert_type\"] == \"STEALTH_DRIFT\") and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
           "refId": "A"
         }
       ],
