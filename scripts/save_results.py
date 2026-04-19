@@ -71,6 +71,7 @@ ATTACKS = {
     "DNP3_PROBE":          "Phase 1/3 — DNP3 Protocol Probe",
     "REPLAY_ATTACK":       "Phase 8 — Replay Attack",
     "ISOLATION_FOREST":    "ML Engine — IsolationForest Anomaly",
+    "LSTM_AUTOENCODER":    "ML Engine — LSTM Autoencoder Anomaly",
     "OVER_PRESSURE":       "Expert Rule — Over Pressure",
 }
 
@@ -84,6 +85,7 @@ CONTAINERS = [
     "attacker_node",
     "honeypot_historian_api",
     "ics_historian_api",
+    "ics_historian_bridge",
     "ics_scada_ssh",
     "fake_plc_sim",
 ]

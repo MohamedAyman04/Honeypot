@@ -219,10 +219,6 @@
               {
                 "color": "red",
                 "value": 1
-              },
-              {
-                "color": "blue",
-                "value": 2
               }
             ]
           },
@@ -234,9 +230,6 @@
                 },
                 "1": {
                   "text": "ANOMALY"
-                },
-                "2": {
-                  "text": "TRAINING"
                 }
               },
               "type": "value"
@@ -339,6 +332,11 @@
       },
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "drawStyle": "points",
+            "lineWidth": 0,
+            "pointSize": 5
+          },
           "color": {
             "mode": "thresholds"
           },
@@ -495,19 +493,31 @@
           "mappings": [
             {
               "options": {
-                "WAITING": {
+                "match": "null",
+                "result": {
                   "text": "WAITING",
                   "color": "green",
                   "index": 0
-                },
-                "DETECTED": {
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "empty",
+                "result": {
+                  "text": "WAITING",
+                  "color": "green",
+                  "index": 1
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "1": {
                   "text": "DETECTED",
                   "color": "red",
-                  "index": 1
-                },
-                "COOLDOWN": {
-                  "text": "COOLDOWN",
-                  "color": "orange",
                   "index": 2
                 }
               },
@@ -533,7 +543,7 @@
       },
       "targets": [
         {
-          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\")\n  |> last()",
+          "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\")\n  |> last()\n  |> map(fn: (r) => ({r with _value: if r._value == \"DETECTED\" then 1 else 0}))",
           "refId": "A"
         }
       ],
@@ -912,7 +922,7 @@
           "refId": "A"
         }
       ],
-      "title": "DNP3 Honeypot Events",
+      "title": "Honeypot Events",
       "type": "table"
     }
   ],

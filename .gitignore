@@ -3,3 +3,8 @@
 __pycache__
 shared_data
 results
+# Central secrets — never commit
+.env
+# ML model artifacts
+*.pkl
+*.keras
