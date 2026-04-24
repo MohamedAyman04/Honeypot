@@ -77,7 +77,7 @@ REPLAY_LSTM_SEQ_LEN        = 15   # shorter window — replay patterns emerge qu
 REPLAY_LSTM_LATENT_DIM     = 16   # lightweight encoder
 REPLAY_LSTM_EPOCHS         = 15
 REPLAY_LSTM_BATCH_SIZE     = 32
-REPLAY_LSTM_THRESHOLD_PCTL = 90   # lower p-tile → more sensitive to frozen patterns
+REPLAY_LSTM_THRESHOLD_PCTL = 95   # lower p-tile → more sensitive to frozen patterns
 
 # ── Expert-rule thresholds ─────────────────────────────────────────────────────
 EXPERT_PRESSURE_DELTA_THRESHOLD = 20.0
@@ -85,8 +85,10 @@ EXPERT_PRESSURE_MEAN_DEV        = 35.0
 
 # ── EWMA/CUSUM parameters ─────────────────────────────────────────────────────
 EWMA_LAMBDA     = 0.1
-CUSUM_THRESHOLD = 8.0
-_cusum_k        = 1.0
+CUSUM_THRESHOLD = 6.0
+DRIFT_CONFIRM_NEEDED = 3   # require 3 consecutive drift signals before alerting
+_drift_confirm_count = 0
+_cusum_k        = 1.5
 
 _ewma_state  = None
 _cusum_pos   = 0.0
@@ -95,7 +97,7 @@ _cusum_neg   = 0.0
 # ── Slope-based drift parameters ──────────────────────────────────────────────
 MIN_SLOPE             = 0.05
 SLOPE_THRESHOLD       = 0.3
-SLOPE_DIRECTION_RATIO = 0.75
+SLOPE_DIRECTION_RATIO = 0.8
 SLOPE_WINDOW_SIZE     = 20
 CUMULATIVE_DEV_THRESH = 100.0
 DRIFT_RANGE_THRESHOLD = 30.0
@@ -110,7 +112,7 @@ _baseline_samples = collections.deque(maxlen=BASELINE_WINDOW)
 
 # ── Replay attack fingerprint matching ────────────────────────────────────────
 REPLAY_WINDOW_SIZE        = 10
-REPLAY_MATCH_RATIO        = 0.85
+REPLAY_MATCH_RATIO        = 0.95
 REPLAY_BASELINE_DEV       = 12.0
 ZERO_VAR_BASELINE_DEV_PCT = 8.0
 _replay_window_fps        = collections.deque(maxlen=20)
@@ -906,14 +908,21 @@ def run_drift_cycle() -> None:
     if in_grace_period():
         return
 
+    # ── Write-reset guard ─────────────────────────────────────────────────────
+    # Only reset CUSUM/EWMA for legitimate actuator writes (register >= 200).
+    # Sensor-register writes (100–199) are the stealth drift attack pattern —
+    # resetting on those would blind the detector during the attack itself.
     if has_recent_writes():
-        _ewma_state     = None
-        _cusum_pos      = 0.0
-        _cusum_neg      = 0.0
-        _cumulative_dev = 0.0
-        _pressure_history.clear()
-        _slope_history.clear()
-        return
+        if not _sensor_writes_detected():
+            # Legitimate actuator write — safe to reset baseline
+            _ewma_state     = None
+            _cusum_pos      = 0.0
+            _cusum_neg      = 0.0
+            _cumulative_dev = 0.0
+            _pressure_history.clear()
+            _slope_history.clear()
+            return
+        # else: sensor-register manipulation detected — fall through and keep accumulating
 
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
@@ -925,40 +934,44 @@ from(bucket: "{INFLUX_BUCKET}")
         tables = query_api.query(query)
         for table in tables:
             for record in table.records:
-                pressure       = float(record.get_value())
-                drift, detail  = run_ewma_cusum(pressure)
+                pressure      = float(record.get_value())
+                drift, detail = run_ewma_cusum(pressure)
                 if drift:
-                    is_critical = _sensor_writes_detected()
-                    if is_critical:
-                        _drift_attack_seen = True
-                    sev       = "critical" if is_critical else "high"
-                    score_val = -1.0 if is_critical else -0.8
-                    print(f"!!! STEALTH DRIFT DETECTED !!! {detail}")
-                    _record_alert("STEALTH_DRIFT_EWMA", detail, score_val)
-                    for record_obj in [
-                        Point("security_alerts")
-                        .tag("alert_type", "STEALTH_DRIFT_EWMA")
-                        .tag("session_id", SESSION_ID)
-                        .field("detail", detail)
-                        .field("score",  score_val)
-                        .time(time.time_ns(), WritePrecision.NS),
+                    _drift_confirm_count += 1
+                    if _drift_confirm_count >= DRIFT_CONFIRM_NEEDED:
+                        is_critical = _sensor_writes_detected()
+                        if is_critical:
+                            _drift_attack_seen = True
+                        sev       = "critical" if is_critical else "high"
+                        score_val = -1.0      if is_critical else -0.8
+                        print(f"!!! STEALTH DRIFT DETECTED !!! {detail}")
+                        _record_alert("STEALTH_DRIFT_EWMA", detail, score_val)
+                        for record_obj in [
+                            Point("security_alerts")
+                            .tag("alert_type", "STEALTH_DRIFT_EWMA")
+                            .tag("session_id", SESSION_ID)
+                            .field("detail", detail)
+                            .field("score",  score_val)
+                            .time(time.time_ns(), WritePrecision.NS),
 
-                        Point("security_metrics")
-                        .tag("sensor",     "ml_engine")
-                        .tag("session_id", SESSION_ID)
-                        .field("anomaly_score", score_val)
-                        .field("is_anomaly",    1)
-                        .time(time.time_ns(), WritePrecision.NS),
-                    ]:
-                        write_api.write(bucket=INFLUX_BUCKET, record=record_obj)
-                    _write_grafana_event(
-                        metric_type="pressure", value=pressure,
-                        event_type="STEALTH_DRIFT", severity=sev,
-                        source="ml-engine", detail=detail
-                    )
+                            Point("security_metrics")
+                            .tag("sensor",     "ml_engine")
+                            .tag("session_id", SESSION_ID)
+                            .field("anomaly_score", score_val)
+                            .field("is_anomaly",    1)
+                            .time(time.time_ns(), WritePrecision.NS),
+                        ]:
+                            write_api.write(bucket=INFLUX_BUCKET, record=record_obj)
+                        _write_grafana_event(
+                            metric_type="pressure", value=pressure,
+                            event_type="STEALTH_DRIFT", severity=sev,
+                            source="ml-engine", detail=detail
+                        )
+                    else:
+                        # not enough consecutive signals — reset timer but keep state
+                        _drift_confirm_count = 0
     except Exception as e:
         print(f"Drift cycle error: {e}")
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Replay attack detector  (fingerprint + LSTM variance model)
@@ -1017,11 +1030,11 @@ from(bucket: "{INFLUX_BUCKET}")
 
         # ── Signal 1: zero-variance + strong baseline deviation ────────────────
         # Require BOTH low variance AND a meaningful deviation from known-good baseline.
-        # This is what catches your 120 PSI spam: std≈0, baseline_dev high.
+        # This is what catches your 180 PSI spam: std≈0, baseline_dev high.
         # Normal stable pressure will have low baseline_dev and won't fire.
         zero_var_detected = (
-            std < 0.15
-            and baseline_dev_pct > 5.0   # raised back up — 2% was too sensitive at startup
+            std < 0.05
+            and baseline_dev_pct > 3.0
         )
 
         # ── Signal 2: fingerprint match ────────────────────────────────────────
@@ -1043,7 +1056,7 @@ from(bucket: "{INFLUX_BUCKET}")
 
         # A match only matters if the pattern is complex OR clearly off-baseline.
         # Raise std threshold: normal noise at 0.25 is too easy to hit spuriously.
-        is_meaningful_match = (std >= 0.5) or (baseline_dev_pct >= 5.0) or is_post_attack
+        is_meaningful_match = (baseline_dev_pct >= 5.0) or is_post_attack
         fp_match_fires = fp_match_found and is_meaningful_match
 
         # Store fingerprint AFTER comparison (not before)
