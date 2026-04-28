@@ -140,7 +140,7 @@ def export_logs():
                 capture_output=True, text=True, timeout=12
             )
             content = r.stdout + r.stderr
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
             print(f"  [OK]  {ctr:<30} {content.count(chr(10)):>5} lines")
         except FileNotFoundError:
@@ -267,7 +267,7 @@ def main():
 
     summary = build_summary(csv_counts, ac)
     spath = os.path.join(OUT_DIR, "summary.txt")
-    with open(spath, "w") as f:
+    with open(spath, "w", encoding="utf-8") as f:
         f.write(summary)
 
     print("\n" + summary)

