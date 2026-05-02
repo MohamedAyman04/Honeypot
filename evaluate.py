@@ -80,7 +80,7 @@ def reconstruct_data():
     
     # InfluxDB exports can be sparse; group by second to get a solid timeline
     pm = pm.sort_values("timestamp")
-    pm = pm.set_index("timestamp").resample("1S").first()
+    pm = pm.set_index("timestamp").resample("1s").first()
     pm = pm.ffill().fillna(0) # Forward fill physical state
     
     # Load Modbus events
@@ -92,7 +92,7 @@ def reconstruct_data():
         me = me.sort_values("timestamp")
         
         # Merge modbus into physics timeline
-        me_idx = me.set_index("timestamp").resample("1S").max()
+        me_idx = me.set_index("timestamp").resample("1s").max()
         pm["is_write"] = me_idx["is_write"].fillna(0).astype(int)
         pm["func_code"] = me_idx["func_code"].fillna(0).astype(int)
     else:

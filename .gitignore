@@ -1,5 +1,6 @@
 .idea
 .venv
+.venv-windows-backup
 __pycache__
 shared_data
 results

@@ -24,6 +24,7 @@ Retained from v4:
 
 import time
 import os
+import sys
 import uuid
 import threading
 import collections
@@ -35,6 +36,14 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import MinMaxScaler
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+
+# ── MITRE ATT&CK for ICS enrichment ───────────────────────────────────────────
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+try:
+    from shared.mitre_mapping import enrich_point as _mitre_enrich
+except ImportError:
+    def _mitre_enrich(point, event_type):   # graceful no-op if module missing
+        return point
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 INFLUX_URL    = os.environ.get("INFLUX_URL",    "http://ics_historian:8086")
@@ -70,7 +79,7 @@ LSTM_SEQ_LEN        = 20
 LSTM_LATENT_DIM     = 32
 LSTM_EPOCHS         = 20
 LSTM_BATCH_SIZE     = 32
-LSTM_THRESHOLD_PCTL = 95    # p95 of train reconstruction errors → threshold
+LSTM_THRESHOLD_PCTL = 99    # p99 of train reconstruction errors → threshold
 
 # ── Replay LSTM hyper-parameters ──────────────────────────────────────────────
 REPLAY_LSTM_SEQ_LEN        = 15   # shorter window — replay patterns emerge quickly
@@ -239,6 +248,10 @@ def _score_lstm(features: pd.DataFrame) -> tuple[bool, float]:
 
     tail   = features.tail(LSTM_SEQ_LEN).values.astype(np.float32)
     scaled = _lstm_scaler.transform(tail)
+    # Clamp to [0, 1] — MinMaxScaler can return values outside this range when
+    # live data falls outside the training distribution, causing artificially
+    # high reconstruction errors and continuous false-positive alerts.
+    scaled = np.clip(scaled, 0.0, 1.0)
     seq    = scaled[np.newaxis, :, :]
 
     error = float(_reconstruction_errors(_lstm_model, seq)[0])
@@ -357,6 +370,8 @@ def _score_replay_lstm(pressure_values: list) -> tuple[bool, float]:
 
     try:
         scaled = _replay_lstm_scaler.transform(tail)
+        # Clamp to [0, 1] for same reason as the general LSTM scorer.
+        scaled = np.clip(scaled, 0.0, 1.0)
         seq    = scaled[np.newaxis, :, :]
         error  = float(_reconstruction_errors(_replay_lstm_model, seq)[0])
         return error > _replay_lstm_thresh, error
@@ -506,7 +521,8 @@ from(bucket: "{INFLUX_BUCKET}")
             result = pd.merge_asof(
                 result,
                 net[["_time", "is_write", "func_code", "length", "write_freq_10s"]],
-                on="_time", direction="backward"
+                on="_time", direction="backward",
+                tolerance=pd.Timedelta("1s")
             )
             for col in ["is_write", "func_code", "length", "write_freq_10s"]:
                 new_col = col + "_y"
@@ -666,7 +682,43 @@ def run_ml_cycle() -> None:
     global _replay_lstm_model, _replay_lstm_scaler, _replay_lstm_thresh
 
     # ── Training / warm-up phase ──────────────────────────────────────────────
-    if _if_model is not None:
+    # Fast-path: IF loaded from disk but LSTM(s) deleted/missing — retrain them
+    # now on current live data without entering the full warm-up block.
+    if _if_model is not None and (_lstm_model is None or _replay_lstm_model is None):
+        with _api_lock:
+            _api_state["model_ready"] = True
+            _api_state["in_warmup"]   = True
+
+        if _lstm_model is None:
+            print("[LSTM] IF present but LSTM missing — retraining on live data.")
+            try:
+                m, s, t = _train_lstm(features)
+                if m is not None:
+                    _lstm_model, _lstm_scaler, _lstm_threshold = m, s, t
+                    with _api_lock:
+                        _api_state["lstm_ready"] = True
+                    print(f"[LSTM] Retrained — new threshold={t:.6f}")
+            except Exception as e:
+                print(f"[LSTM] Training error: {e}")
+
+        if _replay_lstm_model is None:
+            print("[rLSTM] IF present but replay LSTM missing — retraining on live data.")
+            try:
+                pressure_vals = features["pressure"].tolist()
+                rm, rs, rt = _train_replay_lstm(pressure_vals)
+                if rm is not None:
+                    _replay_lstm_model, _replay_lstm_scaler, _replay_lstm_thresh = rm, rs, rt
+                    with _api_lock:
+                        _api_state["replay_lstm_ready"] = True
+                    print(f"[rLSTM] Retrained — new threshold={rt:.6f}")
+            except Exception as e:
+                print(f"[rLSTM] Training error: {e}")
+
+        with _api_lock:
+            _api_state["in_warmup"] = False
+        # Fall through to detection phase below (do NOT return early)
+
+    elif _if_model is not None:
         with _api_lock:
             _api_state["model_ready"] = True
             _api_state["in_warmup"]   = False
@@ -779,14 +831,16 @@ def run_ml_cycle() -> None:
         print(f"!!! {alert['type']} !!! {alert['detail']}")
         effective_score = min(effective_score, -0.5)
         _record_alert(alert["type"], alert["detail"], effective_score)
-        write_api.write(bucket=INFLUX_BUCKET, record=(
+        _alert_point = (
             Point("security_alerts")
             .tag("alert_type", alert["type"])
             .tag("session_id", SESSION_ID)
             .field("detail", alert["detail"])
             .field("score",  effective_score)
             .time(time.time_ns(), WritePrecision.NS)
-        ))
+        )
+        _mitre_enrich(_alert_point, alert["type"])
+        write_api.write(bucket=INFLUX_BUCKET, record=_alert_point)
         _write_grafana_event(
             metric_type="anomaly", value=effective_score,
             event_type=alert["type"], severity="high",
@@ -796,6 +850,16 @@ def run_ml_cycle() -> None:
     if is_if_anom and not expert_alerts:
         print(f"!!! IF ANOMALY DETECTED !!! score={score_val:.4f}")
         _record_alert("ISOLATION_FOREST", f"if_score={score_val:.4f}", score_val)
+        _if_point = (
+            Point("security_alerts")
+            .tag("alert_type", "ISOLATION_FOREST")
+            .tag("session_id", SESSION_ID)
+            .field("detail", f"if_score={score_val:.4f}")
+            .field("score",  score_val)
+            .time(time.time_ns(), WritePrecision.NS)
+        )
+        _mitre_enrich(_if_point, "ISOLATION_FOREST")
+        write_api.write(bucket=INFLUX_BUCKET, record=_if_point)
         _write_grafana_event(
             metric_type="anomaly", value=score_val,
             event_type="ISOLATION_FOREST", severity="medium",
@@ -806,21 +870,29 @@ def run_ml_cycle() -> None:
         detail = f"reconstruction_error={lstm_error:.6f}  threshold={_lstm_threshold:.6f}"
         print(f"!!! LSTM ANOMALY DETECTED !!! {detail}")
         _record_alert("LSTM_AUTOENCODER", detail, -lstm_error)
-        write_api.write(bucket=INFLUX_BUCKET, record=(
+        _lstm_point = (
             Point("security_alerts")
             .tag("alert_type", "LSTM_AUTOENCODER")
             .tag("session_id", SESSION_ID)
             .field("detail", detail)
             .field("score",  -lstm_error)
             .time(time.time_ns(), WritePrecision.NS)
-        ))
+        )
+        _mitre_enrich(_lstm_point, "LSTM_AUTOENCODER")
+        write_api.write(bucket=INFLUX_BUCKET, record=_lstm_point)
         _write_grafana_event(
             metric_type="anomaly", value=-lstm_error,
             event_type="LSTM_AUTOENCODER", severity="medium",
             source="ml-engine", detail=detail
         )
 
-    write_api.write(bucket=INFLUX_BUCKET, record=(
+    # ── security_metrics: include top ATT&CK tag for the most severe alert ─────
+    _dominant_type = (
+        expert_alerts[0]["type"] if expert_alerts
+        else ("LSTM_AUTOENCODER" if is_lstm_anom
+              else ("ISOLATION_FOREST" if is_if_anom else "unknown"))
+    )
+    _metrics_point = (
         Point("security_metrics")
         .tag("sensor",     "ml_engine")
         .tag("session_id", SESSION_ID)
@@ -829,7 +901,10 @@ def run_ml_cycle() -> None:
         .field("if_score",      score_val)
         .field("lstm_error",    lstm_error)
         .time(time.time_ns(), WritePrecision.NS)
-    ))
+    )
+    if is_anomaly:
+        _mitre_enrich(_metrics_point, _dominant_type)
+    write_api.write(bucket=INFLUX_BUCKET, record=_metrics_point)
 
     print(
         f"[ML] Cycle — IF_score={score_val:.4f}  IF_anom={int(is_if_anom)}  "
