@@ -23,7 +23,7 @@ RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install mbtget
-RUN wget https://raw.githubusercontent.com/sourceperl/mbtget/master/mbtget -O /usr/local/bin/mbtget && \
+RUN wget https://raw.githubusercontent.com/sourceperl/mbtget/master/scripts/mbtget -O /usr/local/bin/mbtget && \
     chmod +x /usr/local/bin/mbtget
 
 # ── Python ICS attack libraries ───────────────────────────────────────────────
