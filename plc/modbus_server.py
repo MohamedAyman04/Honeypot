@@ -111,14 +111,17 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
             rpm = max(0, min(int(values[0]), 3000))
             self.physics_engine.set_pump_rpm(rpm)
             self._current_rpm = rpm
+            log_forced_write(address, values[0])
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
         elif address == 201:
             raw = int(values[0])
             pos = raw / 1000.0 if raw > 1 else float(raw)
             self.physics_engine.set_valve_pos(pos)
+            log_forced_write(address, values[0])
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
         elif address == 202:
             self.physics_engine.set_valve_pos(1.0 if int(values[0]) == 1 else 0.0)
+            log_forced_write(address, values[0])
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
         elif 100 <= address <= 103:
             log_forced_write(address, values[0])   # writes to forced_writes + pipeline_metrics

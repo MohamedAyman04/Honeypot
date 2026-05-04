@@ -18,7 +18,13 @@ RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends \
     bash \
     iproute2 \
     procps \
+    perl \
+    xxd \
     && rm -rf /var/lib/apt/lists/*
+
+# Install mbtget
+RUN wget https://raw.githubusercontent.com/sourceperl/mbtget/master/mbtget -O /usr/local/bin/mbtget && \
+    chmod +x /usr/local/bin/mbtget
 
 # ── Python ICS attack libraries ───────────────────────────────────────────────
 # --break-system-packages needed on Debian 12+ with PEP 668
