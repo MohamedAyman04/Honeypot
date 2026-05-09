@@ -347,6 +347,13 @@ services:
       - NET_RAW
     volumes:
       - ./results:/app/results # persists CSV results across container restarts
+    env_file: .env
+    environment:
+      - INFLUX_URL=${INFLUX_URL}
+      - INFLUX_TOKEN=${INFLUX_TOKEN}
+      - INFLUX_ORG=${INFLUX_ORG}
+      - INFLUX_BUCKET=${INFLUX_BUCKET}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -375,6 +382,26 @@ services:
     depends_on:
       - historian
       - ics_scada_ssh
+    restart: unless-stopped
+
+  log_dashboard:
+    build:
+      context: ./log_dashboard
+    container_name: ics_log_dashboard
+    ports:
+      - "8502:8502"
+    networks:
+      - monitor-net
+    env_file: .env
+    environment:
+      - INFLUX_URL=${INFLUX_URL}
+      - INFLUX_TOKEN=${INFLUX_TOKEN}
+      - INFLUX_ORG=${INFLUX_ORG}
+      - INFLUX_BUCKET=${INFLUX_BUCKET}
+      - DASHBOARD_RANGE=-6h
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    depends_on:
+      - historian
     restart: unless-stopped
 
 volumes:
