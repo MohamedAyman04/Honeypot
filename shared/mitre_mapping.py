@@ -137,6 +137,22 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "purdue_level":         "Level 1",
         "protocol":             "DNP3",
     },
+    "S7COMM_PROBE": {
+        "mitre_tactic":         "Discovery",
+        "mitre_technique_id":   "T0846",
+        "mitre_technique_name": "Network Service Discovery",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 2",
+        "protocol":             "S7comm",
+    },
+    "DNP3_PROBE": {
+        "mitre_tactic":         "Discovery",
+        "mitre_technique_id":   "T0846",
+        "mitre_technique_name": "Network Service Discovery",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 1",
+        "protocol":             "DNP3",
+    },
 
     # ── SSH / SCADA Workstation (Level 3) ───────────────────────────────────
     "ssh_login": {

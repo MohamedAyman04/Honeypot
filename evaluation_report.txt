@@ -13,14 +13,14 @@ Isolation Forest Performance:
   F1-Score:  0.1137
 
 LSTM Autoencoder Performance:
-  Precision: 0.0521
+  Precision: 0.1698
   Recall:    1.0000
-  F1-Score:  0.0991
+  F1-Score:  0.2903
   
 Ensemble OR-Gate Performance:
-  Precision: 0.0521
+  Precision: 0.1011
   Recall:    1.0000
-  F1-Score:  0.0991
+  F1-Score:  0.1837
 
 Phase Detection Audit:
   Phase 4 (Semantic Inject): IF=MISSED     LSTM=MISSED     Ensemble=MISSED

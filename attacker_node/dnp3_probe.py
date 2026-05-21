@@ -66,6 +66,7 @@ try:
     print(f"[DNP3-PROBE] Response ({len(resp)} bytes): {resp.hex()}")
 
     # Parse ACK
+    ack_received = False
     if len(resp) >= 10 and resp[0] == 0x05 and resp[1] == 0x64:
         ctrl   = resp[3]
         dst    = struct.unpack('<H', resp[4:6])[0]
@@ -74,10 +75,12 @@ try:
         print(f"  Control byte: 0x{ctrl:02X}")
         print(f"  From address: {src}")
         print(f"  To address:   {dst}")
+        ack_received = True
     else:
         print("[DNP3-PROBE] Unexpected response format.")
 
     sock.close()
+
 except Exception as e:
     print(f"[DNP3-PROBE] Error: {e}")
     sys.exit(1)

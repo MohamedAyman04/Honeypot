@@ -13,7 +13,9 @@ import sys
 import os
 
 # Allow the shared package to be found whether running inside or outside Docker
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
 
 import scapy.all as scapy
 from pymodbus.client import ModbusTcpClient
@@ -23,6 +25,7 @@ import time
 import struct
 
 from shared.mitre_mapping import enrich_point
+from unified_logger import UnifiedLogger
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 PLC_IP        = os.environ.get('PLC_IP',         'plc_simulator')
@@ -33,6 +36,8 @@ INFLUX_BUCKET = os.environ.get('INFLUX_BUCKET',  'sensor_logs')
 
 db_client  = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 write_api  = db_client.write_api(write_options=SYNCHRONOUS)
+
+unified_logger = UnifiedLogger(service="ics_correlator", layer="Level 2", log_dir="/data")
 
 print("--- CROSS-LAYER CORRELATOR v2 (MITRE ATT\u0026CK enriched) STARTING ---")
 
@@ -92,10 +97,33 @@ def process_packet(packet):
     if not packet.haslayer(scapy.Raw) or not packet.haslayer(scapy.TCP):
         return
     layer = packet[scapy.TCP]
+    src_ip = packet[scapy.IP].src if packet.haslayer(scapy.IP) else "?"
+    dst_ip = packet[scapy.IP].dst if packet.haslayer(scapy.IP) else "?"
+    payload = packet[scapy.Raw].load
+
+    if layer.dport == 20000 or layer.sport == 20000:
+        print(f"[CORRELATOR] DNP3 packet detected from {src_ip}")
+        unified_logger.log(
+            event_type="DNP3_PROBE",
+            source={"ip": src_ip, "protocol": "DNP3"},
+            target={"ip": dst_ip, "port": 20000, "host": "ics_dnp3", "service": "dnp3"},
+            payload={"raw_length": len(payload)}
+        )
+        return
+
+    if layer.dport == 102 or layer.sport == 102:
+        print(f"[CORRELATOR] S7comm packet detected from {src_ip}")
+        unified_logger.log(
+            event_type="S7COMM_PROBE",
+            source={"ip": src_ip, "protocol": "S7comm"},
+            target={"ip": dst_ip, "port": 102, "host": "ics_s7_plc", "service": "s7comm"},
+            payload={"raw_length": len(payload)}
+        )
+        return
+
     if layer.dport != 502 and layer.sport != 502:
         return
 
-    payload = packet[scapy.Raw].load
     if len(payload) >= 8:
         fc = payload[7]
         print(f"[DEBUG] Modbus packet {len(payload)} bytes, FC={fc}, payload={payload.hex()}")
@@ -106,7 +134,6 @@ def process_packet(packet):
     if func_code is None:
         return
 
-    src_ip     = packet[scapy.IP].src if packet.haslayer(scapy.IP) else "?"
     event_type = _classify_modbus(func_code, reg_addr)
 
     print(f"[CORRELATOR] FC{func_code} {event_type}: Reg {reg_addr} = {reg_val}  from {src_ip}")
@@ -126,10 +153,32 @@ def process_packet(packet):
                  .field("phys_flow",     flow)
                  .time(time.time_ns(), WritePrecision.NS))
 
-        # ── ATT\u0026CK enrichment (adds 6 indexed tags) ─────────────────────────────
+        # ── ATT&CK enrichment (adds 6 indexed tags) ─────────────────────────────
         enrich_point(point, event_type)
 
         write_api.write(bucket=INFLUX_BUCKET, record=point)
+        
+        unified_logger.log(
+            event_type="MODBUS_WRITE" if func_code in (5, 6, 15, 16) else "MODBUS_READ",
+            source={
+                "ip": src_ip,
+                "protocol": "ModbusTCP"
+            },
+            target={
+                "ip": dst_ip,
+                "port": 502,
+                "host": "plc_simulator",
+                "service": "plc"
+            },
+            payload={
+                "function_code": func_code,
+                "register": reg_addr,
+                "value": reg_val,
+                "phys_pressure": pressure,
+                "phys_flow": flow
+            }
+        )
+        
         print(
             f"[CORRELATOR] Logged: Reg={reg_addr} Val={reg_val} "
             f"P={pressure:.1f} PSI  [{event_type}]"
@@ -139,4 +188,4 @@ def process_packet(packet):
 
 # ── Sniffing ──────────────────────────────────────────────────────────────
 print("[CORRELATOR] Sniffing on ALL interfaces")
-scapy.sniff(iface="any", filter="tcp port 502", prn=process_packet, store=0)
+scapy.sniff(filter="tcp port 502 or tcp port 102 or tcp port 20000", prn=process_packet, store=0)

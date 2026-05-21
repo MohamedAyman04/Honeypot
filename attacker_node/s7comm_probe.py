@@ -69,14 +69,16 @@ def probe(host: str, port: int):
     resp = sock.recv(1024)
     print(f"[S7-PROBE] COTP response ({len(resp)} bytes): {resp.hex()}")
 
+    cotp_confirmed = False
     if len(resp) >= 5 and resp[5] == 0xD0:
         print("[S7-PROBE] ✓ COTP Connection Confirmed (CC) — this is a real S7 target!")
+        cotp_confirmed = True
     elif len(resp) > 0:
         print(f"[S7-PROBE] COTP response PDU type: 0x{resp[5]:02X}")
     else:
         print("[S7-PROBE] No COTP response.")
         sock.close()
-        return
+        return False, None
 
     # Step 2: S7 Setup Communication
     sock.sendall(S7_SETUP)
@@ -84,8 +86,11 @@ def probe(host: str, port: int):
     resp2 = sock.recv(1024)
     print(f"[S7-PROBE] S7 Setup response ({len(resp2)} bytes): {resp2.hex()}")
 
+    pdu_size = None
+    s7_ack = False
     if len(resp2) >= 8 and resp2[7] == 0x03:
         print("[S7-PROBE] ✓ S7 ACK-DATA received — communication negotiated!")
+        s7_ack = True
         # Parse PDU size from response
         if len(resp2) >= 25:
             pdu_size = (resp2[23] << 8) | resp2[24]
@@ -95,10 +100,12 @@ def probe(host: str, port: int):
 
     sock.close()
     print("[S7-PROBE] Done.")
+    return cotp_confirmed and s7_ack, pdu_size
 
 
+# ── Main ──────────────────────────────────────────────────────────────────────
 try:
-    probe(TARGET, PORT)
+    success, pdu_size = probe(TARGET, PORT)
 except Exception as e:
     print(f"[S7-PROBE] Error: {e}")
     sys.exit(1)

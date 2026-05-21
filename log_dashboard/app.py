@@ -1,415 +1,380 @@
-"""
-Level 2 ICS Honeypot — Unified Log Dashboard
-=============================================
-Streamlit dashboard reading from InfluxDB.  Mirrors the Level 3 :8501
-dashboard but surfaces OT/SCADA data: pipeline metrics, ML alerts,
-MITRE ATT&CK mapping, and the full correlated attack narrative.
-
-Run:  streamlit run app.py --server.port 8502
-"""
-
+import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
-# ── Optional InfluxDB client ─────────────────────────────────────────────────
-try:
-    from influxdb_client import InfluxDBClient
-    _HAS_INFLUX = True
-except ImportError:
-    _HAS_INFLUX = False
-
-# ── Config ───────────────────────────────────────────────────────────────────
-INFLUX_URL    = os.getenv("INFLUX_URL",    "http://localhost:8086")
-INFLUX_TOKEN  = os.getenv("INFLUX_TOKEN",  "supersecrettoken")
-INFLUX_ORG    = os.getenv("INFLUX_ORG",    "my_refinery")
-INFLUX_BUCKET = os.getenv("INFLUX_BUCKET", "sensor_logs")
-TIME_RANGE    = os.getenv("DASHBOARD_RANGE", "-6h")
-
+# -- Page Configuration --
 st.set_page_config(
-    page_title="Level 2 ICS Honeypot — Log Dashboard",
-    page_icon="🏭",
+    page_title="ICS Honeypot - Unified Dashboard",
+    page_icon="🛡️",
     layout="wide",
 )
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-@st.cache_resource
-def get_client():
-    if not _HAS_INFLUX:
-        return None
-    try:
-        return InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
-    except Exception:
-        return None
-
-
-def query(flux: str) -> pd.DataFrame:
-    client = get_client()
-    if client is None:
-        return pd.DataFrame()
-    try:
-        return client.query_api().query_data_frame(flux)
-    except Exception as exc:
-        st.warning(f"InfluxDB query error: {exc}")
-        return pd.DataFrame()
-
-
-def _clean(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty:
-        return df
-    drop = [c for c in df.columns if c.startswith("result") or c.startswith("table") or c == "_start" or c == "_stop"]
-    return df.drop(columns=drop, errors="ignore")
-
-
-# ── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.title("⚙️ Controls")
-time_range = st.sidebar.selectbox(
-    "Time window",
-    ["-15m", "-30m", "-1h", "-3h", "-6h", "-12h", "-24h", "-48h"],
-    index=4,
-)
-if st.sidebar.button("🔄 Refresh"):
-    st.cache_data.clear()
-    st.rerun()
-
-st.sidebar.markdown("---")
-st.sidebar.markdown(f"**InfluxDB:** `{INFLUX_URL}`")
-st.sidebar.markdown(f"**Bucket:** `{INFLUX_BUCKET}`")
-st.sidebar.markdown(f"**Org:** `{INFLUX_ORG}`")
-
-# ── Header ───────────────────────────────────────────────────────────────────
+# -- Custom CSS for Premium Look --
 st.markdown("""
 <style>
-.hero {
-    background: linear-gradient(135deg,#0f2237 0%,#1a3a5c 50%,#0f7b6c 100%);
-    padding:20px 28px; border-radius:14px; margin-bottom:18px;
-}
-.hero h1 {color:#f5fbff;margin:0 0 6px;}
-.hero p  {color:rgba(245,251,255,0.82);margin:0;}
-.stMetric {background:#1e2d3d;border-radius:10px;padding:10px;}
+    .main {
+        background-color: #0e1117;
+    }
+    .hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #10b981 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .hero h1 {
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .hero p {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    .stMetric {
+        background: #1f2937;
+        border: 1px solid #374151;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    [data-testid="stMetricLabel"] {
+        color: #9ca3af !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    [data-testid="stMetricValue"] {
+        color: #f3f4f6 !important;
+        font-size: 2.2rem !important;
+        font-weight: 700 !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #1f2937;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 20px;
+        color: #9ca3af;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+# -- Data Loading --
+# Use environment variable if provided, otherwise try to find it
+LOG_FILE_ENV = os.getenv("LOG_FILE_PATH")
+LOG_FILENAME = "general logs.jsonl"
+
+def find_log_file():
+    if LOG_FILE_ENV and Path(LOG_FILE_ENV).exists():
+        return Path(LOG_FILE_ENV)
+    
+    curr = Path(__file__).resolve().parent
+    for _ in range(5):
+        potential = curr / LOG_FILENAME
+        if potential.exists():
+            return potential
+        curr = curr.parent
+    return Path(LOG_FILENAME)
+
+LOG_FILE = find_log_file()
+
+@st.cache_data(ttl=5)
+def load_data():
+    if not LOG_FILE.exists():
+        return pd.DataFrame()
+    
+    events = []
+    with open(LOG_FILE, 'r') as f:
+        for line in f:
+            if line.strip():
+                try:
+                    events.append(json.loads(line))
+                except Exception:
+                    continue
+    
+    if not events:
+        return pd.DataFrame()
+    
+    df = pd.DataFrame(events)
+
+    # Normalize columns: promote commonly-used fields from meta to top-level
+    for col in ("level", "component", "severity", "message"):
+        if col not in df.columns and "meta" in df.columns:
+            df[col] = df["meta"].apply(
+                lambda m: m.get(col) if isinstance(m, dict) else None
+            )
+
+    # MITRE ATT&CK promotion (they might be at root or in meta)
+    for col in ("mitre_tactic", "mitre_technique_id", "mitre_technique_name", "kill_chain_stage", "purdue_level", "protocol"):
+        if col not in df.columns and "meta" in df.columns:
+            df[col] = df["meta"].apply(
+                lambda m: m.get(col) if isinstance(m, dict) else None
+            )
+
+    # Map 'ts' (new schema) → 'timestamp' (dashboard expected name)
+    if 'timestamp' not in df.columns and 'ts' in df.columns:
+        df['timestamp'] = df['ts']
+
+    if 'timestamp' in df.columns:
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce', utc=True)
+    return df
+
+# -- Dashboard Header --
+st.markdown("""
 <div class="hero">
-  <h1>🏭 Level 2 ICS Honeypot — Log Dashboard</h1>
-  <p>Real-time OT/SCADA telemetry, ML alerts, MITRE ATT&amp;CK mapping &amp; correlated attack narrative</p>
+    <h1>🛡️ ICS Honeypot Unified Dashboard</h1>
+    <p>Cross-layer telemetry visualization for Level 2 & Level 3 industrial assets.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ── KPI row ──────────────────────────────────────────────────────────────────
-@st.cache_data(ttl=15)
-def kpi_data(tr):
-    alerts_df = query(f"""
-        from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-        |> filter(fn:(r) => r["_measurement"] == "security_alerts")
-        |> filter(fn:(r) => r["_field"] == "value")
-        |> count()
-    """)
-    n_alerts = int(alerts_df["_value"].sum()) if not alerts_df.empty and "_value" in alerts_df.columns else 0
+df = load_data()
 
-    crit_df = query(f"""
-        from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-        |> filter(fn:(r) => r["_measurement"] == "security_alerts")
-        |> filter(fn:(r) => r["_field"] == "value")
-        |> filter(fn:(r) => r["severity"] == "CRITICAL")
-        |> count()
-    """)
-    n_crit = int(crit_df["_value"].sum()) if not crit_df.empty and "_value" in crit_df.columns else 0
+if df.empty:
+    st.warning(f"No logs found in {LOG_FILE.absolute()}. Please ensure the honeynet is generating events.")
+    if st.button("🔄 Refresh Data"):
+        st.rerun()
+    st.stop()
 
-    mod_df = query(f"""
-        from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-        |> filter(fn:(r) => r["_measurement"] == "correlation_logs")
-        |> filter(fn:(r) => r["_field"] == "func_code")
-        |> count()
-    """)
-    n_mod = int(mod_df["_value"].sum()) if not mod_df.empty and "_value" in mod_df.columns else 0
+# -- Sidebar Controls --
+st.sidebar.title("🛠️ Configuration")
+if st.sidebar.button("🔄 Force Refresh"):
+    st.cache_data.clear()
+    st.rerun()
 
-    hp_df = query(f"""
-        from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-        |> filter(fn:(r) => r["_measurement"] == "honeypot_events")
-        |> filter(fn:(r) => r["_field"] == "value")
-        |> count()
-    """)
-    n_hp = int(hp_df["_value"].sum()) if not hp_df.empty and "_value" in hp_df.columns else 0
+st.sidebar.divider()
+st.sidebar.subheader("Filters")
 
-    return n_alerts, n_crit, n_mod, n_hp
+levels = ["All"]
+if 'level' in df.columns:
+    levels += sorted(df['level'].dropna().unique().tolist())
+selected_level = st.sidebar.selectbox("Filter by Level", levels)
 
-n_alerts, n_crit, n_mod, n_hp = kpi_data(time_range)
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("🚨 Total Alerts",        n_alerts)
-k2.metric("🔴 Critical Alerts",     n_crit)
-k3.metric("📡 Modbus Events",       n_mod)
-k4.metric("🕵️ Honeypot Probes",    n_hp)
+components = ["All"]
+if 'component' in df.columns:
+    components += sorted(df['component'].dropna().unique().tolist())
+selected_comp = st.sidebar.selectbox("Filter by Component", components)
+
+severities = ["All"]
+if 'severity' in df.columns:
+    severities += sorted(df['severity'].dropna().unique().tolist())
+selected_sev = st.sidebar.multiselect("Filter by Severity", severities, default="All")
+
+# Apply filters
+filtered_df = df.copy()
+if selected_level != "All" and 'level' in filtered_df.columns:
+    filtered_df = filtered_df[filtered_df['level'] == selected_level]
+if selected_comp != "All" and 'component' in filtered_df.columns:
+    filtered_df = filtered_df[filtered_df['component'] == selected_comp]
+if "All" not in selected_sev and selected_sev and 'severity' in filtered_df.columns:
+    filtered_df = filtered_df[filtered_df['severity'].isin(selected_sev)]
+
+# -- KPI Metrics --
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Total Events", len(df))
+m2.metric("Filtered Events", len(filtered_df))
+crit_count = len(df[df['severity'].str.lower() == 'critical']) if 'severity' in df.columns else 0
+m3.metric("Critical Alerts", crit_count, delta=f"{crit_count} Total", delta_color="inverse")
+unique_comps = df['component'].nunique() if 'component' in df.columns else 0
+m4.metric("Active Assets", unique_comps)
 
 st.divider()
 
-# ── Tabs ─────────────────────────────────────────────────────────────────────
-tab_story, tab_pipeline, tab_alerts, tab_mitre, tab_raw = st.tabs([
-    "📖 Attack Story", "📊 Pipeline Metrics", "🚨 Security Alerts",
-    "🎯 MITRE ATT&CK", "📋 All Logs"
-])
+# -- Tabs for different views --
+tab_viz, tab_mitre, tab_timeline, tab_raw = st.tabs(["📊 Distribution Analysis", "🎯 MITRE ATT&CK", "📈 Event Timeline", "📋 Raw Telemetry"])
 
-# ════════════════════════════════════════════════════════════════════════════
-# TAB 1 — ATTACK STORY (correlated narrative)
-# ════════════════════════════════════════════════════════════════════════════
-with tab_story:
-    st.subheader("📖 Correlated Attack Narrative — Kill Chain Story")
-    st.caption("Events are grouped by session_id so you can follow the attacker's path from start to finish.")
-
-    @st.cache_data(ttl=15)
-    def story_data(tr):
-        return _clean(query(f"""
-            from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-            |> filter(fn:(r) => r["_measurement"] == "security_alerts")
-            |> filter(fn:(r) => r["_field"] == "narrative")
-            |> keep(columns:["_time","_value","event_type","severity","layer",
-                              "kill_chain_stage","mitre_tactic","protocol",
-                              "session_id","correlation_id"])
-            |> sort(columns:["_time"], desc:false)
-        """))
-
-    sdf = story_data(time_range)
-
-    if sdf.empty:
-        st.info("No narrative events yet. Run an attack scenario to generate correlated logs.")
-    else:
-        sdf["_time"] = pd.to_datetime(sdf["_time"], errors="coerce", utc=True)
-        sdf = sdf.dropna(subset=["_time"])
-
-        # Session selector
-        sessions = sdf["session_id"].dropna().unique().tolist() if "session_id" in sdf.columns else []
-        chosen = st.selectbox("Filter by Session ID (blank = show all)", ["— All Sessions —"] + sessions)
-
-        show_df = sdf if chosen == "— All Sessions —" else sdf[sdf["session_id"] == chosen]
-
-        # Timeline chart
-        if not show_df.empty and "kill_chain_stage" in show_df.columns:
-            tl = show_df.copy()
-            tl["count"] = 1
-            fig = px.scatter(
-                tl, x="_time", y="kill_chain_stage",
-                color="mitre_tactic" if "mitre_tactic" in tl.columns else "event_type",
-                size="count", hover_data=["event_type","severity","protocol","_value"],
-                title="Attack Kill-Chain Timeline",
-                labels={"_time":"Time","kill_chain_stage":"Kill Chain Stage"},
-                height=380,
+with tab_viz:
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Severity Distribution")
+        if 'severity' in filtered_df.columns:
+            sev_counts = filtered_df['severity'].value_counts().reset_index()
+            sev_counts.columns = ['severity', 'count']
+            fig_sev = px.pie(
+                sev_counts, 
+                names='severity', 
+                values='count',
+                color='severity',
+                color_discrete_map={
+                    'info': '#3b82f6',
+                    'medium': '#fbbf24',
+                    'high': '#f97316',
+                    'critical': '#ef4444',
+                    'INFO': '#3b82f6',
+                    'MEDIUM': '#fbbf24',
+                    'HIGH': '#f97316',
+                    'CRITICAL': '#ef4444'
+                },
+                hole=0.4
             )
-            fig.update_layout(paper_bgcolor="#0f1923", plot_bgcolor="#0f1923",
-                              font_color="#c8d8e8")
-            st.plotly_chart(fig, use_container_width=True)
+            fig_sev.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+            st.plotly_chart(fig_sev, use_container_width=True)
+        else:
+            st.info("Severity data not available.")
 
-        # Narrative feed
-        st.subheader("📜 Narrative Feed")
-        sev_colors = {"CRITICAL":"🔴","HIGH":"🟠","MEDIUM":"🟡","INFO":"🔵"}
-        for _, row in show_df.sort_values("_time", ascending=False).head(40).iterrows():
-            sev   = str(row.get("severity", "INFO"))
-            icon  = sev_colors.get(sev, "⚪")
-            ts    = row["_time"].strftime("%H:%M:%S")
-            evt   = row.get("event_type","?")
-            kc    = row.get("kill_chain_stage","")
-            narr  = row.get("_value","")
-            st.markdown(f"{icon} `{ts}` **{evt}** _{kc}_  \n> {narr}")
+    with col2:
+        st.subheader("Level Breakdown")
+        if 'level' in filtered_df.columns:
+            lvl_counts = filtered_df['level'].value_counts().reset_index()
+            lvl_counts.columns = ['level', 'count']
+            fig_lvl = px.bar(
+                lvl_counts, 
+                x='level', 
+                y='count',
+                color='level',
+                color_discrete_sequence=px.colors.qualitative.Pastel
+            )
+            fig_lvl.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white', showlegend=False)
+            st.plotly_chart(fig_lvl, use_container_width=True)
+        else:
+            st.info("Level data not available.")
 
-# ════════════════════════════════════════════════════════════════════════════
-# TAB 2 — PIPELINE METRICS
-# ════════════════════════════════════════════════════════════════════════════
-with tab_pipeline:
-    st.subheader("📊 Physical Process Telemetry")
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        st.subheader("Top Components")
+        if 'component' in filtered_df.columns:
+            comp_counts = filtered_df['component'].value_counts().head(10).reset_index()
+            comp_counts.columns = ['component', 'count']
+            fig_comp = px.bar(
+                comp_counts, 
+                y='component', 
+                x='count',
+                orientation='h',
+                color='count',
+                color_continuous_scale='Blues'
+            )
+            fig_comp.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+            st.plotly_chart(fig_comp, use_container_width=True)
+        else:
+            st.info("Component data not available.")
 
-    @st.cache_data(ttl=15)
-    def pipeline_data(tr):
-        return _clean(query(f"""
-            from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-            |> filter(fn:(r) => r["_measurement"] == "pipeline_metrics")
-            |> aggregateWindow(every:30s, fn:mean, createEmpty:false)
-            |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
-        """))
+    with col4:
+        st.subheader("Event Types")
+        if 'event_type' in filtered_df.columns:
+            type_counts = filtered_df['event_type'].value_counts().head(10).reset_index()
+            type_counts.columns = ['event_type', 'count']
+            fig_type = px.pie(
+                type_counts, 
+                names='event_type', 
+                values='count',
+                hole=0.4
+            )
+            fig_type.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+            st.plotly_chart(fig_type, use_container_width=True)
+        else:
+            st.info("Event Type data not available.")
 
-    pdf = pipeline_data(time_range)
-
-    if pdf.empty:
-        st.info("No pipeline metrics available.")
-    else:
-        pdf["_time"] = pd.to_datetime(pdf["_time"], errors="coerce", utc=True)
-        fields = [c for c in ["pressure","flow_rate","temperature","pump_rpm"] if c in pdf.columns]
-
-        cols = st.columns(2)
-        for i, field in enumerate(fields):
-            with cols[i % 2]:
-                fig = px.line(pdf, x="_time", y=field,
-                              title=field.replace("_"," ").title(),
-                              labels={"_time":"Time", field: field},
-                              height=300)
-                fig.update_layout(paper_bgcolor="#0f1923", plot_bgcolor="#0f1923",
-                                  font_color="#c8d8e8")
-                st.plotly_chart(fig, use_container_width=True)
-
-# ════════════════════════════════════════════════════════════════════════════
-# TAB 3 — SECURITY ALERTS
-# ════════════════════════════════════════════════════════════════════════════
-with tab_alerts:
-    st.subheader("🚨 Security Alerts")
-
-    @st.cache_data(ttl=15)
-    def alerts_data(tr):
-        return _clean(query(f"""
-            from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-            |> filter(fn:(r) => r["_measurement"] == "security_alerts")
-            |> filter(fn:(r) => r["_field"] == "narrative")
-            |> keep(columns:["_time","_value","event_type","severity","layer",
-                              "kill_chain_stage","mitre_tactic","mitre_technique_id",
-                              "protocol","session_id"])
-            |> sort(columns:["_time"], desc:true)
-            |> limit(n:200)
-        """))
-
-    adf = alerts_data(time_range)
-
-    if adf.empty:
-        st.info("No security alerts in this window.")
-    else:
-        adf["_time"] = pd.to_datetime(adf["_time"], errors="coerce", utc=True)
-
-        left, right = st.columns(2)
-        with left:
-            if "event_type" in adf.columns:
-                vc = adf["event_type"].value_counts().reset_index()
-                vc.columns = ["event_type","count"]
-                fig = px.bar(vc, x="event_type", y="count", title="Alert Types",
-                             color="event_type", height=300)
-                fig.update_layout(paper_bgcolor="#0f1923", plot_bgcolor="#0f1923",
-                                  font_color="#c8d8e8", showlegend=False)
-                st.plotly_chart(fig, use_container_width=True)
-        with right:
-            if "severity" in adf.columns:
-                svc = adf["severity"].value_counts().reset_index()
-                svc.columns = ["severity","count"]
-                color_map = {"CRITICAL":"#e53935","HIGH":"#fb8c00",
-                             "MEDIUM":"#fdd835","INFO":"#42a5f5"}
-                fig = px.pie(svc, names="severity", values="count",
-                             color="severity", color_discrete_map=color_map,
-                             title="Severity Breakdown", height=300)
-                fig.update_layout(paper_bgcolor="#0f1923", font_color="#c8d8e8")
-                st.plotly_chart(fig, use_container_width=True)
-
-        st.dataframe(
-            adf.rename(columns={"_time":"Time","_value":"Narrative",
-                                 "event_type":"Event","severity":"Severity",
-                                 "layer":"Layer","kill_chain_stage":"Kill Chain",
-                                 "mitre_tactic":"Tactic","mitre_technique_id":"Technique ID",
-                                 "protocol":"Protocol","session_id":"Session"}),
-            use_container_width=True, height=400,
-        )
-
-# ════════════════════════════════════════════════════════════════════════════
-# TAB 4 — MITRE ATT&CK
-# ════════════════════════════════════════════════════════════════════════════
 with tab_mitre:
-    st.subheader("🎯 MITRE ATT&CK for ICS Mapping")
+    st.subheader("🎯 MITRE ATT&CK Mapping")
+    
+    mitre_df = filtered_df.dropna(subset=['mitre_tactic']).copy() if 'mitre_tactic' in filtered_df.columns else pd.DataFrame()
+    
+    if not mitre_df.empty:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Tactics Distribution")
+            tactic_counts = mitre_df['mitre_tactic'].value_counts().reset_index()
+            tactic_counts.columns = ['tactic', 'count']
+            fig_tactic = px.pie(tactic_counts, names='tactic', values='count', hole=0.3)
+            fig_tactic.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+            st.plotly_chart(fig_tactic, use_container_width=True)
+            
+        with col2:
+            st.subheader("Kill Chain Stages")
+            if 'kill_chain_stage' in mitre_df.columns:
+                kc_counts = mitre_df['kill_chain_stage'].value_counts().reset_index()
+                kc_counts.columns = ['kill_chain_stage', 'count']
+                fig_kc = px.bar(kc_counts, x='count', y='kill_chain_stage', orientation='h', color='count', color_continuous_scale='Reds')
+                fig_kc.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+                st.plotly_chart(fig_kc, use_container_width=True)
 
-    @st.cache_data(ttl=15)
-    def mitre_data(tr):
-        return _clean(query(f"""
-            from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-            |> filter(fn:(r) => r["_measurement"] == "security_alerts" or
-                                 r["_measurement"] == "correlation_logs")
-            |> filter(fn:(r) => r["_field"] == "value" or r["_field"] == "func_code")
-            |> keep(columns:["_time","_value","mitre_tactic","mitre_technique_id",
-                              "mitre_technique_name","kill_chain_stage","purdue_level","protocol"])
-        """))
-
-    mdf = mitre_data(time_range)
-
-    if mdf.empty:
-        st.info("No MITRE-tagged events in this time window.")
-    else:
-        mdf["_time"] = pd.to_datetime(mdf["_time"], errors="coerce", utc=True)
-        cols = st.columns(3)
-
-        with cols[0]:
-            if "mitre_tactic" in mdf.columns:
-                tdf = mdf[mdf["mitre_tactic"].notna() & (mdf["mitre_tactic"] != "Unknown")]
-                if not tdf.empty:
-                    vc = tdf["mitre_tactic"].value_counts().reset_index()
-                    vc.columns = ["tactic","count"]
-                    fig = px.bar(vc, x="count", y="tactic", orientation="h",
-                                 title="Tactics", height=350)
-                    fig.update_layout(paper_bgcolor="#0f1923", plot_bgcolor="#0f1923",
-                                      font_color="#c8d8e8")
-                    st.plotly_chart(fig, use_container_width=True)
-
-        with cols[1]:
-            if "protocol" in mdf.columns:
-                pdf = mdf[mdf["protocol"].notna() & (mdf["protocol"] != "Unknown")]
-                if not pdf.empty:
-                    vc = pdf["protocol"].value_counts().reset_index()
-                    vc.columns = ["protocol","count"]
-                    fig = px.pie(vc, names="protocol", values="count",
-                                 title="Protocol Distribution", height=350)
-                    fig.update_layout(paper_bgcolor="#0f1923", font_color="#c8d8e8")
-                    st.plotly_chart(fig, use_container_width=True)
-
-        with cols[2]:
-            if "purdue_level" in mdf.columns:
-                pldf = mdf[mdf["purdue_level"].notna() & (mdf["purdue_level"] != "Unknown")]
-                if not pldf.empty:
-                    vc = pldf["purdue_level"].value_counts().reset_index()
-                    vc.columns = ["level","count"]
-                    fig = px.bar(vc, x="level", y="count", title="Purdue Level Activity",
-                                 color="level", height=350)
-                    fig.update_layout(paper_bgcolor="#0f1923", plot_bgcolor="#0f1923",
-                                      font_color="#c8d8e8", showlegend=False)
-                    st.plotly_chart(fig, use_container_width=True)
-
-        # Technique table
-        if "mitre_technique_id" in mdf.columns and "mitre_technique_name" in mdf.columns:
-            st.subheader("Technique Summary")
-            tbl = (mdf.groupby(["mitre_technique_id","mitre_technique_name","mitre_tactic","protocol"])
-                      .size().reset_index(name="count")
-                      .sort_values("count", ascending=False))
+        st.subheader("Technique Summary")
+        if 'mitre_technique_id' in mitre_df.columns and 'mitre_technique_name' in mitre_df.columns:
+            tbl = mitre_df.groupby(["mitre_technique_id", "mitre_technique_name", "mitre_tactic"]).size().reset_index(name="count")
+            tbl = tbl.sort_values("count", ascending=False)
             st.dataframe(tbl, use_container_width=True, height=300)
-
-# ════════════════════════════════════════════════════════════════════════════
-# TAB 5 — ALL LOGS (raw browser)
-# ════════════════════════════════════════════════════════════════════════════
-with tab_raw:
-    st.subheader("📋 All Measurements — Raw Log Browser")
-
-    MEASUREMENTS = [
-        "pipeline_metrics", "security_alerts", "security_metrics",
-        "correlation_logs", "honeypot_events", "recon_scan_events",
-        "modbus_events", "forced_writes", "attack_status",
-        "grafana_events",
-    ]
-    selected_m = st.selectbox("Measurement", MEASUREMENTS)
-    row_limit  = st.slider("Max rows", 50, 500, 100, 50)
-
-    @st.cache_data(ttl=10)
-    def raw_data(measurement, limit, tr):
-        return _clean(query(f"""
-            from(bucket:"{INFLUX_BUCKET}") |> range(start:{tr})
-            |> filter(fn:(r) => r["_measurement"] == "{measurement}")
-            |> sort(columns:["_time"], desc:true)
-            |> limit(n:{limit})
-        """))
-
-    rdf = raw_data(selected_m, row_limit, time_range)
-    if rdf.empty:
-        st.info(f"No data in `{selected_m}` for the selected time window.")
     else:
-        st.caption(f"{len(rdf)} rows from `{selected_m}`")
-        st.dataframe(rdf, use_container_width=True, height=500)
+        st.info("No MITRE ATT&CK mapping data available in the selected logs.")
 
-        # Download
-        csv = rdf.to_csv(index=False)
-        st.download_button(
-            f"⬇️ Download {selected_m}.csv",
-            data=csv,
-            file_name=f"{selected_m}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
-        )
+with tab_timeline:
+    st.subheader("Event Frequency Over Time")
+    if not filtered_df.empty and 'timestamp' in filtered_df.columns:
+        timeline_df = filtered_df.copy()
+        timeline_df = timeline_df.dropna(subset=['timestamp'])
+        
+        if not timeline_df.empty:
+            resample_rate = st.select_slider(
+                "Time Resolution",
+                options=["10s", "30s", "min", "5min", "15min", "h"],
+                value="min",
+                help="min=Minute, s=Second, h=Hour"
+            )
+            
+            timeline_df.set_index('timestamp', inplace=True)
+            resampled = timeline_df.resample(resample_rate).size().reset_index(name='count')
+            
+            fig_time = px.line(
+                resampled, 
+                x='timestamp', 
+                y='count',
+                title=f"Events per {resample_rate}"
+            )
+            fig_time.update_traces(line_color='#3b82f6', fill='tozeroy')
+            fig_time.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+            st.plotly_chart(fig_time, use_container_width=True)
+        else:
+            st.info("No valid timestamps found for timeline.")
+    else:
+        st.info("Timestamp column missing or empty.")
 
-st.markdown("---")
-st.caption(f"Level 2 ICS Honeypot Log Dashboard • {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+with tab_raw:
+    st.subheader("Detailed Event Logs")
+    
+    # Search functionality
+    search_query = st.text_input("🔍 Search messages or details", "")
+    if search_query:
+        mask = filtered_df.apply(lambda r: search_query.lower() in str(r.to_dict()).lower(), axis=1)
+        display_df = filtered_df[mask]
+    else:
+        display_df = filtered_df
+    
+    st.write(f"Showing {len(display_df)} events")
+    
+    # Selection for which columns to show
+    all_cols = display_df.columns.tolist()
+    default_cols = ['timestamp', 'level', 'component', 'event_type', 'severity', 'mitre_tactic', 'mitre_technique_id', 'message']
+    selected_cols = st.multiselect("Visible Columns", all_cols, default=[c for c in default_cols if c in all_cols])
+    
+    st.dataframe(
+        display_df[selected_cols].sort_values('timestamp', ascending=False)
+        if 'timestamp' in selected_cols else display_df[selected_cols],
+        use_container_width=True,
+        height=500
+    )
+    
+    # Download button
+    csv = display_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        "⬇️ Download Filtered Logs (CSV)",
+        csv,
+        "filtered_honeypot_logs.csv",
+        "text/csv",
+        key='download-csv'
+    )
+
+# -- Footer --
+st.divider()
+st.caption(f"ICS Honeypot Unified Logging System • {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")

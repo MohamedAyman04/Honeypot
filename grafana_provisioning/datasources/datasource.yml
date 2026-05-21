@@ -1,10 +1,10 @@
 apiVersion: 1
-
 datasources:
-  - name: InfluxDB
+  - name: InfluxDB L2
+    uid: influxdb-l2
     type: influxdb
     access: proxy
-    url: http://ics_historian:8086
+    url: http://historian:8086
     jsonData:
       version: Flux
       organization: my_refinery

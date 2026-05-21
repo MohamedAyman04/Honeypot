@@ -89,6 +89,7 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
         self.physics_engine = physics_engine
         self._lock = threading.Lock()
         self._current_rpm = 1200  # Initial pump RPM seed
+        self.injected = {}        # address -> (value, timestamp)
 
         # Fix 1: Pre-seed registers from physics engine state.
         # Valve starts CLOSED (register 202=0, 201=0) to match physics startup.
@@ -124,6 +125,7 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
             log_forced_write(address, values[0])
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
         elif 100 <= address <= 103:
+            self.injected[address] = (values[0], time.time())
             log_forced_write(address, values[0])   # writes to forced_writes + pipeline_metrics
             log_modbus_event("attacker", 6, address, values[0], is_write=True)
             log.warning(f"[FORCED WRITE] Sensor register {address} = {values[0]} (SEMANTIC INJECTION)")
@@ -138,6 +140,14 @@ class PhysicsAwareDataBlock(ModbusSequentialDataBlock):
                           int(state["flow_rate"] * 10),
                           int(state["temperature"]),
                           int(state["pump_rpm"]))
+            
+            # Apply any injected values indefinitely (stay forever until changed)
+            now = time.time()
+            if 100 in self.injected: p = self.injected[100][0]
+            if 101 in self.injected: f = self.injected[101][0]
+            if 102 in self.injected: t = self.injected[102][0]
+            if 103 in self.injected: r = self.injected[103][0]
+
             super().setValues(100, [p, f, t, r])
 
             # ── Recon detection (false-positive-resistant) ────────────────────

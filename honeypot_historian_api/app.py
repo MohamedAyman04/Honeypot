@@ -264,18 +264,13 @@ def debug_info():
             "ip":       local_ip,
         },
         "environment": {
-            # InfluxDB historian connection (Purdue Level 2/3)
-            "INFLUX_URL":       INFLUX_URL,
-            "INFLUX_TOKEN":     INFLUX_TOKEN,
-            "INFLUX_ORG":       INFLUX_ORG,
-            "INFLUX_BUCKET":    INFLUX_BUCKET,
-            # ML engine
-            "ML_ENGINE_URL":    ML_ENGINE_URL,
             # !! SCADA SSH — used by data-collection cron to pull process logs
-            "SCADA_SSH_HOST":   SCADA_SSH_HOST,
-            "SCADA_SSH_PORT":   SCADA_SSH_PORT,
-            "SCADA_SSH_USER":   SCADA_SSH_USER,
-            "SCADA_SSH_PASS":   SCADA_SSH_PASS,
+            "SCADA_SSH_HOST":     SCADA_SSH_HOST,
+            "SCADA_SSH_PORT":     SCADA_SSH_PORT,
+            "SCADA_SSH_USER":     SCADA_SSH_USER,
+            "SCADA_SSH_PASS":     SCADA_SSH_PASS,
+            "MODBUS_HOST":        "plc_simulator",
+            "MODBUS_PORT":        "502",
         },
         "note": (
             "SCADA_SSH_* vars are used by /opt/historian/collect_scada_logs.sh "

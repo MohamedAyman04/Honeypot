@@ -90,13 +90,13 @@ RUN echo '' >> /root/.bashrc && \
     echo '' >> /root/.bashrc && \
     echo 'echo ""' >> /root/.bashrc && \
     echo 'echo "╔══════════════════════════════════════════════════════════╗"' >> /root/.bashrc && \
-    echo 'echo "║       ICS Honeypot — Attacker Node (Kali-like)          ║"' >> /root/.bashrc && \
+    echo 'echo "║       ICS Honeypot — Attacker Node (Kali-like)           ║"' >> /root/.bashrc && \
     echo 'echo "╠══════════════════════════════════════════════════════════╣"' >> /root/.bashrc && \
     echo 'echo "║  TARGETS                                                 ║"' >> /root/.bashrc && \
-    echo 'echo "║    plc_simulator:502      Modbus PLC (main target)      ║"' >> /root/.bashrc && \
-    echo 'echo "║    ics_s7_plc:102         Siemens S7-300 PLC            ║"' >> /root/.bashrc && \
-    echo 'echo "║    ics_dnp3:20000         DNP3 RTU (power/water)        ║"' >> /root/.bashrc && \
-    echo 'echo "║    ics_scada_ssh:2222     SCADA SSH pivot (Level 2)     ║"' >> /root/.bashrc && \
+    echo 'echo "║    plc_simulator:502      Modbus PLC (main target)       ║"' >> /root/.bashrc && \
+    echo 'echo "║    ics_s7_plc:102         Siemens S7-300 PLC             ║"' >> /root/.bashrc && \
+    echo 'echo "║    ics_dnp3:20000         DNP3 RTU (power/water)         ║"' >> /root/.bashrc && \
+    echo 'echo "║    ics_scada_ssh:2222     SCADA SSH pivot (Level 2)      ║"' >> /root/.bashrc && \
     echo 'echo "║    honeypot_historian_api:5000  Historian REST API       ║"' >> /root/.bashrc && \
     echo 'echo "╠══════════════════════════════════════════════════════════╣"' >> /root/.bashrc && \
     echo 'echo "║  TOOLS AVAILABLE                                         ║"' >> /root/.bashrc && \
@@ -104,18 +104,63 @@ RUN echo '' >> /root/.bashrc && \
     echo 'echo "║    ICS:      mbtget, mb-read, mb-write, pymodbus         ║"' >> /root/.bashrc && \
     echo 'echo "║              python3 s7comm_probe.py                     ║"' >> /root/.bashrc && \
     echo 'echo "║              python3 dnp3_probe.py                       ║"' >> /root/.bashrc && \
-    echo 'echo "║    Web:      sqlmap, curl                                        ║"' >> /root/.bashrc && \
+    echo 'echo "║    Web:      sqlmap, curl                                ║"' >> /root/.bashrc && \
     echo 'echo "║    Auth:     hydra, medusa, ncrack, john, sshpass        ║"' >> /root/.bashrc && \
     echo 'echo "║    Packet:   tcpdump, tshark, scapy, netcat, socat       ║"' >> /root/.bashrc && \
     echo 'echo "╠══════════════════════════════════════════════════════════╣"' >> /root/.bashrc && \
     echo 'echo "║  AUTOMATED KILL CHAIN                                    ║"' >> /root/.bashrc && \
-    echo 'echo "║    python3 /tools/attack_suite.py --phase 0  (all)      ║"' >> /root/.bashrc && \
-    echo 'echo "║    python3 /tools/attack_suite.py --phase 4  (exploit)  ║"' >> /root/.bashrc && \
-    echo 'echo "║    python3 /tools/attack_suite.py --phase 6  (lateral)  ║"' >> /root/.bashrc && \
+    echo 'echo "║    python3 /tools/attack_suite.py --phase 0  (all)       ║"' >> /root/.bashrc && \
+    echo 'echo "║    python3 /tools/attack_suite.py --phase 4  (exploit)   ║"' >> /root/.bashrc && \
+    echo 'echo "║    python3 /tools/attack_suite.py --phase 6  (lateral)   ║"' >> /root/.bashrc && \
     echo 'echo "╚══════════════════════════════════════════════════════════╝"' >> /root/.bashrc && \
     echo 'echo ""' >> /root/.bashrc
 
 WORKDIR /tools
+
+# Create a script to log interactive bash commands to the story logger
+RUN cat <<'EOF' > /tools/log_cmd.py
+import sys, os, json, urllib.request, datetime
+try:
+    cmd = sys.argv[1].strip()
+    if not cmd: sys.exit(0)
+    last_f = '/tmp/.last_cmd'
+    if os.path.exists(last_f):
+        with open(last_f, 'r') as f:
+            if f.read().strip() == cmd: sys.exit(0)
+    with open(last_f, 'w') as f: f.write(cmd)
+    
+    url = os.environ.get("STORY_LOGGER_URL", "http://story_logger:8600").rstrip("/")
+    payload = {
+        "ts": datetime.datetime.utcnow().isoformat() + "Z",
+        "sensor": "attacker_node",
+        "event_type": "INTERACTIVE_COMMAND",
+        "src_ip": "172.28.0.50",
+        "stage": "S3",
+        "journey_id": os.environ.get("STORY_RUN_ID", "interactive_session"),
+        "outcome": "observed",
+        "severity": "HIGH",
+        "meta": {
+            "message": f"Attacker executed command: {cmd}",
+            "level": "Level 2",
+            "command": cmd,
+            "mitre_tactic": "Execution",
+            "mitre_technique_id": "T1059.004",
+            "mitre_technique_name": "Command and Scripting Interpreter: Unix Shell",
+            "kill_chain_stage": "Stage 3 - Discovery & Pivot",
+            "purdue_level": "Level 2"
+        }
+    }
+    req = urllib.request.Request(
+        f"{url}/story/events",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    urllib.request.urlopen(req, timeout=0.5)
+except Exception as e:
+    pass
+EOF
+
+RUN echo 'export PROMPT_COMMAND='\''cmd=$(history 1 | sed -e "s/^[ ]*[0-9]*[ ]*//"); python3 /tools/log_cmd.py "$cmd"'\''' >> /root/.bashrc
 
 # Copy attack scripts
 COPY s7comm_probe.py .

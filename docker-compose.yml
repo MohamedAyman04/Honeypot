@@ -115,18 +115,34 @@ services:
     restart: unless-stopped
 
   # ── SCADA SSH Workstation (Purdue Level 2 — Lateral Movement Pivot) ───────────
+  # Exposes:
+  #   :2222  — SSH service (lateral-movement target; engineer/operator accounts)
+  #   :5100  — Physics REST API (unauthenticated; cross-layer data bridge to L3)
   ics_scada_ssh:
     build:
-      context: ./scada_ssh
+      context: . # Level 2 root — gives access to physics/ package
+      dockerfile: scada_ssh/Dockerfile # explicit path because context is now the parent
     container_name: ics_scada_ssh
     networks:
-      - ot-net
-      - enterprise-net
-      - dmz-net
+      ot-net: {}
+      dmz-net: {}
+      enterprise-net:
+        ipv4_address: 192.168.50.10 # static IP — referenced by L3 OPC-UA bridge
+      l2l3-bridge-net:
+        ipv4_address: 172.28.0.10 # shared bridge to Level 3 stack
     cap_add:
       - NET_ADMIN
     ports:
-      - "2222:2222"
+      - "2222:2222" # SSH
+      - "5100:5100" # Physics REST API (Level 2 → Level 3 data flow)
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - PHYSICS_API_PORT=5100
+      - LOG_DIR=/var/log/honeynet
+      - L2L3_SHARED_TOKEN=${L2L3_SHARED_TOKEN:-change-this-token}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    volumes:
+      - unified-logs:/var/log/honeynet # unified log volume shared across services
     restart: unless-stopped
 
   # ── HMI Web Dashboard (Purdue Level 2) ────────────────────────────────────────
@@ -201,6 +217,8 @@ services:
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+      - STORY_LOGGER_URL=http://story_logger:8600
+      - STORY_RUN_ID=${STORY_RUN_ID}
     restart: unless-stopped
 
   # ── Historian API (Purdue Level 3 Integration Bridge) ─────────────────────────
@@ -274,7 +292,7 @@ services:
 
   # ── InfluxDB Historian (Purdue Level 2/3 Data Store) ─────────────────────────
   historian:
-    image: influxdb:latest
+    image: influxdb:2.7.6
     container_name: ics_historian
     ports:
       - "8086:8086"
@@ -315,6 +333,8 @@ services:
     container_name: ics_grafana
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./grafana_provisioning:/etc/grafana/provisioning
       - ./grafana_dashboards:/var/lib/grafana/dashboards
@@ -332,6 +352,8 @@ services:
       - grafana-image-renderer
     networks:
       - monitor-net
+    dns:
+      - 127.0.0.11
     restart: unless-stopped
 
   # ── Attacker Node (Purdue Level 3.5 / External Threat Simulation) ─────────────
@@ -354,8 +376,29 @@ services:
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+      - STORY_LOGGER_URL=http://story_logger:8600
+      - STORY_RUN_ID=${STORY_RUN_ID}
     stdin_open: true
     tty: true
+    restart: unless-stopped
+
+  # ── Story Logger (cross-level narrative log) ───────────────────────────────
+  story_logger:
+    build:
+      context: ../Industrial-honeypot/story_logger
+      dockerfile: Dockerfile
+    container_name: story_logger_l2
+    ports:
+      - "8600:8600"
+    volumes:
+      - .:/repo
+    environment:
+      - "STORY_LOG_PATH=/repo/general logs.jsonl"
+      - PYTHONUNBUFFERED=1
+    networks:
+      - dmz-net
+      - monitor-net
+      - l2l3-bridge-net
     restart: unless-stopped
 
   # ── Honeypot Historian API (DMZ-facing decoy) ─────────────────────────────────
@@ -384,22 +427,21 @@ services:
       - ics_scada_ssh
     restart: unless-stopped
 
+  # ── Level 2 Log Dashboard (Streamlit — mirrors L3 :8501) ─────────────────────
   log_dashboard:
     build:
       context: ./log_dashboard
     container_name: ics_log_dashboard
     ports:
-      - "8502:8502"
+      - "8502:8501"
+    volumes:
+      - "./general logs.jsonl:/data/general_logs.jsonl"
     networks:
       - monitor-net
     env_file: .env
     environment:
-      - INFLUX_URL=${INFLUX_URL}
-      - INFLUX_TOKEN=${INFLUX_TOKEN}
-      - INFLUX_ORG=${INFLUX_ORG}
-      - INFLUX_BUCKET=${INFLUX_BUCKET}
-      - DASHBOARD_RANGE=-6h
-      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+      - LOG_FILE_PATH=/data/general_logs.jsonl
+      - PYTHONUNBUFFERED=1
     depends_on:
       - historian
     restart: unless-stopped
@@ -407,6 +449,8 @@ services:
 volumes:
   shared-data:
   influx-data:
+  unified-logs:
+    # shared JSONL log volume — all services write to this
 
 networks:
   # Purdue Level 1/2 — OT process network (physics, PLCs, Redis)
@@ -424,3 +468,11 @@ networks:
   # Purdue Level 3 — Enterprise network (historian API, SCADA SSH)
   enterprise-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.50.0/24
+
+  # Shared bridge between Level 2 and Level 3 stacks.
+  # Create before first run:  docker network create l2l3-bridge-net --subnet 172.28.0.0/24
+  l2l3-bridge-net:
+    external: true

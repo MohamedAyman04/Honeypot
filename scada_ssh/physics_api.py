@@ -58,7 +58,7 @@ except ImportError:
     from logger.unified_logger import UnifiedLogger
 
 # ── Logging setup ──────────────────────────────────────────────────────────────
-unified_logger = UnifiedLogger(service="physics_api", layer="Level_2", log_dir=LOG_DIR)
+unified_logger = UnifiedLogger(service="physics_api", layer="Level 2", log_dir=LOG_DIR)
 
 
 # ── Physics engine (shared Redis state with plc/modbus_server.py) ──────────────

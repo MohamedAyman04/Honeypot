@@ -29,6 +29,11 @@ import uuid
 import threading
 import collections
 import statistics
+import json
+import secrets
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 import joblib
@@ -80,6 +85,9 @@ LSTM_LATENT_DIM     = 32
 LSTM_EPOCHS         = 20
 LSTM_BATCH_SIZE     = 32
 LSTM_THRESHOLD_PCTL = 99    # p99 of train reconstruction errors → threshold
+LSTM_ERROR_MARGIN   = 4.0   # multiply threshold by this to reduce FP on borderline cases
+LSTM_CONFIRM_WINDOW = 3     # require this many consecutive anomalous windows before alerting
+_lstm_consecutive_anom = 0  # counter for consecutive LSTM anomaly windows
 
 # ── Replay LSTM hyper-parameters ──────────────────────────────────────────────
 REPLAY_LSTM_SEQ_LEN        = 15   # shorter window — replay patterns emerge quickly
@@ -139,6 +147,56 @@ _drift_attack_seen       = False
 
 # ── Session ID ────────────────────────────────────────────────────────────────
 SESSION_ID = os.environ.get("SESSION_ID", str(uuid.uuid4())[:8])
+
+# ── Story logger client (HTTP) ───────────────────────────────────────────────
+def _story_run_id() -> str:
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    nonce = secrets.token_hex(2)
+    return f"{ts}_{nonce}"
+
+
+_STORY_LOGGER_URL = (os.environ.get("STORY_LOGGER_URL") or "http://story_logger:8600").rstrip("/")
+_STORY_RUN_ID = os.environ.get("STORY_RUN_ID") or _story_run_id()
+_STORY_TIMEOUT = float(os.environ.get("STORY_LOGGER_TIMEOUT", "0.5"))
+
+_ALERT_SEVERITY = {
+    "SEMANTIC_INJECTION": "critical",
+    "REPLAY_ATTACK": "critical",
+    "STEALTH_DRIFT": "high",
+    "STEALTH_DRIFT_EWMA": "high",
+    "CROSS_LAYER_ANOMALY": "high",
+}
+
+
+def _story_log(event_type: str, message: str, severity: str = "info", details: dict | None = None) -> None:
+    if not _STORY_LOGGER_URL:
+        return
+
+    payload = {
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "sensor": "synthetic",  # ML engine generates synthetic events
+        "event_type": event_type,
+        "src_ip": details.get("src_ip", "0.0.0.0") if details else "0.0.0.0",
+        "stage": details.get("stage", "S1") if details else "S1",
+        "journey_id": _STORY_RUN_ID,
+        "outcome": severity if severity in ("critical", "high", "observed") else "observed",
+        "level": "Level 2",
+        "meta": details or {},
+    }
+    payload["meta"]["message"] = message
+    payload["meta"]["component"] = "ml-engine"
+
+    data = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+    request = urllib.request.Request(
+        url=f"{_STORY_LOGGER_URL}/story/events",
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_STORY_TIMEOUT):
+            pass
+    except (urllib.error.URLError, urllib.error.HTTPError, ValueError):
+        return
 
 # ── In-memory model references ─────────────────────────────────────────────────
 _if_model           = None    # IsolationForest (general anomaly)
@@ -241,9 +299,12 @@ def _try_load_lstm() -> bool:
 
 def _score_lstm(features: pd.DataFrame) -> tuple[bool, float]:
     """Score the most recent 20-sample window with the general LSTM autoencoder."""
+    global _lstm_consecutive_anom
     if _lstm_model is None or _lstm_scaler is None or _lstm_threshold is None:
+        _lstm_consecutive_anom = 0
         return False, 0.0
     if len(features) < LSTM_SEQ_LEN:
+        _lstm_consecutive_anom = 0
         return False, 0.0
 
     tail   = features.tail(LSTM_SEQ_LEN).values.astype(np.float32)
@@ -255,7 +316,15 @@ def _score_lstm(features: pd.DataFrame) -> tuple[bool, float]:
     seq    = scaled[np.newaxis, :, :]
 
     error = float(_reconstruction_errors(_lstm_model, seq)[0])
-    return error > _lstm_threshold, error
+    effective_threshold = _lstm_threshold * LSTM_ERROR_MARGIN
+
+    if error > effective_threshold:
+        _lstm_consecutive_anom += 1
+    else:
+        _lstm_consecutive_anom = 0
+
+    confirmed = _lstm_consecutive_anom >= LSTM_CONFIRM_WINDOW
+    return confirmed, error
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -661,6 +730,14 @@ def _record_alert(alert_type: str, detail: str, score: float) -> None:
         if len(_api_state["recent_alerts"]) > 1000:
             _api_state["recent_alerts"] = _api_state["recent_alerts"][-1000:]
         _api_state["last_anomaly"] = entry
+
+    severity = _ALERT_SEVERITY.get(alert_type, "medium")
+    _story_log(
+        "detection_alert",
+        f"{alert_type} detected",
+        severity=severity,
+        details={"alert_type": alert_type, "detail": detail, "score": round(score, 4)},
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1388,6 +1465,7 @@ def _start_api_server() -> None:
 api_thread = threading.Thread(target=_start_api_server, daemon=True)
 api_thread.start()
 time.sleep(2)
+_story_log("ml_engine_started", "ML engine startup complete", details={"session_id": SESSION_ID})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
