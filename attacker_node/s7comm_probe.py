@@ -17,6 +17,55 @@ import time
 TARGET = sys.argv[1] if len(sys.argv) > 1 else "ics_s7_plc"
 PORT   = int(sys.argv[2]) if len(sys.argv) > 2 else 102
 
+
+def _story_log(event_type: str, message: str, details: dict = None) -> None:
+    """Send an event to the story_logger to be written in general logs.jsonl."""
+    import json
+    import os
+    import urllib.request
+    import urllib.error
+
+    logger_url = os.environ.get("STORY_LOGGER_URL")
+    urls_to_try = []
+    if logger_url:
+        urls_to_try.append(logger_url.rstrip("/"))
+    else:
+        urls_to_try.extend(["http://localhost:8600", "http://story_logger:8600"])
+
+    payload = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+        "sensor": "attacker_node",
+        "event_type": event_type,
+        "src_ip": "172.28.0.50",
+        "stage": "S2",
+        "journey_id": "probe_session",
+        "outcome": "observed",
+        "severity": "MEDIUM",
+        "mitre_technique_id": "T0846",
+        "mitre_technique_name": "Network Service Discovery",
+        "mitre_tactic": "Discovery",
+        "kill_chain_stage": "Stage 2 - ICS Impact",
+        "purdue_level": "Level 2",
+        "protocol": "S7comm",
+        "meta": {
+            "narrative": message,
+            "target_service": "ics_s7_plc",
+            "target_ip": TARGET,
+            **(details or {})
+        }
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+    for base_url in urls_to_try:
+        url = f"{base_url}/story/events"
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=0.5):
+                return
+        except Exception:
+            continue
+
+
 # ── S7comm packets ─────────────────────────────────────────────────────────────
 # ISO-on-TCP (RFC 1006) + COTP Connection Request (CR)
 COTP_CR = bytes([
@@ -88,7 +137,7 @@ def probe(host: str, port: int):
 
     pdu_size = None
     s7_ack = False
-    if len(resp2) >= 8 and resp2[7] == 0x03:
+    if len(resp2) >= 9 and (resp2[7] == 0x03 or resp2[8] == 0x03):
         print("[S7-PROBE] ✓ S7 ACK-DATA received — communication negotiated!")
         s7_ack = True
         # Parse PDU size from response
@@ -106,6 +155,12 @@ def probe(host: str, port: int):
 # ── Main ──────────────────────────────────────────────────────────────────────
 try:
     success, pdu_size = probe(TARGET, PORT)
+    if success:
+        _story_log(
+            "S7COMM_PROBE",
+            f"S7comm probe from 172.28.0.50 — fingerprinting Siemens PLC identity. Negotiated PDU size: {pdu_size} bytes",
+            {"pdu_size": pdu_size}
+        )
 except Exception as e:
     print(f"[S7-PROBE] Error: {e}")
     sys.exit(1)

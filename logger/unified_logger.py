@@ -119,6 +119,16 @@ _ATTACK_MAP: dict[str, tuple] = {
         "Stage 1 - IT Intrusion", "Level 1", "DNP3",
         "DNP3 probe from {source_ip} — scanning power/water protocol endpoints.",
     ),
+    "CREDENTIAL_DISCOVERY": (
+        "T1005", "Data from Local System", "Credential Access",
+        "Stage 1 - IT Intrusion", "Level 3", "SSH",
+        "Attacker read local files on {target_service} from {source_ip} — mining logs for exposed credentials.",
+    ),
+    "TERMINAL_CMD": (
+        "T1059", "Command and Scripting Interpreter", "Execution",
+        "Stage 1 - IT Intrusion", "Level 3", "N/A",
+        "Terminal command executed by {source_ip} against {target_service}.",
+    ),
 }
 
 _UNKNOWN_ENTRY: tuple = (

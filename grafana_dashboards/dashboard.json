@@ -924,6 +924,159 @@
             ],
             "title": "Honeypot Events",
             "type": "table"
+        },
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 57 },
+            "id": 104,
+            "title": "Terminal Operator Commands (Host-Side Attacks)",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "red", "value": 1 }
+                        ]
+                    },
+                    "mappings": [
+                        { "options": { "match": "null",  "result": { "text": "NONE", "color": "green", "index": 0 } }, "type": "special" },
+                        { "options": { "match": "empty", "result": { "text": "NONE", "color": "green", "index": 1 } }, "type": "special" },
+                        { "options": { "1": { "text": "DETECTED", "color": "red", "index": 2 } }, "type": "value" }
+                    ]
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 6, "x": 0, "y": 58 },
+            "id": 20,
+            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "targets": [
+                {
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"AUTH_ATTEMPT\" or r[\"event_type\"] == \"LATERAL_MOVEMENT\"))\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSH Attempts",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "orange", "value": 1 }
+                        ]
+                    },
+                    "mappings": [
+                        { "options": { "match": "null",  "result": { "text": "NONE", "color": "green",  "index": 0 } }, "type": "special" },
+                        { "options": { "match": "empty", "result": { "text": "NONE", "color": "green",  "index": 1 } }, "type": "special" },
+                        { "options": { "1": { "text": "DETECTED", "color": "orange", "index": 2 } }, "type": "value" }
+                    ]
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 6, "x": 6, "y": 58 },
+            "id": 21,
+            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "targets": [
+                {
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and r[\"event_type\"] == \"API_ACCESS\")\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "refId": "A"
+                }
+            ],
+            "title": "API Recon Probes",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "dark-red", "value": 1 }
+                        ]
+                    },
+                    "mappings": [
+                        { "options": { "match": "null",  "result": { "text": "NONE",     "color": "green",    "index": 0 } }, "type": "special" },
+                        { "options": { "match": "empty", "result": { "text": "NONE",     "color": "green",    "index": 1 } }, "type": "special" },
+                        { "options": { "1": { "text": "EXECUTED!", "color": "dark-red", "index": 2 } }, "type": "value" }
+                    ]
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 6, "x": 12, "y": 58 },
+            "id": 22,
+            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "targets": [
+                {
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and r[\"event_type\"] == \"MODBUS_WRITE\")\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "refId": "A"
+                }
+            ],
+            "title": "Modbus Writes (Malicious)",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 1 }
+                        ]
+                    },
+                    "mappings": [
+                        { "options": { "match": "null",  "result": { "text": "NONE",      "color": "green",  "index": 0 } }, "type": "special" },
+                        { "options": { "match": "empty", "result": { "text": "NONE",      "color": "green",  "index": 1 } }, "type": "special" },
+                        { "options": { "1": { "text": "DETECTED", "color": "yellow", "index": 2 } }, "type": "value" }
+                    ]
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 6, "x": 18, "y": 58 },
+            "id": 23,
+            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "targets": [
+                {
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"MODBUS_READ\" or r[\"event_type\"] == \"CREDENTIAL_DISCOVERY\"))\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "refId": "A"
+                }
+            ],
+            "title": "Modbus Reads / Cred Discovery",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "fieldConfig": {
+                "defaults": { "custom": {} },
+                "overrides": []
+            },
+            "gridPos": { "h": 10, "w": 24, "x": 0, "y": 63 },
+            "id": 24,
+            "options": { "frameIndex": 0, "showHeader": true },
+            "targets": [
+                {
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\")\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 100)",
+                    "refId": "A"
+                }
+            ],
+            "title": "Terminal Command Log (hplog events)",
+            "type": "table"
         }
     ],
     "refresh": "5s",

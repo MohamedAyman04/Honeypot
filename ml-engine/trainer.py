@@ -86,6 +86,8 @@ LSTM_EPOCHS         = 20
 LSTM_BATCH_SIZE     = 32
 LSTM_THRESHOLD_PCTL = 99    # p99 of train reconstruction errors → threshold
 LSTM_ERROR_MARGIN   = 4.0   # multiply threshold by this to reduce FP on borderline cases
+LSTM_MIN_THRESHOLD  = 0.01  # absolute floor — prevents near-zero thresholds from causing FP floods
+                             # (e.g. when model is trained on a flat/low-variance startup ramp)
 LSTM_CONFIRM_WINDOW = 3     # require this many consecutive anomalous windows before alerting
 _lstm_consecutive_anom = 0  # counter for consecutive LSTM anomaly windows
 
@@ -266,7 +268,10 @@ def _train_lstm(features: pd.DataFrame):
 
     train_errors = _reconstruction_errors(model, sequences)
     threshold    = float(np.percentile(train_errors, LSTM_THRESHOLD_PCTL))
-    print(f"[LSTM] Trained — threshold={threshold:.6f}  (p{LSTM_THRESHOLD_PCTL})")
+    # Apply minimum floor: if training data has very low variance (e.g. a startup ramp),
+    # the raw p99 can be near-zero, causing every normal reading to be flagged.
+    threshold = max(threshold, LSTM_MIN_THRESHOLD)
+    print(f"[LSTM] Trained — threshold={threshold:.6f}  (p{LSTM_THRESHOLD_PCTL}, floor={LSTM_MIN_THRESHOLD})")
 
     try:
         model.save(LSTM_MODEL_FILE)
@@ -316,7 +321,9 @@ def _score_lstm(features: pd.DataFrame) -> tuple[bool, float]:
     seq    = scaled[np.newaxis, :, :]
 
     error = float(_reconstruction_errors(_lstm_model, seq)[0])
-    effective_threshold = _lstm_threshold * LSTM_ERROR_MARGIN
+    # Apply the minimum floor here too — guards against stale models loaded from disk
+    # that were trained before the floor was enforced.
+    effective_threshold = max(_lstm_threshold, LSTM_MIN_THRESHOLD) * LSTM_ERROR_MARGIN
 
     if error > effective_threshold:
         _lstm_consecutive_anom += 1

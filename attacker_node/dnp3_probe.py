@@ -15,6 +15,54 @@ import time
 TARGET = sys.argv[1] if len(sys.argv) > 1 else "ics_dnp3"
 PORT   = int(sys.argv[2]) if len(sys.argv) > 2 else 20000
 
+# ── Story Logging ─────────────────────────────────────────────────────────────
+def _story_log(event_type: str, message: str, details: dict = None) -> None:
+    """Send an event to the story_logger to be written in general logs.jsonl."""
+    import json
+    import os
+    import urllib.request
+    import urllib.error
+
+    logger_url = os.environ.get("STORY_LOGGER_URL")
+    urls_to_try = []
+    if logger_url:
+        urls_to_try.append(logger_url.rstrip("/"))
+    else:
+        urls_to_try.extend(["http://localhost:8600", "http://story_logger:8600"])
+
+    payload = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+        "sensor": "attacker_node",
+        "event_type": event_type,
+        "src_ip": "172.28.0.50",
+        "stage": "S2",
+        "journey_id": "probe_session",
+        "outcome": "observed",
+        "severity": "MEDIUM",
+        "mitre_technique_id": "T0846",
+        "mitre_technique_name": "Network Service Discovery",
+        "mitre_tactic": "Discovery",
+        "kill_chain_stage": "Stage 2 - ICS Impact",
+        "purdue_level": "Level 2",
+        "protocol": "DNP3",
+        "meta": {
+            "narrative": message,
+            "target_service": "ics_dnp3",
+            "target_ip": TARGET,
+            **(details or {})
+        }
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+    for base_url in urls_to_try:
+        url = f"{base_url}/story/events"
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=0.5):
+                return
+        except Exception:
+            continue
+
 # ── DNP3 CRC-16 ───────────────────────────────────────────────────────────────
 def _build_crc_table():
     table = []
@@ -80,6 +128,13 @@ try:
         print("[DNP3-PROBE] Unexpected response format.")
 
     sock.close()
+
+    if ack_received:
+        _story_log(
+            "DNP3_PROBE",
+            f"DNP3 link-layer probe from 172.28.0.50 — connection request and handshake with outstation. Outstation address: {src}",
+            {"src_address": src, "dst_address": dst, "ctrl_byte": f"0x{ctrl:02X}"}
+        )
 
 except Exception as e:
     print(f"[DNP3-PROBE] Error: {e}")

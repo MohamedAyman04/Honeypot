@@ -73,7 +73,24 @@ DNP3_PORT   = 20000
 SSH_PORT    = 2222
 
 # ── InfluxDB direct-write config (attacker-side guaranteed visibility) ────────
-INFLUX_URL_ATTACKER   = os.environ.get("INFLUX_URL",    "http://ics_historian:8086")
+def _resolve_influx_url() -> str:
+    env_url = os.environ.get("INFLUX_URL")
+    if env_url:
+        return env_url.rstrip("/")
+    for host_url in ["http://ics_historian:8086", "http://localhost:8086"]:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(host_url)
+            h = parsed.hostname
+            p = parsed.port or 80
+            s = socket.create_connection((h, p), timeout=0.2)
+            s.close()
+            return host_url
+        except Exception:
+            continue
+    return "http://ics_historian:8086"
+
+INFLUX_URL_ATTACKER   = _resolve_influx_url()
 INFLUX_TOKEN_ATTACKER = os.environ.get("INFLUX_TOKEN",  "supersecrettoken")
 INFLUX_ORG_ATTACKER   = os.environ.get("INFLUX_ORG",    "my_refinery")
 INFLUX_BUCKET_ATTACKER= os.environ.get("INFLUX_BUCKET", "sensor_logs")
@@ -94,8 +111,24 @@ def _story_run_id() -> str:
     nonce = secrets.token_hex(2)
     return f"{ts}_{nonce}"
 
+def _resolve_story_logger_url() -> str:
+    env_url = os.environ.get("STORY_LOGGER_URL")
+    if env_url:
+        return env_url.rstrip("/")
+    for host_url in ["http://story_logger:8600", "http://localhost:8600"]:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(host_url)
+            h = parsed.hostname
+            p = parsed.port or 80
+            s = socket.create_connection((h, p), timeout=0.2)
+            s.close()
+            return host_url
+        except Exception:
+            continue
+    return "http://story_logger:8600"
 
-_STORY_LOGGER_URL = (os.environ.get("STORY_LOGGER_URL") or "http://story_logger:8600").rstrip("/")
+_STORY_LOGGER_URL = _resolve_story_logger_url()
 _STORY_RUN_ID = os.environ.get("STORY_RUN_ID") or _story_run_id()
 _STORY_TIMEOUT = float(os.environ.get("STORY_LOGGER_TIMEOUT", "0.5"))
 
@@ -598,6 +631,12 @@ def phase6_lateral_movement(targets: dict):
         found(f"Leaked Creds → {scada_user} / {scada_pass} @ {scada_host}:{scada_port}")
     except Exception:
         warn("Could not query honeypot API; assuming defaults for demo.")
+
+    # Robust host-side hostname resolution check
+    try:
+        socket.gethostbyname(scada_host)
+    except Exception:
+        scada_host = "localhost"
 
     mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials", level="Level 3", tactic="Initial Access")
     info("━━ Step 3: Login as Engineer (Read-Only) ━━")
