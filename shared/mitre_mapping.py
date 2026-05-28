@@ -53,12 +53,44 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
+    "credential_discovery": {
+        "mitre_tactic":         "Credential Access",
+        "mitre_technique_id":   "T1005",
+        "mitre_technique_name": "Data from Local System",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 2",
+        "protocol":             "SSH",
+    },
+    "lateral_movement": {
+        "mitre_tactic":         "Lateral Movement",
+        "mitre_technique_id":   "T0867",
+        "mitre_technique_name": "Lateral Tool Transfer",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 2",
+        "protocol":             "SSH",
+    },
+    "network_scan": {
+        "mitre_tactic":         "Reconnaissance",
+        "mitre_technique_id":   "T1595",
+        "mitre_technique_name": "Active Scanning",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 2",
+        "protocol":             "Modbus",
+    },
+    "terminal_cmd": {
+        "mitre_tactic":         "Execution",
+        "mitre_technique_id":   "T0807",
+        "mitre_technique_name": "Command-Line Interface",
+        "kill_chain_stage":     "Stage 1 - IT Intrusion",
+        "purdue_level":         "Level 2",
+        "protocol":             "SSH",
+    },
     "forced_write": {
         "mitre_tactic":         "Impair Process Control",
         "mitre_technique_id":   "T0855",
         "mitre_technique_name": "Unauthorized Command Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "replay_attack": {
@@ -66,7 +98,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0856",
         "mitre_technique_name": "Spoof Reporting Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
 
@@ -110,7 +142,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0802",
         "mitre_technique_name": "Automated Collection",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "DNP3",
     },
     "dnp3_write": {
@@ -118,7 +150,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0855",
         "mitre_technique_name": "Unauthorized Command Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "DNP3",
     },
     "dnp3_direct_operate": {
@@ -126,7 +158,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0855",
         "mitre_technique_name": "Unauthorized Command Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "DNP3",
     },
     "dnp3_unsolicited": {
@@ -134,7 +166,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0802",
         "mitre_technique_name": "Automated Collection",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "DNP3",
     },
     "S7COMM_PROBE": {
@@ -150,7 +182,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0846",
         "mitre_technique_name": "Network Service Discovery",
         "kill_chain_stage":     "Stage 1 - IT Intrusion",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "DNP3",
     },
 
@@ -160,7 +192,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0812",
         "mitre_technique_name": "Default Credentials",
         "kill_chain_stage":     "Stage 1 - IT Intrusion",
-        "purdue_level":         "Level 3",
+        "purdue_level":         "Level 2",
         "protocol":             "SSH",
     },
     "ssh_bruteforce": {
@@ -168,7 +200,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0812",
         "mitre_technique_name": "Default Credentials",
         "kill_chain_stage":     "Stage 1 - IT Intrusion",
-        "purdue_level":         "Level 3",
+        "purdue_level":         "Level 2",
         "protocol":             "SSH",
     },
     "ssh_command": {
@@ -176,7 +208,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0807",
         "mitre_technique_name": "Command-Line Interface",
         "kill_chain_stage":     "Stage 1 - IT Intrusion",
-        "purdue_level":         "Level 3",
+        "purdue_level":         "Level 2",
         "protocol":             "SSH",
     },
     "ssh_recon": {
@@ -184,7 +216,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0842",
         "mitre_technique_name": "Network Sniffing",
         "kill_chain_stage":     "Stage 1 - IT Intrusion",
-        "purdue_level":         "Level 3",
+        "purdue_level":         "Level 2",
         "protocol":             "SSH",
     },
 
@@ -194,7 +226,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0806",
         "mitre_technique_name": "Brute Force I/O",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "LSTM_AUTOENCODER": {
@@ -202,7 +234,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0856",
         "mitre_technique_name": "Spoof Reporting Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "REPLAY_LSTM": {
@@ -210,7 +242,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0856",
         "mitre_technique_name": "Spoof Reporting Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "SEMANTIC_INJECTION": {
@@ -234,7 +266,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0836",
         "mitre_technique_name": "Modify Parameter",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "OVER_PRESSURE": {
@@ -250,7 +282,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0836",
         "mitre_technique_name": "Modify Parameter",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "ZERO_VARIANCE": {
@@ -258,7 +290,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0856",
         "mitre_technique_name": "Spoof Reporting Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
     "REPLAY_FINGERPRINT": {
@@ -266,7 +298,7 @@ TECHNIQUE_MAP: dict[str, dict[str, str]] = {
         "mitre_technique_id":   "T0856",
         "mitre_technique_name": "Spoof Reporting Message",
         "kill_chain_stage":     "Stage 2 - ICS Impact",
-        "purdue_level":         "Level 1",
+        "purdue_level":         "Level 2",
         "protocol":             "Modbus",
     },
 }
@@ -287,8 +319,12 @@ def lookup(event_type: str) -> dict[str, str]:
     Return the ATT\u0026CK metadata dict for *event_type*.
     Falls back to _UNKNOWN if the key is not in the table.
     The returned dict is a shallow copy — safe to mutate.
+    All events are tagged Purdue Level 2 for this honeypot deployment.
     """
-    return dict(TECHNIQUE_MAP.get(event_type, _UNKNOWN))
+    key = event_type.lower() if isinstance(event_type, str) else event_type
+    result = dict(TECHNIQUE_MAP.get(key, TECHNIQUE_MAP.get(event_type, _UNKNOWN)))
+    result["purdue_level"] = "Level 2"
+    return result
 
 
 def enrich_point(point, event_type: str):

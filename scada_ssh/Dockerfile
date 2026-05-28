@@ -26,7 +26,8 @@ RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends \
 # ── Install mbtget (Modbus CLI read/write tool) ───────────────────────────────
 RUN wget -q --no-check-certificate https://raw.githubusercontent.com/sourceperl/mbtget/master/scripts/mbtget \
     -O /usr/local/bin/mbtget && \
-    chmod +x /usr/local/bin/mbtget
+    chmod +x /usr/local/bin/mbtget && \
+    python3 -c "with open('/usr/local/bin/mbtget', 'r') as f: t = f.read(); t = t.replace('[a-z][a-z0-9\\\\.\\\\-]+', '[a-z][a-z0-9\\\\._\\\\-]+'); open('/usr/local/bin/mbtget', 'w').write(t)"
 
 # ── Python dependencies for the physics REST API ───────────────────────────────
 # flask  — lightweight REST server
@@ -41,7 +42,9 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 RUN useradd -m -s /bin/bash -g operator operator && \
     echo "operator:operator123" | chpasswd && \
     useradd -m -s /bin/bash engineer && \
-    echo "engineer:engineer456" | chpasswd
+    echo "engineer:engineer456" | chpasswd && \
+    chown operator:operator /usr/local/bin/mbtget && \
+    chmod 750 /usr/local/bin/mbtget
 
 # ── SSH server configuration ───────────────────────────────────────────────────
 RUN mkdir /var/run/sshd && \
@@ -50,6 +53,7 @@ RUN mkdir /var/run/sshd && \
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
     sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config && \
     echo "Port 2222" >> /etc/ssh/sshd_config && \
+    echo "AcceptEnv STORY_RUN_ID" >> /etc/ssh/sshd_config && \
     ssh-keygen -A
 
 # ── Realistic MOTD ─────────────────────────────────────────────────────────────
@@ -167,9 +171,13 @@ historian_svc:hist_svc_2023  # historian bridge service\n" \
 COPY physics/ /opt/physics_api/physics/
 COPY scada_ssh/physics_api.py /opt/physics_api/physics_api.py
 COPY logger/ /opt/logger/
+COPY shared/ /opt/shared/
+COPY scada_ssh/log_scada_cmd.py /usr/local/bin/log_scada_cmd.py
+RUN chmod +x /usr/local/bin/log_scada_cmd.py && \
+    echo 'export PROMPT_COMMAND='\''cmd=$(history 1 | sed -e "s/^[ ]*[0-9]*[ ]*//"); python3 /usr/local/bin/log_scada_cmd.py "$cmd"'\''' >> /etc/bash.bashrc
 
-# Set PYTHONPATH so 'from physics.physics_engine import ...' resolves inside the container
-ENV PYTHONPATH=/opt/physics_api
+# PYTHONPATH: physics engine, MITRE mapping (shared/), unified logger
+ENV PYTHONPATH=/opt/physics_api:/opt/shared:/opt/logger
 
 # ── Log directories ───────────────────────────────────────────────────────────
 RUN mkdir -p /var/log/scada && chmod 777 /var/log/scada
@@ -204,8 +212,11 @@ echo "[SCADA-SSH] Physics REST API started on :5100 (PID $!)"
 
 # Save env vars for SSH sessions
 echo "INFLUX_URL=\"$INFLUX_URL\"" >> /etc/environment
+echo "INFLUX_TOKEN=\"$INFLUX_TOKEN\"" >> /etc/environment
+echo "INFLUX_ORG=\"$INFLUX_ORG\"" >> /etc/environment
+echo "INFLUX_BUCKET=\"$INFLUX_BUCKET\"" >> /etc/environment
 echo "STORY_LOGGER_URL=\"$STORY_LOGGER_URL\"" >> /etc/environment
-echo "PYTHONPATH=/opt/logger:/opt/physics_api" >> /etc/environment
+echo "PYTHONPATH=/opt/physics_api:/opt/shared:/opt/logger" >> /etc/environment
 
 # Create an SSH login hook to log lateral movement
 cat <<'HOOK_EOF' > /etc/profile.d/log_ssh.sh
@@ -213,7 +224,9 @@ if [ -n "$SSH_CONNECTION" ]; then
     python3 -c '
 import os, sys
 try:
-    sys.path.append("/opt/logger")
+    for _p in ("/opt/shared", "/opt/logger"):
+        if _p not in sys.path:
+            sys.path.insert(0, _p)
     from unified_logger import UnifiedLogger
     logger = UnifiedLogger(service="scada_ssh", layer="Level 2", log_dir="/var/log/scada")
     user = os.environ.get("USER", "unknown")
@@ -223,6 +236,7 @@ try:
         event_type="LATERAL_MOVEMENT",
         source={"ip": src_ip},
         target={"user": user, "service": "ssh"},
+        session_id=os.environ.get("STORY_RUN_ID"),
         payload={"message": f"SSH Login by {user} from {src_ip}"}
     )
 except Exception as e:

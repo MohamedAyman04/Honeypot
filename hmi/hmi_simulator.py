@@ -128,10 +128,10 @@ def check_replay_attack(live_pressure: float) -> tuple:
             return True, delta
 
     # Signal 2: write flood (attack sprays 15 writes in 1.5 s)
-    # Normal: ~5 writes in 10 s; threshold 10 = 2x normal
+    # Normal: ~20 writes in 10 s; threshold 30 = 1.5x normal
     write_count = get_historian_write_count(seconds=10)
-    if write_count > 10:
-        print(f"[REPLAY] Write flood detected: {write_count} writes in 10 s (normal ~5)")
+    if write_count > 30:
+        print(f"[REPLAY] Write flood detected: {write_count} writes in 10 s (normal ~20)")
         return True, delta
 
     return False, delta

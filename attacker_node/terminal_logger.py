@@ -100,7 +100,7 @@ def classify(argv: list) -> dict:
             mitre_name       = "Internet Accessible Device",
             mitre_tactic     = "Reconnaissance",
             kill_chain_stage = "Stage 1 - IT Intrusion",
-            purdue_level     = "Level 3",
+            purdue_level     = "Level 2",
             protocol         = "HTTP",
             severity         = "MEDIUM",
             stage            = "S1",
@@ -120,7 +120,7 @@ def classify(argv: list) -> dict:
             mitre_name       = "Valid Accounts",
             mitre_tactic     = "Lateral Movement",
             kill_chain_stage = "Stage 1 - IT Intrusion",
-            purdue_level     = "Level 3",
+            purdue_level     = "Level 2",
             protocol         = "SSH",
             severity         = "HIGH",
             stage            = "S1",
@@ -140,7 +140,7 @@ def classify(argv: list) -> dict:
             mitre_name       = "Remote Services",
             mitre_tactic     = "Lateral Movement",
             kill_chain_stage = "Stage 1 - IT Intrusion",
-            purdue_level     = "Level 3\u21922",
+            purdue_level     = "Level 2",
             protocol         = "SSH",
             severity         = "HIGH",
             stage            = "S3",
@@ -160,7 +160,7 @@ def classify(argv: list) -> dict:
             mitre_name       = "Data from Local System",
             mitre_tactic     = "Credential Access",
             kill_chain_stage = "Stage 1 - IT Intrusion",
-            purdue_level     = "Level 3",
+            purdue_level     = "Level 2",
             protocol         = "SSH",
             severity         = "HIGH",
             stage            = "S2",
@@ -307,6 +307,7 @@ def _post_influx(argv: list, ev: dict, outcome: str) -> bool:
         f"mitre_technique_id={_etag(ev['mitre_id'])}",
         f"target_service={_etag(ev['target_service'])}",
         f"source=terminal",
+        f"session_id={_etag(JOURNEY_ID)}",
     ])
 
     cmd_f = _efield(" ".join(argv))
@@ -317,7 +318,7 @@ def _post_influx(argv: list, ev: dict, outcome: str) -> bool:
         f'outcome="{_efield(outcome)}",'
         f'command="{cmd_f}",'
         f'narrative="{nar_f}",'
-        f"value=1 {ts_ns}\n"
+        f"value=1.0 {ts_ns}\n"
     )
     line2 = (
         f"honeypot_events,{tags} "
@@ -352,6 +353,12 @@ def main() -> None:
         sys.exit(0)
 
     argv = sys.argv[1:]
+    run_env = os.environ.copy()
+    if argv and argv[0] in ("ssh", "/usr/bin/ssh"):
+        # SendEnv accepts only the variable *name*; value must be in the client env.
+        run_env["STORY_RUN_ID"] = JOURNEY_ID
+        argv.insert(1, "-o")
+        argv.insert(2, "SendEnv=STORY_RUN_ID")
     ev   = classify(argv)
 
     # Print intercept banner to STDERR (keeps stdout clean for pipes)
@@ -368,7 +375,7 @@ def main() -> None:
     # Run the actual command — stdout goes directly to caller's stdout (pipe-safe)
     # _err(DIM("\u2500" * 60))
     try:
-        result = subprocess.run(argv)
+        result = subprocess.run(argv, env=run_env)
         exit_code = result.returncode
     except FileNotFoundError:
         _err(RED(f"  [error] Command not found: {argv[0]}"))

@@ -89,7 +89,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"protocol\"] and r[\"protocol\"] != \"Unknown\")\n  |> keep(columns: [\"_time\", \"_value\", \"protocol\"])\n  |> group(columns: [\"protocol\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"protocol\"] and r[\"protocol\"] != \"Unknown\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"protocol\"])\n  |> group(columns: [\"protocol\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
                     "refId": "A"
                 }
             ],
@@ -152,7 +152,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"mitre_tactic\"] and r[\"mitre_tactic\"] != \"Unknown\")\n  |> keep(columns: [\"_time\", \"_value\", \"mitre_tactic\"])\n  |> group(columns: [\"mitre_tactic\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"mitre_tactic\"] and r[\"mitre_tactic\"] != \"Unknown\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"mitre_tactic\"])\n  |> group(columns: [\"mitre_tactic\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
                     "refId": "A"
                 }
             ],
@@ -215,7 +215,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> filter(fn: (r) => exists r[\"severity\"] and r[\"severity\"] != \"\")\n  |> keep(columns: [\"_time\", \"_value\", \"severity\"])\n  |> group(columns: [\"severity\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> filter(fn: (r) => exists r[\"severity\"] and r[\"severity\"] != \"\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"severity\"])\n  |> group(columns: [\"severity\"])\n  |> count()\n  |> rename(columns: {\"_value\": \"count\"})\n  |> group()",
                     "refId": "A"
                 }
             ],
@@ -304,7 +304,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"kill_chain_stage\"] and r[\"kill_chain_stage\"] != \"Unknown\")\n  |> keep(columns: [\"_time\", \"_value\", \"kill_chain_stage\"])\n  |> group(columns: [\"kill_chain_stage\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"kill_chain_stage\"] and r[\"kill_chain_stage\"] != \"Unknown\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"kill_chain_stage\"])\n  |> group(columns: [\"kill_chain_stage\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
                     "refId": "A"
                 }
             ],
@@ -381,7 +381,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"purdue_level\"] and r[\"purdue_level\"] != \"Unknown\")\n  |> keep(columns: [\"_time\", \"_value\", \"purdue_level\"])\n  |> group(columns: [\"purdue_level\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"purdue_level\"] and r[\"purdue_level\"] != \"Unknown\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"purdue_level\"])\n  |> group(columns: [\"purdue_level\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
                     "refId": "A"
                 }
             ],
@@ -397,7 +397,7 @@
                 "y": 18
             },
             "id": 40,
-            "title": "Attack Story — Correlated Event Narrative",
+            "title": "Attack Story \u2014 Correlated Event Narrative",
             "type": "row"
         },
         {
@@ -515,11 +515,11 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"narrative\")\n  |> keep(columns: [\"_time\", \"_value\", \"event_type\", \"severity\", \"layer\", \"kill_chain_stage\", \"mitre_tactic\", \"protocol\", \"session_id\"])\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 60)",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n      (r[\"_measurement\"] == \"security_alerts\" and r[\"_field\"] == \"narrative\") or\n      (r[\"_measurement\"] == \"terminal_commands\" and r[\"_field\"] == \"narrative\") or\n      (r[\"_measurement\"] == \"honeypot_events\" and r[\"_field\"] == \"narrative\")\n  )\n    |> map(fn: (r) => ({r with _value: string(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"event_type\", \"severity\", \"layer\", \"kill_chain_stage\", \"mitre_tactic\", \"protocol\", \"session_id\"])\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 60)",
                     "refId": "A"
                 }
             ],
-            "title": "Attack Story — Narrative Event Log (newest first)",
+            "title": "Attack Story \u2014 Narrative Event Log (newest first)",
             "transformations": [
                 {
                     "id": "organize",
@@ -634,7 +634,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"mitre_tactic\"] and r[\"mitre_tactic\"] != \"Unknown\")\n  |> keep(columns: [\"_time\", \"_value\", \"mitre_tactic\"])\n  |> group(columns: [\"mitre_tactic\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> filter(fn: (r) => exists r[\"mitre_tactic\"] and r[\"mitre_tactic\"] != \"Unknown\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"mitre_tactic\"])\n  |> group(columns: [\"mitre_tactic\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: count, createEmpty: false)\n  |> yield(name: \"count\")",
                     "refId": "A"
                 }
             ],
@@ -699,7 +699,7 @@
                         "type": "influxdb",
                         "uid": "${DS_INFLUXDB}"
                     },
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n  |> keep(columns: [\"_time\", \"_value\", \"event_type\", \"source_ip\", \"mitre_tactic\", \"mitre_technique_id\", \"mitre_technique_name\", \"kill_chain_stage\", \"purdue_level\", \"protocol\"])\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 50)",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"correlation_logs\" or r[\"_measurement\"] == \"security_alerts\" or r[\"_measurement\"] == \"terminal_commands\" or r[\"_measurement\"] == \"honeypot_events\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\" or r[\"_field\"] == \"func_code\")\n    |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> keep(columns: [\"_time\", \"_value\", \"event_type\", \"source_ip\", \"mitre_tactic\", \"mitre_technique_id\", \"mitre_technique_name\", \"kill_chain_stage\", \"purdue_level\", \"protocol\"])\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 50)",
                     "refId": "A"
                 }
             ],
@@ -755,7 +755,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "MITRE ATT&CK for ICS — Attack Story Dashboard",
+    "title": "MITRE ATT&CK for ICS \u2014 Attack Story Dashboard",
     "uid": "mitre_attack_ics",
     "version": 2,
     "weekStart": ""

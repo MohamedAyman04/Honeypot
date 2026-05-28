@@ -225,11 +225,42 @@
                     "mappings": [
                         {
                             "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "Normal",
+                                    "color": "green",
+                                    "index": 0
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "empty",
+                                "result": {
+                                    "text": "Normal",
+                                    "color": "green",
+                                    "index": 1
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
                                 "0": {
-                                    "text": "NORMAL"
+                                    "text": "Normal",
+                                    "color": "green",
+                                    "index": 2
                                 },
                                 "1": {
-                                    "text": "ANOMALY"
+                                    "text": "Anomaly",
+                                    "color": "red",
+                                    "index": 3
+                                },
+                                "1.0": {
+                                    "text": "Anomaly",
+                                    "color": "red",
+                                    "index": 4
                                 }
                             },
                             "type": "value"
@@ -249,12 +280,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -20s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"is_anomaly\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> max()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -30s)\n  |> filter(fn: (r) =>\n      (r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"is_anomaly\") or\n      (r[\"_measurement\"] == \"security_alerts\" and r[\"_field\"] == \"score\")\n  )\n  |> map(fn: (r) => ({\n      r with\n      _value: if r[\"_measurement\"] == \"security_alerts\" then 1.0 else float(v: r._value)\n  }))\n  |> group()\n  |> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -286,7 +322,7 @@
             "id": 6,
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"anomaly_score\")\n  |> group(columns: [\"_measurement\", \"_field\", \"sensor\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_metrics\" and r[\"_field\"] == \"anomaly_score\" and r[\"sensor\"] == \"ml_engine\")\n  |> map(fn: (r) => ({r with _value: float(v: r._value)}))\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: min, createEmpty: false)",
                     "refId": "A"
                 }
             ],
@@ -433,9 +469,19 @@
                         {
                             "options": {
                                 "1": {
-                                    "text": "EXECUTED",
+                                    "text": "DETECTED",
                                     "color": "red",
                                     "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
                                 }
                             },
                             "type": "value"
@@ -455,12 +501,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"SEMANTIC_INJECTION\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"AUTH_ATTEMPT\" or r[\"event_type\"] == \"LATERAL_MOVEMENT\") and r[\"_field\"] == \"value\")\n  |> group()\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n  |> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -522,6 +573,16 @@
                                 }
                             },
                             "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
                         }
                     ]
                 },
@@ -538,12 +599,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\")\n  |> last()\n  |> map(fn: (r) => ({r with _value: if r._value == \"DETECTED\" then 1 else 0}))",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) =>\n      (r[\"_measurement\"] == \"attack_status\" and r[\"attack_type\"] == \"REPLAY\" and r[\"_field\"] == \"status\" and r[\"_value\"] == \"DETECTED\") or\n      (r[\"_measurement\"] == \"security_alerts\" and r[\"alert_type\"] == \"REPLAY_ATTACK\")\n  )\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -605,6 +671,16 @@
                                 }
                             },
                             "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
                         }
                     ]
                 },
@@ -621,12 +697,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"recon_scan_events\" and r[\"event_type\"] == \"recon_scan_detection\" and r[\"_field\"] == \"port\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"recon_scan_events\" and r[\"event_type\"] == \"recon_scan_detection\" and r[\"_field\"] == \"port\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -688,6 +769,16 @@
                                 }
                             },
                             "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
                         }
                     ]
                 },
@@ -704,12 +795,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"S7comm\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"honeypot_events\" and r[\"protocol\"] == \"S7comm\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -771,6 +867,16 @@
                                 }
                             },
                             "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
                         }
                     ]
                 },
@@ -787,12 +893,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"modbus_events\" and r[\"fc_type\"] == \"read\")\n  |> group(columns: [\"_measurement\"])\n  |> count(column: \"_value\")\n  |> map(fn: (r) => ({r with _value: 1}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"modbus_events\" and r[\"fc_type\"] == \"read\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -848,9 +959,19 @@
                         {
                             "options": {
                                 "1": {
-                                    "text": "EXECUTED",
+                                    "text": "DETECTED",
                                     "color": "red",
                                     "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "WAITING",
+                                    "color": "green",
+                                    "index": 3
                                 }
                             },
                             "type": "value"
@@ -870,12 +991,17 @@
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
-                    ]
-                }
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
             },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -15s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and (r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" or r[\"alert_type\"] == \"STEALTH_DRIFT\") and r[\"_field\"] == \"score\")\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"security_alerts\" and (r[\"alert_type\"] == \"STEALTH_DRIFT_EWMA\" or r[\"alert_type\"] == \"STEALTH_DRIFT\") and r[\"_field\"] == \"score\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -927,37 +1053,108 @@
         },
         {
             "collapsed": false,
-            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 57 },
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 57
+            },
             "id": 104,
             "title": "Terminal Operator Commands (Host-Side Attacks)",
             "type": "row"
         },
         {
-            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "datasource": {
+                "type": "influxdb",
+                "uid": "${DS_INFLUXDB}"
+            },
             "fieldConfig": {
                 "defaults": {
-                    "color": { "mode": "thresholds" },
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
-                            { "color": "green", "value": null },
-                            { "color": "red", "value": 1 }
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
                         ]
                     },
                     "mappings": [
-                        { "options": { "match": "null",  "result": { "text": "NONE", "color": "green", "index": 0 } }, "type": "special" },
-                        { "options": { "match": "empty", "result": { "text": "NONE", "color": "green", "index": 1 } }, "type": "special" },
-                        { "options": { "1": { "text": "DETECTED", "color": "red", "index": 2 } }, "type": "value" }
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 0
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "empty",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 1
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "1": {
+                                    "text": "DETECTED",
+                                    "color": "red",
+                                    "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
+                        }
                     ]
                 },
                 "overrides": []
             },
-            "gridPos": { "h": 5, "w": 6, "x": 0, "y": 58 },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 0,
+                "y": 58
+            },
             "id": 20,
-            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
+            },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"AUTH_ATTEMPT\" or r[\"event_type\"] == \"LATERAL_MOVEMENT\"))\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"AUTH_ATTEMPT\" or r[\"event_type\"] == \"LATERAL_MOVEMENT\") and r[\"_field\"] == \"value\")\n  |> group()\n  |> count()\n  |> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n  |> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -965,31 +1162,97 @@
             "type": "stat"
         },
         {
-            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "datasource": {
+                "type": "influxdb",
+                "uid": "${DS_INFLUXDB}"
+            },
             "fieldConfig": {
                 "defaults": {
-                    "color": { "mode": "thresholds" },
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
-                            { "color": "green", "value": null },
-                            { "color": "orange", "value": 1 }
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 1
+                            }
                         ]
                     },
                     "mappings": [
-                        { "options": { "match": "null",  "result": { "text": "NONE", "color": "green",  "index": 0 } }, "type": "special" },
-                        { "options": { "match": "empty", "result": { "text": "NONE", "color": "green",  "index": 1 } }, "type": "special" },
-                        { "options": { "1": { "text": "DETECTED", "color": "orange", "index": 2 } }, "type": "value" }
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 0
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "empty",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 1
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "1": {
+                                    "text": "DETECTED",
+                                    "color": "orange",
+                                    "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
+                        }
                     ]
                 },
                 "overrides": []
             },
-            "gridPos": { "h": 5, "w": 6, "x": 6, "y": 58 },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 6,
+                "y": 58
+            },
             "id": 21,
-            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
+            },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and r[\"event_type\"] == \"API_ACCESS\")\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and r[\"event_type\"] == \"API_ACCESS\" and r[\"_field\"] == \"value\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -997,31 +1260,97 @@
             "type": "stat"
         },
         {
-            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "datasource": {
+                "type": "influxdb",
+                "uid": "${DS_INFLUXDB}"
+            },
             "fieldConfig": {
                 "defaults": {
-                    "color": { "mode": "thresholds" },
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
-                            { "color": "green", "value": null },
-                            { "color": "dark-red", "value": 1 }
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "dark-red",
+                                "value": 1
+                            }
                         ]
                     },
                     "mappings": [
-                        { "options": { "match": "null",  "result": { "text": "NONE",     "color": "green",    "index": 0 } }, "type": "special" },
-                        { "options": { "match": "empty", "result": { "text": "NONE",     "color": "green",    "index": 1 } }, "type": "special" },
-                        { "options": { "1": { "text": "EXECUTED!", "color": "dark-red", "index": 2 } }, "type": "value" }
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 0
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "empty",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 1
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "1": {
+                                    "text": "DETECTED",
+                                    "color": "dark-red",
+                                    "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
+                        }
                     ]
                 },
                 "overrides": []
             },
-            "gridPos": { "h": 5, "w": 6, "x": 12, "y": 58 },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 12,
+                "y": 58
+            },
             "id": 22,
-            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
+            },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and r[\"event_type\"] == \"MODBUS_WRITE\")\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"MODBUS_WRITE\" or r[\"event_type\"] == \"modbus_write\") and r[\"_field\"] == \"value\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -1029,31 +1358,97 @@
             "type": "stat"
         },
         {
-            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "datasource": {
+                "type": "influxdb",
+                "uid": "${DS_INFLUXDB}"
+            },
             "fieldConfig": {
                 "defaults": {
-                    "color": { "mode": "thresholds" },
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
-                            { "color": "green", "value": null },
-                            { "color": "yellow", "value": 1 }
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1
+                            }
                         ]
                     },
                     "mappings": [
-                        { "options": { "match": "null",  "result": { "text": "NONE",      "color": "green",  "index": 0 } }, "type": "special" },
-                        { "options": { "match": "empty", "result": { "text": "NONE",      "color": "green",  "index": 1 } }, "type": "special" },
-                        { "options": { "1": { "text": "DETECTED", "color": "yellow", "index": 2 } }, "type": "value" }
+                        {
+                            "options": {
+                                "match": "null",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 0
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "empty",
+                                "result": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 1
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "1": {
+                                    "text": "DETECTED",
+                                    "color": "yellow",
+                                    "index": 2
+                                }
+                            },
+                            "type": "value"
+                        },
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "NONE",
+                                    "color": "green",
+                                    "index": 3
+                                }
+                            },
+                            "type": "value"
+                        }
                     ]
                 },
                 "overrides": []
             },
-            "gridPos": { "h": 5, "w": 6, "x": 18, "y": 58 },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 18,
+                "y": 58
+            },
             "id": 23,
-            "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "value",
+                "colorMode": "value",
+                "graphMode": "none"
+            },
             "targets": [
                 {
-                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"MODBUS_READ\" or r[\"event_type\"] == \"CREDENTIAL_DISCOVERY\"))\n  |> count(column: \"value\")\n  |> map(fn: (r) => ({r with _value: if r[\"value\"] > 0 then 1 else 0}))\n  |> last()",
+                    "query": "from(bucket: \"sensor_logs\")\n  |> range(start: -10s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\" and (r[\"event_type\"] == \"MODBUS_READ\" or r[\"event_type\"] == \"modbus_read\" or r[\"event_type\"] == \"CREDENTIAL_DISCOVERY\" or r[\"event_type\"] == \"credential_discovery\") and r[\"_field\"] == \"value\")\n|> group()\n|> count()\n|> map(fn: (r) => ({r with _value: if r[\"_value\"] > 0 then 1.0 else 0.0}))\n|> max(column: \"_value\")",
                     "refId": "A"
                 }
             ],
@@ -1061,14 +1456,27 @@
             "type": "stat"
         },
         {
-            "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+            "datasource": {
+                "type": "influxdb",
+                "uid": "${DS_INFLUXDB}"
+            },
             "fieldConfig": {
-                "defaults": { "custom": {} },
+                "defaults": {
+                    "custom": {}
+                },
                 "overrides": []
             },
-            "gridPos": { "h": 10, "w": 24, "x": 0, "y": 63 },
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 63
+            },
             "id": 24,
-            "options": { "frameIndex": 0, "showHeader": true },
+            "options": {
+                "frameIndex": 0,
+                "showHeader": true
+            },
             "targets": [
                 {
                     "query": "from(bucket: \"sensor_logs\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"terminal_commands\")\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 100)",

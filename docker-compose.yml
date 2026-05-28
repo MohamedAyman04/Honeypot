@@ -123,6 +123,8 @@ services:
       context: . # Level 2 root — gives access to physics/ package
       dockerfile: scada_ssh/Dockerfile # explicit path because context is now the parent
     container_name: ics_scada_ssh
+    depends_on:
+      - story_logger
     networks:
       ot-net: {}
       dmz-net: {}
@@ -135,12 +137,18 @@ services:
     ports:
       - "2222:2222" # SSH
       - "5100:5100" # Physics REST API (Level 2 → Level 3 data flow)
+    env_file: .env
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - PHYSICS_API_PORT=5100
       - LOG_DIR=/var/log/honeynet
       - L2L3_SHARED_TOKEN=${L2L3_SHARED_TOKEN:-change-this-token}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+      - INFLUX_URL=${INFLUX_URL}
+      - INFLUX_TOKEN=${INFLUX_TOKEN}
+      - INFLUX_ORG=${INFLUX_ORG}
+      - INFLUX_BUCKET=${INFLUX_BUCKET}
+      - STORY_LOGGER_URL=http://story_logger:8600
     volumes:
       - unified-logs:/var/log/honeynet # unified log volume shared across services
     restart: unless-stopped

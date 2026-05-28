@@ -144,8 +144,10 @@ _seen_injection_ts: dict[str, float] = {}
 _INJECTION_DEDUP_TTL = 120.0   # seconds to remember a seen event
 
 # ── Post-attack state ─────────────────────────────────────────────────────────
-_semantic_injection_seen = False
-_drift_attack_seen       = False
+_semantic_injection_seen  = False
+_drift_attack_seen        = False
+_drift_attack_seen_time   = 0.0   # unix timestamp when drift was last confirmed
+DRIFT_POST_ATTACK_WINDOW  = 300.0  # seconds to stay in post-attack mode
 
 # ── Session ID ────────────────────────────────────────────────────────────────
 SESSION_ID = os.environ.get("SESSION_ID", str(uuid.uuid4())[:8])
@@ -981,7 +983,7 @@ def run_ml_cycle() -> None:
         .tag("sensor",     "ml_engine")
         .tag("session_id", SESSION_ID)
         .field("anomaly_score", effective_score)
-        .field("is_anomaly",    is_anomaly)
+        .field("is_anomaly",    is_anomaly)  # int — must match Influx field type (not float)
         .field("if_score",      score_val)
         .field("lstm_error",    lstm_error)
         .time(time.time_ns(), WritePrecision.NS)
@@ -1063,7 +1065,7 @@ def _was_injection_seen_recently() -> bool:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def run_drift_cycle() -> None:
-    global _ewma_state, _cusum_pos, _cusum_neg, _cumulative_dev, _drift_attack_seen
+    global _ewma_state, _cusum_pos, _cusum_neg, _cumulative_dev, _drift_attack_seen, _drift_attack_seen_time
     if in_grace_period():
         return
 
@@ -1100,7 +1102,8 @@ from(bucket: "{INFLUX_BUCKET}")
                     if _drift_confirm_count >= DRIFT_CONFIRM_NEEDED:
                         is_critical = _sensor_writes_detected()
                         if is_critical:
-                            _drift_attack_seen = True
+                            _drift_attack_seen      = True
+                            _drift_attack_seen_time = time.time()
                         sev       = "critical" if is_critical else "high"
                         score_val = -1.0      if is_critical else -0.8
                         print(f"!!! STEALTH DRIFT DETECTED !!! {detail}")
@@ -1145,7 +1148,7 @@ def _fingerprint_window(values: list) -> tuple:
 
 
 def check_replay_attack() -> list[dict]:
-    global _replay_cooldown_until
+    global _replay_cooldown_until, _drift_attack_seen, _drift_attack_seen_time
     if in_grace_period():
         return []
     current_time = time.time()
@@ -1185,23 +1188,25 @@ from(bucket: "{INFLUX_BUCKET}")
         baseline_dev_pct = abs(mean_v - baseline) / baseline * 100.0 if baseline > 1.0 else 0.0
 
         current_fp     = _fingerprint_window(values[-REPLAY_WINDOW_SIZE:])
+        # Auto-expire the post-attack flag after DRIFT_POST_ATTACK_WINDOW seconds
+        if _drift_attack_seen and (time.time() - _drift_attack_seen_time) > DRIFT_POST_ATTACK_WINDOW:
+            _drift_attack_seen = False
         is_post_attack = _was_injection_seen_recently() or _drift_attack_seen
 
         # ── Signal 1: zero-variance + strong baseline deviation ────────────────
-        # Require BOTH low variance AND a meaningful deviation from known-good baseline.
-        # This is what catches your 180 PSI spam: std≈0, baseline_dev high.
-        # Normal stable pressure will have low baseline_dev and won't fire.
+        # Require BOTH near-zero variance AND a significant deviation from baseline.
+        # Uses ZERO_VAR_BASELINE_DEV_PCT (8%) so normal ±4% operational drift won't fire.
         zero_var_detected = (
             std < 0.05
-            and baseline_dev_pct > 3.0
+            and baseline_dev_pct > ZERO_VAR_BASELINE_DEV_PCT
         )
 
         # ── Signal 2: fingerprint match ────────────────────────────────────────
         fp_match_found = False
         all_fps = list(_replay_window_fps) + list(_frozen_fps)
 
-        # Only compare against fingerprints collected AFTER baseline matured
-        # Require at least 3 stored fingerprints before trusting fp matching
+        # Only compare against fingerprints collected AFTER baseline matured.
+        # Require at least 3 stored fingerprints before trusting fp matching.
         if len(all_fps) >= 3:
             for prev_fp in all_fps:
                 if len(prev_fp) == len(current_fp):
@@ -1213,15 +1218,22 @@ from(bucket: "{INFLUX_BUCKET}")
                         fp_match_found = True
                         break
 
-        # A match only matters if the pattern is complex OR clearly off-baseline.
-        # Raise std threshold: normal noise at 0.25 is too easy to hit spuriously.
-        is_meaningful_match = (baseline_dev_pct >= 5.0) or is_post_attack
+        # A match only fires if there is a clear off-baseline signature.
+        # post_attack mode lowers the threshold slightly but never to zero —
+        # matching your own normal fingerprint at 0% deviation must not fire.
+        if is_post_attack:
+            is_meaningful_match = baseline_dev_pct >= 3.0
+        else:
+            is_meaningful_match = baseline_dev_pct >= 5.0
         fp_match_fires = fp_match_found and is_meaningful_match
 
-        # Store fingerprint AFTER comparison (not before)
-        if std < 0.5:
+        # Store fingerprint AFTER comparison (not before).
+        # Only save to _frozen_fps when data is clearly off-baseline (suspicious).
+        # Saving normal operating fingerprints would poison the database and cause
+        # every subsequent normal window to match — the root cause of false positives.
+        if std < 0.5 and baseline_dev_pct > ZERO_VAR_BASELINE_DEV_PCT:
             _frozen_fps.append(current_fp)
-        else:
+        elif std >= 0.5:
             _replay_window_fps.append(current_fp)
 
         # ── Signal 3: LSTM replay model ────────────────────────────────────────

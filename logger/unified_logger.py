@@ -41,28 +41,28 @@ _ATTACK_MAP: dict[str, tuple] = {
     # ── Layer 3 / IT events ──────────────────────────────────────────────────
     "DISCOVERY": (
         "T0846", "Remote System Discovery", "Reconnaissance",
-        "Stage 1 - IT Intrusion", "Level 3", "HTTP",
+        "Stage 1 - IT Intrusion", "Level 2", "HTTP",
         "Attacker started reconnaissance from {source_ip} — scanning for accessible ICS services.",
     ),
     "SQL_INJECTION": (
         "T1190", "Exploit Public-Facing Application", "Initial Access",
-        "Stage 1 - IT Intrusion", "Level 3", "HTTP",
+        "Stage 1 - IT Intrusion", "Level 2", "HTTP",
         "SQL injection from {source_ip} against {target_service} — probing historian database.",
     ),
     "API_ACCESS": (
         "T0883", "Internet Accessible Device", "Reconnaissance",
-        "Stage 1 - IT Intrusion", "Level 3", "HTTP",
+        "Stage 1 - IT Intrusion", "Level 2", "HTTP",
         "Unauthenticated API access from {source_ip} to {target_service} — mapping ICS data endpoints.",
     ),
     # ── Cross-layer pivot ────────────────────────────────────────────────────
     "LATERAL_MOVEMENT": (
         "T0885", "Remote Services", "Lateral Movement",
-        "Stage 1 - IT Intrusion", "Level 3→2", "SSH",
+        "Stage 1 - IT Intrusion", "Level 2", "SSH",
         "Lateral movement: {source_ip} pivoted from IT into OT network via {target_service}.",
     ),
     "AUTH_ATTEMPT": (
         "T1078", "Valid Accounts", "Lateral Movement",
-        "Stage 1 - IT Intrusion", "Level 3", "SSH",
+        "Stage 1 - IT Intrusion", "Level 2", "SSH",
         "Credential attempt from {source_ip} on {target_service} — attacker trying valid accounts.",
     ),
     # ── Layer 2 / OT events ──────────────────────────────────────────────────
@@ -83,7 +83,7 @@ _ATTACK_MAP: dict[str, tuple] = {
     ),
     "PHYSICS_CONTROL_CMD": (
         "T0855", "Unauthorized Command Message", "Impair Process Control",
-        "Stage 2 - ICS Impact", "Level 1", "Modbus",
+        "Stage 2 - ICS Impact", "Level 2", "Modbus",
         "Physics-layer control command from {source_ip} — process state manipulation detected.",
     ),
     # ── ML alert types ───────────────────────────────────────────────────────
@@ -95,12 +95,12 @@ _ATTACK_MAP: dict[str, tuple] = {
     ),
     "REPLAY_ATTACK": (
         "T0856", "Spoof Reporting Message", "Impair Process Control",
-        "Stage 2 - ICS Impact", "Level 1", "Modbus",
+        "Stage 2 - ICS Impact", "Level 2", "Modbus",
         "REPLAY ATTACK — {source_ip} retransmitted captured telemetry to mask real process changes.",
     ),
     "STEALTH_DRIFT": (
         "T0836", "Modify Parameter", "Impair Process Control",
-        "Stage 2 - ICS Impact", "Level 1", "Modbus",
+        "Stage 2 - ICS Impact", "Level 2", "Modbus",
         "STEALTH DRIFT — slow monotonic pressure ramp from {source_ip} evaded threshold alarms.",
     ),
     "CROSS_LAYER_ANOMALY": (
@@ -116,17 +116,17 @@ _ATTACK_MAP: dict[str, tuple] = {
     ),
     "DNP3_PROBE": (
         "T0846", "Network Service Discovery", "Discovery",
-        "Stage 1 - IT Intrusion", "Level 1", "DNP3",
+        "Stage 1 - IT Intrusion", "Level 2", "DNP3",
         "DNP3 probe from {source_ip} — scanning power/water protocol endpoints.",
     ),
     "CREDENTIAL_DISCOVERY": (
         "T1005", "Data from Local System", "Credential Access",
-        "Stage 1 - IT Intrusion", "Level 3", "SSH",
+        "Stage 1 - IT Intrusion", "Level 2", "SSH",
         "Attacker read local files on {target_service} from {source_ip} — mining logs for exposed credentials.",
     ),
     "TERMINAL_CMD": (
         "T1059", "Command and Scripting Interpreter", "Execution",
-        "Stage 1 - IT Intrusion", "Level 3", "N/A",
+        "Stage 1 - IT Intrusion", "Level 2", "N/A",
         "Terminal command executed by {source_ip} against {target_service}.",
     ),
 }
@@ -205,7 +205,8 @@ class UnifiedLogger:
         payload: dict[str, Any] | None = None,
         narrative: str | None = None,
     ) -> dict:
-        tid, tname, tactic, kill_chain, purdue, protocol, tmpl = _lookup(event_type)
+        tid, tname, tactic, kill_chain, _purdue, protocol, tmpl = _lookup(event_type)
+        purdue = "Level 2"
 
         src_ip  = source.get("ip", "unknown")
         tgt_svc = target.get("service", target.get("host", "unknown"))
@@ -285,7 +286,7 @@ class UnifiedLogger:
                     .field("target_ip",      target.get("ip", "unknown"))
                     .field("target_service", tgt_svc)
                     .field("narrative",      auto_story)
-                    .field("value",          1)        # numeric sentinel for count()
+                    .field("value",          1.0)      # numeric sentinel for count()
                     .time(time.time_ns(), WritePrecision.NS)
                 )
                 self._write_api.write(bucket=self.influx_bucket, record=point)

