@@ -151,7 +151,7 @@ if valve_pos == 0:
     flow_rate = 0.0
 ```
 
-**Startup conditions:** 1200 RPM, valve 50% open → ~60 PSI, ~12 L/s, 18.5 °C.
+**Startup conditions:** 1200 RPM, valve 50% open → ~132 PSI, ~12 L/s, 18.5 °C.
 
 ---
 
@@ -706,7 +706,7 @@ Dataset: 519 samples at 1 Hz (27 attack, 492 normal).
 
 1. Open **Grafana** at `http://localhost:3000`.
 2. Navigate to *"ICS Honeypot — Full Monitoring"* dashboard.
-3. Point out: stable pressure ~60 PSI, consistent flow ~12 L/s, temperature rising slowly.
+3. Point out: stable pressure ~132 PSI, consistent flow ~12 L/s, temperature rising slowly.
 4. Open **HMI** at `http://localhost:8060`.
 5. Move the **Pump RPM slider** — show pressure and flow updating in both HMI and Grafana within 5 seconds.
 

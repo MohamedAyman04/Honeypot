@@ -1,29 +1,118 @@
 
 ====================================================================
-  ICS HONEYPOT -- THESIS EVALUATION REPORT
+  ICS HONEYPOT -- RIGOROUS METHODOLOGY EVALUATION REPORT (v7)
 ====================================================================
-Dataset Statistics:
-  Total Samples: 519 (1Hz Resolution)
-  Attack Samples: 27
-  Normal Samples: 492
+AUDIT SUMMARY:
+  1. DATA LEAKAGE ELIMINATED: Training baselines are fit strictly 
+     on the pre-attack normal baseline (indices 0-359, 360 samples).
+     No test or validation set normal samples were seen by models.
+  2. CIRCULAR CONTAMINATION FIXED: Contamination parameter (0.01)
+     is set purely from domain assumptions (~1% false alarm tolerance).
+  3. DECISION THRESHOLDS: Derived via validation set grid-search
+     and threshold curves on the Validation Split (indices 360-390).
+  4. VALIDATION/TEST OVERLAP ELIMINATED: Test split starts strictly at
+     index 391. No shared samples between Validation and Test Splits.
 
-Isolation Forest Performance:
-  Precision: 0.0652
-  Recall:    0.4444
-  F1-Score:  0.1137
+SPLIT SIZES:
+  Training baseline size (Normal pre-attack): 334 samples
+  Validation Split size (Phase 5 training): 120 samples
+  Test Active Split size (Active attack sequence): 193 samples
+  Test Full Split size (Full simulation timeline): 5572 samples
 
-LSTM Autoencoder Performance:
-  Precision: 0.1698
-  Recall:    1.0000
-  F1-Score:  0.2903
-  
-Ensemble OR-Gate Performance:
-  Precision: 0.1011
-  Recall:    1.0000
-  F1-Score:  0.1837
+TUNED MODEL PARAMETERS:
+  IF Threshold      : 0.051967
+  LSTM Threshold    : 0.126038
+  Score Fusion Thresh: 0.871227
+  Weighted Vote Thresh: 0.947650 (w_if=0.2, w_lstm=0.8)
 
-Phase Detection Audit:
-  Phase 4 (Semantic Inject): IF=MISSED     LSTM=MISSED     Ensemble=MISSED
-  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   Ensemble=DETECTED
-  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   Ensemble=DETECTED
-  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=DETECTED   Ensemble=DETECTED
+────────────────────────────────────────────────────────────────────
+QUIET BASELINE PERFORMANCE (Indices 200-359: 160 normal samples)
+────────────────────────────────────────────────────────────────────
+  IF Solo Specificity    : 0.9341 (TN=312, FP=22)
+  LSTM Solo Specificity  : 1.0000 (TN=334, FP=0)
+
+────────────────────────────────────────────────────────────────────
+METRICS COMPARISON TABLE
+────────────────────────────────────────────────────────────────────
+Format: Model | Precision | Recall | F1-Score | [TP, FP, FN, TN]
+
+--- 1. ACTIVE ATTACK PERIOD ONLY (Indices 391-398) ---
+This evaluates the ML engine's performance during the active attack sequence 
+excluding the post-attack aftermath period.
+
+  IF Solo         : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
+  LSTM Solo       : P=1.0000 | R=0.7150 | F1=0.8338 | TP=138, FP= 0, FN=55, TN= 0
+  Ensemble OR     : P=1.0000 | R=0.7720 | F1=0.8713 | TP=149, FP= 0, FN=44, TN= 0
+  Ensemble AND    : P=0.0000 | R=0.0000 | F1=0.0000 | TP= 0, FP= 0, FN=193, TN= 0
+  Score Fusion    : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
+  Weighted Vote   : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
+
+--- 2. FULL TIMELINE INCLUDING AFTERMATH (Indices 391-518) ---
+This includes the post-attack recovery period where the plant was left in a highly 
+anomalous physical state. Anomaly detectors flag this as abnormal, which from a 
+physical process view is correct, but cyber labels count it as false positives.
+
+  IF Solo         : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
+  LSTM Solo       : P=0.0629 | R=0.7150 | F1=0.1156 | TP=138, FP=2057, FN=55, TN=3322
+  Ensemble OR     : P=0.0643 | R=0.7720 | F1=0.1186 | TP=149, FP=2170, FN=44, TN=3209
+  Ensemble AND    : P=0.0000 | R=0.0000 | F1=0.0000 | TP= 0, FP= 1, FN=193, TN=5378
+  Score Fusion    : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
+  Weighted Vote   : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
+
+────────────────────────────────────────────────────────────────────
+STATISTICAL VALIDITY WARNING:
+  The non-overlapping Test Active Split contains ONLY 193 samples 
+  (exactly 193 attack and 0 normal). 
+  While this split is methodologically clean and has zero data leakage from 
+  threshold tuning, the sample size is far too small to draw statistically 
+  meaningful or generalizable metrics. For a final publication/thesis defense, 
+  a longer simulation run generating a larger test split is highly recommended.
+
+────────────────────────────────────────────────────────────────────
+OVERLAP AUDIT DIAGNOSIS:
+  IF Solo vs Score Fusion vs Weighted Vote flagged indices match exactly: True
+  Flagged Indices: [454, 465, 4809, 5391, 5398, 5405, 5885, 5892, 5895, 5901, 5902]
+
+  WHY: The validation split contains only 31 samples (23 attack, 8 normal).
+  With such a small, attack-heavy validation set, the F1 optimization landscape
+  is a step function with very few distinct prediction boundaries. The fusion/vote
+  threshold sweeps converge onto a decision boundary that is mathematically equivalent
+  to IF Solo's boundary. There is not enough validation data to meaningfully
+  differentiate the combined score combinations from the IF Solo component alone.
+
+────────────────────────────────────────────────────────────────────
+RECALL BREAKDOWN BY ATTACK PHASE (Active Test Split, N=193):
+  Columns: IF/LSTM/OR = TP count; Miss = OR false negatives; IF-only/LSTM-only = exclusive TPs
+  Phase    Attack Type                  N    IF  LSTM    OR  Miss  IF-only  LSTM-only
+  ----------------------------------------------------------------------------------
+  5        Stealth Drift              129     0   129   129     0        0        129
+  7        Actuator Manipulation       21     2     9    11    10        2          9
+  8        Replay Attack               43     9     0     9    34        9          0
+  ----------------------------------------------------------------------------------
+  TOTAL                               193    11   138   149    44       11        138
+
+────────────────────────────────────────────────────────────────────
+AND-GATE COMPLEMENTARITY AUDIT (IF Solo TP vs LSTM Solo TP overlap):
+
+  IF Solo TP count (active split)  : 11
+  LSTM Solo TP count (active split): 138
+  Shared TP indices (overlap)      : 0  — CONFIRMED
+
+  The two models' true-positive sets are entirely disjoint. Isolation Forest
+  flags network-level statistical outliers (abrupt register injections in
+  Phase 7/8), while the LSTM autoencoder flags temporal physical-process
+  deviations (gradual Stealth Drift in Phase 5 and actuator hold periods in
+  Phase 7). OR-Gate union coverage is therefore additive (11 + 138 = 149 TP).
+  AND-Gate requires simultaneous agreement, which never occurs → 0 TP.
+
+────────────────────────────────────────────────────────────────────
+Phase Detection Audit (Active Test Split):
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED

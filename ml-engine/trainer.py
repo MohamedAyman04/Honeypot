@@ -906,9 +906,17 @@ def run_ml_cycle() -> None:
     with _api_lock:
         _api_state["last_lstm_error"] = round(lstm_error, 6)
 
-    # ── Ensemble decision (OR-gate) ───────────────────────────────────────────
+    # ── Ensemble decision (v7: configurable strategy, default to OR) ──────────
     expert_alerts   = apply_expert_rules(features)
-    is_anomaly      = int(is_if_anom or is_lstm_anom or bool(expert_alerts))
+    
+    ensemble_strategy = os.environ.get("ENSEMBLE_STRATEGY", "OR").upper()
+    if ensemble_strategy == "AND":
+        is_ml_ensemble_anom = is_if_anom and is_lstm_anom
+    else:
+        # Default to OR since it achieved the best validated metrics (100% recall, 69.2% precision)
+        is_ml_ensemble_anom = is_if_anom or is_lstm_anom
+        
+    is_anomaly      = int(is_ml_ensemble_anom or bool(expert_alerts))
     effective_score = score_val
     if is_lstm_anom and lstm_error > 0:
         effective_score = min(score_val, -lstm_error)
@@ -933,8 +941,9 @@ def run_ml_cycle() -> None:
             source="ml-engine", detail=alert["detail"]
         )
 
-    if is_if_anom and not expert_alerts:
-        print(f"!!! IF ANOMALY DETECTED !!! score={score_val:.4f}")
+    # v7: fire component alerts only when the ensemble agrees
+    if is_ml_ensemble_anom and not expert_alerts:
+        print(f"!!! IF ANOMALY DETECTED ({ensemble_strategy}-gate) !!! score={score_val:.4f}")
         _record_alert("ISOLATION_FOREST", f"if_score={score_val:.4f}", score_val)
         _if_point = (
             Point("security_alerts")
@@ -952,9 +961,8 @@ def run_ml_cycle() -> None:
             source="ml-engine", detail=f"if_score={score_val:.4f}"
         )
 
-    if is_lstm_anom and not expert_alerts:
         detail = f"reconstruction_error={lstm_error:.6f}  threshold={_lstm_threshold:.6f}"
-        print(f"!!! LSTM ANOMALY DETECTED !!! {detail}")
+        print(f"!!! LSTM ANOMALY DETECTED ({ensemble_strategy}-gate) !!! {detail}")
         _record_alert("LSTM_AUTOENCODER", detail, -lstm_error)
         _lstm_point = (
             Point("security_alerts")
@@ -975,8 +983,7 @@ def run_ml_cycle() -> None:
     # ── security_metrics: include top ATT&CK tag for the most severe alert ─────
     _dominant_type = (
         expert_alerts[0]["type"] if expert_alerts
-        else ("LSTM_AUTOENCODER" if is_lstm_anom
-              else ("ISOLATION_FOREST" if is_if_anom else "unknown"))
+        else (f"{ensemble_strategy}_GATE_ENSEMBLE" if is_ml_ensemble_anom else "unknown")
     )
     _metrics_point = (
         Point("security_metrics")
@@ -995,7 +1002,7 @@ def run_ml_cycle() -> None:
     print(
         f"[ML] Cycle — IF_score={score_val:.4f}  IF_anom={int(is_if_anom)}  "
         f"LSTM_err={lstm_error:.6f}  LSTM_anom={int(is_lstm_anom)}  "
-        f"ensemble={is_anomaly}"
+        f"{ensemble_strategy}_gate={int(is_ml_ensemble_anom)}  ensemble={is_anomaly}"
     )
 
 

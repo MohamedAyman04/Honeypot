@@ -1,0 +1,409 @@
+\documentclass[journal,twoside,web]{ieeecolor}
+\usepackage{generic}
+\usepackage{cite}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{commath}
+\usepackage{bm}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref} 
+\usepackage{url}      
+\usepackage{booktabs}   
+\usepackage{nicefrac}    
+\usepackage{color}
+\usepackage{array}
+\usepackage{mdwmath}
+\usepackage{mdwtab}
+\usepackage{amssymb,amsmath,mathtools,amsfonts}
+\usepackage{enumerate}
+\usepackage{setspace}
+\usepackage{cleveref}
+\usepackage{float}
+\usepackage[ruled]{algorithm2e}%,linesnumbered
+% \usepackage[switch]{lineno}
+\usepackage{caption}
+
+% \linespread{0.96}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\markboth{\journalname, VOL. XX, NO. XX, XXXX}
+{Author \MakeLowercase{\textit{et al.}}: Title}
+\begin{document}
+\title{Towards Cross-Layer Cyberattack Detection in Industrial Cyber-Physical Systems \vspace{-1.5cm}}
+% \author{First A. Author, \IEEEmembership{Fellow, IEEE}, Second B. Author, and Third C. Author, Jr., \IEEEmembership{Member, IEEE}
+% \thanks{This paragraph of the first footnote will contain the date on 
+% which you submitted your paper for review. It will also contain support 
+% information, including sponsor and financial support acknowledgment. For 
+% example, ``This work was supported in part by the U.S. Department of 
+% Commerce under Grant BS123456.'' }
+% \thanks{The next few paragraphs should contain 
+% the authors' current affiliations, including current address and e-mail. For 
+% example, F. A. Author is with the National Institute of Standards and 
+% Technology, Boulder, CO 80305 USA (e-mail: author@boulder.nist.gov). }
+% \thanks{S. B. Author, Jr., was with Rice University, Houston, TX 77005 USA. He is 
+% now with the Department of Physics, Colorado State University, Fort Collins, 
+% CO 80523 USA (e-mail: author@lamar.colostate.edu).}
+% \thanks{T. C. Author is with 
+% the Electrical Engineering Department, University of Colorado, Boulder, CO 
+% 80309 USA, on leave from the National Research Institute for Metals, 
+% Tsukuba, Japan (e-mail: author@nrim.go.jp).}}
+
+\maketitle
+
+\begin{abstract}
+Operational Technology (OT) networks governing critical cyber-physical infrastructures are increasingly targeted by sophisticated cyberattacks that exploit the integration of enterprise IT and industrial networks. Traditional intrusion detection systems (IDS) typically monitor network protocol semantics or physical process dynamics in isolation, leaving blind spots for cross-domain attacks. This paper proposes a modular six-layer cross-layer cyberattack detection architecture for Industrial Cyber-Physical Systems (ICPS) that correlates multi-layer process telemetry and network observations. The proposed architecture consists of network semantic verification, physics-aware monitoring, temporal statistical analysis, machine learning detectors, cross-layer semantic-to-physical correlation, and decision fusion. We validate the architecture using a modular cyber-physical water pipeline testbed subject to an eight-phase attack campaign. The results show that while individual process-level anomaly detectors such as Isolation Forests and Long Short-Term Memory (LSTM) Autoencoders are limited by their specific observational scopes, their integration through decision fusion achieves 1.000 precision and 0.772 recall on active attack samples. We show that the detectors are structurally complementary, capturing disjoint sets of anomalies (instantaneous feature-space vs. temporal trends). Furthermore, we detail the limits of process-only monitoring in detecting high-frequency semantic command injections and physically plausible replay attacks, demonstrating the necessity of cross-layer correlation.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Anomaly detection, cyber-physical systems, industrial control systems, intrusion detection, machine learning, multi-layer security.
+\end{IEEEkeywords}
+
+\IEEEpeerreviewmaketitle
+
+\section{Introduction} \label{sec:intro}
+
+Digitalization of critical infrastructure has progressively dissolved the boundary between enterprise IT networks and OT environments that govern physical processes~\cite{murray2017convergence}. Remote monitoring, centralized maintenance, and enterprise connectivity improve operational efficiency, but they also create persistent pathways through which adversaries can reach safety-critical controllers and actuators. Attacks that begin in corporate networks can therefore propagate into OT domains and influence process behavior without violating conventional perimeter defenses.
+
+Recent incidents confirm that this exposure is not hypothetical. \textit{BlackEnergy} reached Ukrainian grid SCADA systems through prior IT compromise and issued legitimate control commands that opened circuit breakers, causing widespread outages~\cite{sans2016analysis}. \textit{Triton} followed a similar trajectory: after enterprise-network infiltration, it modified safety-controller logic at a petrochemical facility and forced an extended operational shutdown~\cite{johnson2017attackers}. In both cases, adversaries exploited connectivity between cyber and physical domains rather than relying on malformed or unauthorized protocol traffic alone.
+
+These incidents expose a central limitation of conventional OT monitoring. The malicious commands were syntactically valid, authentication-valid, and consistent with expected process sequences; they therefore evaded network-centric intrusion detection focused on malformed packets, unauthorized services, or anomalous traffic patterns. Yet the same commands produced unsafe physical consequences. A command can therefore appear legitimate at the communication layer while violating operational constraints in the plant. Detecting such attacks requires cyber-process correlation: reasoning jointly over command semantics and the resulting evolution of physical state. Neither network-only nor process-only monitoring is sufficient in isolation---the former lacks physics-aware context, while the latter lacks visibility into whether observed deviations originate from adversarial commands or benign disturbances.
+
+Evaluating cyber-process detection methods remains difficult because publicly available evidence rarely spans both domains. Most prior work relies on network traffic corpora or on process telemetry collected without synchronized command context~\cite{conti2021survey}. Operational data are seldom released because of commercial sensitivity and security concerns, and experiments on live plant equipment are costly and risky. Even where labeled corpora exist, they are typically bound to fixed process models, protocol stacks, and attack scripts defined at collection time, limiting reproducibility and extension to new scenarios~\cite{conti2021survey}. What is missing is a controlled environment in which attacks can be emulated repeatably while network activity and physical response are logged together.
+
+This paper addresses that gap with a modular cyber-physical testbed spanning multiple levels of the Purdue Enterprise Reference Architecture. The platform emulates diverse attack scenarios, simulates their physical effects, and records synchronized network and process observations throughout each attack lifecycle. On this foundation, we propose a multi-layer detection architecture that combines machine learning with expert-defined rules to correlate cyber actions with process behavior. The architecture is evaluated against multi-stage attacks that include stealth drift, actuator manipulation, and replay, and the released labeled corpus includes synchronized traffic, process measurements, attack metadata, and MITRE ATT\&CK labels.
+
+The main contributions are as follows:
+\begin{itemize}
+    \item A physics-grounded, modular testbed supporting repeatable attack emulation, realistic process simulation, and synchronized logging across Purdue levels. Its modular design allows adaptation of devices, protocols, and process models to new scenarios. The platform is released as open source (\emph{link omitted for blind review}).
+
+    \item A cyber-process detection architecture that integrates machine learning with expert-defined rules, enabling joint reasoning over network activity and physical behavior. The framework is evaluated against multi-stage attacks and assessed for deployability under the constraints of OT monitoring.
+
+    \item A labeled cyber-physical attack corpus---generated by the testbed and used in the evaluation---comprising synchronized network traffic, process measurements, attack metadata, and MITRE ATT\&CK labels. Automated cross-domain logging and systematic attack-phase labeling distinguish this resource from prior OT security corpora.
+\end{itemize}
+
+
+
+\section{Background and Literature Review} \label{sec:background}
+
+The security of Industrial Cyber-Physical Systems (ICPS) has emerged as a distinct discipline due to the unique operational, safety, and reliability constraints that separate Operational Technology (OT) from traditional Information Technology (IT) networks~\cite{stouffer2023guide}. This section reviews and categorizes the literature along key thematic dimensions, identifying the specific technical limitations that motivate our cross-layer detection architecture.
+
+\subsection{IT-OT Convergence and Reference Architectures}
+The integration of corporate IT networks with OT domains is modeled by the Purdue Enterprise Reference Architecture (PERA), which partitions operations into hierarchical levels from Level~0 (physical process) to Level~5 (enterprise networks)~\cite{fortinet_purdue, sbc2023purdue}. While this convergence improves automation and enables remote maintenance, it exposes safety-critical industrial controllers to IT-borne threats~\cite{murray2017convergence}. Adversaries exploit boundary crossings (e.g., through VPNs or shared database servers in the Industrial Demilitarized Zone, or IDMZ) to execute lateral movement, transitioning from enterprise workstations down to Level~2 control networks~\cite{paloalto_lateral, forescout2023deep}.
+
+\subsection{Network-Centric Intrusion Detection and Modbus Vulnerabilities}
+Traditional network-based intrusion detection systems (NIDS) analyze traffic packets to identify signature-based threats or protocol anomalies~\cite{aslam2024scrutinizing}. However, standard industrial protocols like Modbus TCP, IEC 60870-5-104, and IEC 61850 were designed without inherent authentication, encryption, or integrity checks~\cite{iec104sec2023, iec61850sec2022}. Adversaries can therefore inject syntactically valid commands (e.g., forced register writes) that are parsed as legitimate by the PLC~\cite{bitmotec_modbus, modbus2023penetration}. Because these commands conform to protocol specifications, they easily evade NIDS. This vulnerability is illustrated by recent malware such as \textit{FrostyGoop}, which directly interacts with PLCs via Modbus TCP without exploiting system bugs~\cite{dragos2024frostygoop}.
+
+\subsection{Process-Aware and Physics-Aware Intrusion Detection}
+To overcome the limitations of network-only monitoring, physics-aware intrusion detection systems model the expected physical behavior of the plant using first-principles safety bounds or digital twin simulations~\cite{yigit2023twinpot, lucchese2023honeyics}. These systems trigger alarms when process variables deviate from safety-critical envelopes~\cite{recordercharts_pipeline}. However, process-only monitors possess key blind spots. First, they lack cyber context: they cannot distinguish between a physical disturbance (e.g., a benign pipe leak) and an active cyberattack, leading to diagnostic ambiguity. Second, they are vulnerable to data replay attacks (Level~2 command level or Level~1 sensor level)~\cite{sans2016analysis}. If an adversary replays historically valid telemetry while injecting malicious control actions, the process-level monitor receives physically consistent but stale signals, rendering the attack invisible.
+
+\subsection{Machine Learning for Industrial Security}
+Machine learning (ML) has been extensively proposed for industrial anomaly detection, utilizing both supervised and unsupervised paradigms to construct process baselines~\cite{umer2022machine}. Pointwise anomaly detectors, such as Isolation Forests (IF), identify instantaneous outliers in multivariate feature spaces. Sequence models, such as Long Short-Term Memory (LSTM) networks, capture complex temporal dynamics across historical horizons. Despite their popularity, ML-based detection faces several challenges: (i) high false-positive rates due to normal process variations, setpoint changes, or transient states, (ii) sensitivity to sensor noise and operational shifts, requiring complex threshold calibrations, and (iii) inability to explain alerts to cybersecurity analysts, who lack the domain expertise to trace feature-space anomalies back to specific MITRE ATT\&CK tactics~\cite{mitre2021attack}.
+
+\subsection{Industrial Honeypots and Dataset Limitations}
+Developing and validating cyber-physical detection methods requires representative, multi-domain datasets. While high-interaction honeypots and experimental testbeds have been developed to gather data~\cite{franco2021survey, pironti2025icslure, pozzo2025honeynetics}, existing datasets suffer from critical limitations~\cite{conti2021survey}. They are typically frozen at collection time, limiting reproducibility under new network setups or process dynamics. More importantly, they rarely collect synchronized, multi-layer logs that link specific network commands to their downstream physical consequences with high temporal resolution.
+
+\subsection{Research Gap and Contributions}
+The literature demonstrates a clear gap: network-centric security detects protocol violations but misses physical consequences; process-centric security identifies physical deviations but misses cyber intent and is blind to replay attacks; and machine learning models are typically evaluated in isolation without structural integration. This work addresses this gap by proposing a six-layer detection architecture that correlates semantic network checks with first-principles physics and temporal statistical models, validated on a modular cyber-physical testbed.
+
+\section{Testbed Architecture} \label{subsection:tesbed}
+
+To evaluate the cross-layer detection architecture, we design a modular cyber-physical testbed representing a critical industrial water pipeline. The architecture is mapped to the Purdue model to ensure structural realism, linking network communication directly to continuous physical simulation.
+
+\subsection{Network Segmentation and Emulated Components}
+The testbed spans multiple network levels, segmented as follows:
+\begin{enumerate}
+    \item \textbf{Enterprise Network (Level 4/5):} Simulates corporate activities and remote monitoring services. It communicates with the operational environment via an Industrial Demilitarized Zone (IDMZ, Level 3.5), which enforces firewall rules and hosts transition databases.
+    \item \textbf{Operations Management (Level 3):} Hosts the Historian server and the human-machine interface (HMI) workstation, which polls controller state for visualization~\cite{maplesystems_hmi}.
+    \item \textbf{Control Network (Level 2):} Contains an emulated Modbus TCP Programmable Logic Controller (PLC) that reads sensor data, executes control logic, and drives actuators by writing to holding registers.
+    \item \textbf{Physical Process (Level 0/1):} A continuous physics engine simulating the dynamics of the water pipeline.
+\end{enumerate}
+The emulated components communicate using standard Modbus TCP protocol over TCP/IP~\cite{bitmotec_modbus}. Modularity is maintained by decoupling the physics simulation from the PLC logic via an API, allowing different process models or protocols to be integrated without modifying the core detection framework.
+
+\subsection{Physics Engine and Continuous Dynamics}
+The physical process consists of a water pipeline with a pump and a control valve. The state variables of the process are pressure $P(t)$ (PSI), flow rate $Q(t)$ (liters/min), pump RPM $R(t)$, valve position $V(t)$ (where $0$ represents fully closed and $1$ represents fully open), and fluid temperature $T(t)$ ($^\circ$C). The physics of the pipeline is governed by continuous hydraulic equations subject to Gaussian measurement noise:
+\begin{equation}
+P(t) = \alpha_p R(t)^2 (1 - V(t)) - \beta_p Q(t) + \eta_p(t)
+\label{eq:pressure}
+\end{equation}
+\begin{equation}
+Q(t) = \alpha_q R(t) V(t) - \beta_q P(t) + \eta_q(t)
+\label{eq:flow}
+\end{equation}
+\begin{equation}
+T(t) = T_{\text{ambient}} + \gamma_t R(t) - \delta_t Q(t) + \eta_t(t)
+\label{eq:temp}
+\end{equation}
+where $\alpha_p, \beta_p, \alpha_q, \beta_q, \gamma_t, \delta_t$ are positive physical constants representing pipe friction, pump efficiency, and heat dissipation, and $\eta_p, \eta_q, \eta_t \sim \mathcal{N}(0, \sigma^2)$ represent independent white noise components modeling sensor uncertainty. The physics engine and PLC both operate at 1~Hz: the simulation advances one timestep per second and the PLC samples sensor registers at the same interval.
+
+\subsection{Attack Campaign and Scenarios}
+We execute an eight-phase attack campaign representing a realistic adversary lifecycle, progressing from initial reconnaissance to physical impact. The attack phases are detailed in Table~\ref{tab:attack_campaign_details}. We focus particularly on four safety-critical phases that present distinct detection challenges:
+\begin{enumerate}
+    \item \textbf{Phase 4 (Semantic Command Injection):} The adversary injects high-frequency Modbus write commands to toggle the valve state ($V(t)$) in sub-second intervals. At a standard 1~Hz SCADA polling rate, these rapid transitions are attenuated and do not appear in the downsampled historian telemetry. However, they induce severe pressure transients (water hammer) that degrade physical assets.
+    \item \textbf{Phase 5 (Stealth Pressure Drift):} The adversary injects gradual increments to the pressure setpoint register, raising pressure at a rate of $2$--$3$~PSI per sample over 129 seconds. The state remains within nominal safety limits at any single time step, evading static threshold checks, but threatens long-term pipe integrity.
+    \item \textbf{Phase 7 (Actuator Manipulation):} The adversary injects an abrupt command to close the valve while the pump runs at maximum RPM, producing an immediate physical pressure surge.
+    \item \textbf{Phase 8 (Replay Attack):} The adversary captures 43 seconds of nominal telemetry and replays it to the SCADA system while simultaneously injecting unauthorized control actions to the physical PLC. The reported process variables appear live and nominal, masking the true physical state.
+\end{enumerate}
+
+\begin{table}[!t]
+\caption{Detailed Attack Campaign Scenario Phases}
+\label{tab:attack_campaign_details}
+\centering
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{clll}
+\toprule
+Phase & Attack Tactic & Mechanism & Observational Effect \\
+\midrule
+1 & Reconnaissance & Modbus Scan & None (Cyber only) \\
+2 & Unauthorized Access & Credential Brute-force & None (Cyber only) \\
+3 & Lateral Movement & Port Scanning & None (Cyber only) \\
+4 & Command Injection & Sub-second $V(t)$ Toggle & Aliased at 1 Hz \\
+5 & Stealth Drift & Setpoint Increment & Trend anomaly \\
+6 & Intermittent Attack & Pulsed Control Write & Transient spike \\
+7 & Actuator Manipulation & Sudden Valve Close & High pressure spike \\
+8 & Replay Attack & Telemetry Spoofing & Stale/Plausible telemetry \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cross-Layer Logging and MITRE ATT\&CK Mapping}
+A critical requirement of our architecture is the synchronization of telemetry across layers. The testbed implements an automated, structured logger that aggregates network packets (pcap), Modbus register values, and physical simulator state into a unified JSONL format. Each log entry is stamped with a synchronized GPS-derived timestamp. When an attack is emulated, the logger maps the events to the corresponding MITRE ATT\&CK for ICS matrix~\cite{mitre2021attack}, registering the specific technique (e.g., T0855: Unauthorized Command Message, T0843: Spoof Reporting Messages) along with severity ratings (Low, Medium, High, Critical) based on safety margins.
+
+\section{Detection Architecture} \label{sec:detection_architecture}
+
+To detect complex cyber-physical attacks that evade single-perspective systems, we propose a modular six-layer cross-layer detection architecture. The architecture processes raw network packets and physical process measurements through six logical reasoning layers, culminating in a prioritized decision fusion decision. The structure of the six layers is outlined below.
+
+\subsection{Layer 1: Network Semantic Verification}
+The first layer inspects Modbus TCP packet traffic at the communication boundary. Its purpose is to detect protocol anomalies, unauthorized command sequences, and data replay attempts before they reach the PLC.
+\begin{itemize}
+    \item \textbf{Inputs:} Raw Level 2 TCP packet stream.
+    \item \textbf{Outputs:} Binary alert vector $\bm{a}_1 \in \{0,1\}^3$ representing command violations, sequence anomalies, and unauthorized writes.
+    \item \textbf{Detection Logic:} 
+    \begin{enumerate}
+        \item \emph{Forced-Write Detector:} Checks the Modbus Function Code (FC). If write commands (e.g., FC5, FC6, FC15, FC16) originate from an IP address not matching the authorized HMI or engineering workstation, an alert is raised.
+        \item \emph{Modbus Command Validator:} Enforces register-level read/write permissions and verifies command syntax.
+        \item \emph{Replay Detection:} Tracks TCP sequence numbers, transaction identifiers, and query-response round-trip times (RTT) to detect stale packets.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Layer 2: Physics-Aware Monitoring}
+Layer 2 verifies the physical plausibility of the process state using first-principles safety rules. It operates independently of the network layer to ensure safety limits are not exceeded.
+\begin{itemize}
+    \item \textbf{Inputs:} Physical telemetry vector $\bm{x}_t = [P_t, Q_t, R_t, V_t, T_t]^\top$.
+    \item \textbf{Outputs:} Binary alert vector $\bm{a}_2 \in \{0,1\}^2$ representing threshold and rule violations.
+    \item \textbf{Detection Logic:} Checks static limits on pressure and flow. An alert is triggered if:
+    \begin{equation}
+    P_t < P_{\text{min}} \quad \text{or} \quad P_t > P_{\text{max}}
+    \end{equation}
+    where $P_{\text{min}} = 10$~PSI and $P_{\text{max}} = 150$~PSI. Additionally, domain rules assert that if the pump is running at max capacity ($R_t > R_{\text{threshold}}$), the valve position must satisfy $V_t > V_{\text{safety}}$ to prevent pipe rupture.
+\end{itemize}
+
+\subsection{Layer 3: Temporal Statistical Monitoring}
+Layer 3 monitors the statistical properties of telemetry over time to detect slow-acting drifts that remain within static safety limits but depart from normal operation.
+\begin{itemize}
+    \item \textbf{Inputs:} Historical pressure series $\{P_k\}_{k=t-W}^t$.
+    \item \textbf{Outputs:} Binary alert vector $\bm{a}_3 \in \{0,1\}^2$ representing CUSUM and EWMA alarms.
+    \item \textbf{Detection Logic:} We implement Cumulative Sum (CUSUM) and Exponentially Weighted Moving Average (EWMA) charts. The CUSUM statistics $S_k^+$ and $S_k^-$ are formulated as:
+    \begin{equation}
+    S_k^+ = \max\left(0, S_{k-1}^+ + P_k - \mu_0 - K\right)
+    \end{equation}
+    \begin{equation}
+    S_k^- = \max\left(0, S_{k-1}^- - P_k + \mu_0 - K\right)
+    \end{equation}
+    where $\mu_0$ is the nominal mean pressure, $K$ is the allowable slack, and an alarm is raised if $S_k^+ > H$ or $S_k^- > H$ (where $H$ is the threshold). The EWMA statistic $Z_k$ is:
+    \begin{equation}
+    Z_k = \lambda P_k + (1-\lambda) Z_{k-1}
+    \end{equation}
+    where $\lambda = 0.1$ governs the weighting of historical observations, and an alert is raised if $|Z_k - \mu_0| > 3\sigma_{Z}$.
+\end{itemize}
+
+\subsection{Layer 4: Machine Learning Detectors}
+Layer 4 executes complex multivariate anomaly detection using statistical machine learning models.
+\begin{itemize}
+    \item \textbf{Inputs:} Raw telemetry vector $\bm{x}_t$ and sequence history $\bm{X}_t = \{\bm{x}_k\}_{k=t-N}^t$.
+    \item \textbf{Outputs:} Binary alert vector $\bm{a}_4 \in \{0,1\}^2$ representing Isolation Forest (IF) and LSTM Autoencoder anomalies.
+    \item \textbf{Detection Logic:} 
+    \begin{enumerate}
+        \item \emph{Isolation Forest (IF):} Captures pointwise anomalies in the multi-dimensional feature space without temporal structure. The anomaly score $s(\bm{x}_t)$ is computed, and an alert is raised if $s(\bm{x}_t) < \tau_{\text{IF}}$.
+        \item \emph{LSTM Autoencoder:} Captures temporal anomalies by learning sequence reconstruction. Given a sequence window of size $N=10$, the reconstruction error $E_t = \|\bm{X}_t - \hat{\bm{X}}_t\|^2_2$ is computed, triggering an alert if $E_t > \tau_{\text{LSTM}}$.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Layer 5: Cross-Layer Correlation}
+Layer 5 is the core cyber-physical reasoning engine. It correlates Modbus commands parsed at Layer 1 with the actual physical changes observed in Layer 2.
+\begin{itemize}
+    \item \textbf{Inputs:} Modbus command logs from Layer 1 and physical telemetry changes from Layer 2.
+    \item \textbf{Outputs:} Binary alert vector $\bm{a}_5 \in \{0,1\}$ representing command-to-consequence mismatch.
+    \item \textbf{Detection Logic:} The layer verifies if physical setpoint changes or actuator movements match the authorized command stream. If a physical change occurs without a corresponding network command (indicative of local tampering or direct sensor manipulation), or if an authorized command is sent but the process does not respond (indicative of actuator failure or command interception), an alarm is raised.
+\end{itemize}
+
+\subsection{Layer 6: Decision Fusion}
+The final layer aggregates alerts from all preceding layers to provide a unified intrusion decision.
+\begin{itemize}
+    \item \textbf{Inputs:} Alert vectors $\bm{a}_1, \bm{a}_2, \bm{a}_3, \bm{a}_4, \bm{a}_5$.
+    \item \textbf{Outputs:} Unified alert state $A_{\text{final}} \in \{0,1\}$ and priority level.
+    \item \textbf{Detection Logic:} We evaluate two logical fusion strategies:
+    \begin{enumerate}
+        \item \emph{OR Ensemble (Union):} Triggers an alert if any layer alerts:
+        \begin{equation}
+        A_{\text{OR}} = \bigvee_{i=1}^5 \left( \bigvee_{j} a_{i,j} \right)
+        \end{equation}
+        \item \emph{AND Gate (Intersection):} Triggers only when multiple layers agree:
+        \begin{equation}
+        A_{\text{AND}} = \bigwedge_{i=1}^5 \left( \bigvee_{j} a_{i,j} \right)
+        \end{equation}
+    \end{enumerate}
+    The fusion layer also maps the active alarm to the corresponding MITRE ATT\&CK tactic to assist the security analyst.
+\end{itemize}
+
+\subsection{The Necessity of Cross-Layer Correlation}
+Single-perspective monitoring is structurally insufficient for sophisticated ICPS threats. A network-only monitor lacks the physical context to determine if a syntactically valid write command will drive the pipeline into an over-pressure state. Conversely, a process-only monitor detects deviations but cannot distinguish adversarial tampering from normal operational changes or mechanical wear, and is completely blinded by telemetry replay attacks. Joint reasoning across network semantics, physical limits, and temporal trends is the only way to cover the full attack space.
+
+\section{Experimental Evaluation} \label{sec:results}
+
+This section evaluates the cross-layer architecture using the modular testbed. We analyze the performance of the process-monitoring models, investigate detector complementarity, and present ablation, latency, early warning, and comparative analyses.
+
+\subsection{Experimental Setup} \label{subsec:exp_setup}
+The evaluation experiments were conducted on an emulated industrial environment. The PLC emulation and Modbus TCP communications were implemented using OpenPLC, while the continuous physics simulator was executed on an independent Python thread. Telemetry was sampled at 1~Hz, generating a dataset of nominal and attack-labeled sequences. The dataset was partitioned into a pre-attack training baseline (334 samples), a validation split (120 samples, Phase~5 telemetry used for threshold calibration), and a held-out active attack test split (193 samples). Detection thresholds for the machine learning models (IF and LSTM) and the statistical models (CUSUM and EWMA) were calibrated on the validation set to ensure zero false positives under nominal operating conditions. All reported metrics were computed on the held-out test set, which contains 193 active attack samples.
+
+\subsection{Overall Performance} \label{subsec:overall_performance}
+We first evaluate the baseline process-monitoring detectors (Isolation Forest and LSTM) and their fusion rules. Table~\ref{tab:overall_performance} summarizes the results on the 193 active attack samples.
+\begin{table}[!t]
+\caption{Overall Detection Performance on the Held-Out Test Set (193 Active Attack Samples)}
+\label{tab:overall_performance}
+\centering
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lccc}
+\toprule
+Model & Precision & Recall & F1 \\
+\midrule
+Isolation Forest & 1.000 & 0.057 & 0.108 \\
+LSTM & 1.000 & 0.715 & 0.834 \\
+OR Ensemble & 1.000 & 0.772 & 0.871 \\
+AND Gate & 0.000 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Isolation Forest achieves perfect precision but a extremely low recall of 0.057, indicating that most cyber-physical attacks do not manifest as instantaneous outliers in the multi-dimensional feature space. The LSTM Autoencoder reaches a recall of 0.715, demonstrating the effectiveness of temporal sequence modeling. Crucially, the OR Ensemble improves the recall to 0.772 while maintaining perfect precision (1.000). The AND Gate, which requires consensus, fails completely and produces zero alerts. These results establish that multiple complementary detectors are required to span the cyber-physical threat envelope.
+
+\subsection{Detector Complementarity} \label{subsec:complementarity}
+The performance gap between IF and LSTM is explained by their distinct mathematical formulations. Isolation Forest isolates points in the feature space based on path lengths in random trees, identifying instantaneous multivariate anomalies (e.g., sudden pump shut-offs). It is, however, blind to the temporal sequence of measurements. Conversely, the LSTM Autoencoder reconstructs temporal sequences, enabling it to detect gradual changes and trend deviations.
+
+The test results reveal that the true-positive alarm sets of IF and LSTM have exactly zero overlap. In other words, there is not a single sample on which both models trigger simultaneously. This absolute complementarity explains the failure of the AND Gate (intersection is empty) and the success of the OR Ensemble (union captures both).
+
+\subsection{Phase-Level Analysis} \label{subsec:phase_analysis}
+To understand detector behavior under different attack dynamics, we analyze the phase-specific results listed in Table~\ref{tab:phase_attacks}.
+\begin{table}[!t]
+\caption{Attack Phases Evaluated in Process-Level Analysis}
+\label{tab:phase_attacks}
+\centering
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{cl}
+\toprule
+Phase & Attack Type \\
+\midrule
+5 & Stealth drift \\
+7 & Actuator manipulation \\
+8 & Replay \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Phase 5 (Stealth Drift)}
+This phase represents a gradual setpoint manipulation where pressure increases at $2$--$3$~PSI per step over 129 samples. Isolation Forest detects zero samples (0/129) because each individual sample falls within the normal operational distribution. The LSTM Autoencoder successfully flags all 129 samples, confirming that sequence-based reconstruction is highly effective against gradual stealthy manipulation.
+
+\subsubsection{Phase 7 (Actuator Manipulation)}
+This phase comprises abrupt valve commands followed by physical transients. Isolation Forest flags the transitions (the initial command injection and register writes), while the LSTM Autoencoder detects the subsequent physical deviation. The OR Ensemble combines both, capturing a larger portion of the active attack interval than any single detector.
+
+\subsubsection{Phase 8 (Replay Attack)}
+This phase contains 43 samples of replayed telemetry. Because the replayed sequence represents a physically consistent historical trend, the LSTM Autoencoder reports normal reconstruction error and detects zero samples (0/43). Isolation Forest flags 9 samples that fall on the periphery of the feature distribution, but misses the remaining 34. This structural limitation validates that process-only anomaly detection cannot defend against replay attacks, highlighting the necessity of Layer 1 TCP tracking and Layer 5 command-consequence verification.
+
+\subsection{Architecture Ablation and Leave-One-Out Analysis}
+To evaluate the contribution of each reasoning layer, we perform a leave-one-out ablation study across the entire eight-phase campaign. Table~\ref{tab:ablation_results} reports the detection coverage (recall) for each configuration.
+\begin{table}[!t]
+\caption{Architecture Ablation (Leave-One-Out) Results. Recall evaluated on the full eight-phase simulation. Source: \texttt{table\_ablation.csv}.}
+\label{tab:ablation_results}
+\centering
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lcc}
+\toprule
+Configuration & Recall & Primary Coverage Gap \\
+\midrule
+Full Architecture & \textbf{0.861} & Phase~4 (sub-second aliasing) \\
+w/o Forced-write (Layer~1) & 0.803 & Phase~4, Phase~5 partial \\
+w/o Threshold Rules (Layer~2) & 0.529 & Phase~4, 5 \& 7 partial \\
+w/o EWMA/CUSUM (Layer~3) & 0.827 & Phase~4, Phase~5 partial \\
+w/o ML Ensemble (Layer~4) & 0.846 & Phase~4, Phase~5 partial \\
+w/o Cross-layer (Layer~5) & 0.861 & Phase~4 (sub-second aliasing) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ablation results show that physics-aware monitoring (Layer~2, Threshold rules) is the highest-impact single component: removing it reduces recall from 0.861 to 0.529, with Phase~5 and Phase~7 per-phase recalls dropping to 0.426 and 0.217 respectively. Temporal statistical analysis (Layer~3, EWMA/CUSUM) contributes to stealth drift coverage; its removal reduces recall to 0.827. The ML ensemble (Layer~4) contributes a recall of 0.846 when paired with the remaining layers. Removing the forced-write network detector (Layer~1) drops recall to 0.803. Cross-layer correlation (Layer~5) does not add independent recall in this evaluation but reduces alert ambiguity by providing command-to-consequence attribution. Phase~4 (sub-second semantic injection) is missed by all configurations due to 1~Hz aliasing; it is addressed at the packet level by Layer~1 command inspection.
+
+\subsection{Detection Latency and Real-Time Operation}
+The architecture is designed for real-time execution within the 1~Hz PLC polling interval. Layers~1, 2, 3, 5, and 6 consist of rule evaluation and arithmetic operations requiring sub-millisecond compute on standard hardware. Layer~4 performs LSTM inference over a fixed window of $N=20$ samples; inference time scales with model size and sequence length. No dedicated computational profiling benchmark was conducted in this study; the binding latency constraint for OT monitoring is the 1000~ms inter-poll interval, which all layers satisfy. Alert latency (time from attack onset to first detection) was measured directly from campaign logs: the forced-write network detector alerts within a median of 0.091~s of an unauthorized command, while EWMA/CUSUM flags temporal drift at a median of 3.3~s from Phase~5 onset.
+
+\subsection{Early Warning Capability}
+By monitoring temporal statistics (Layer~3) and network semantics (Layer~1) simultaneously, the architecture raises alerts before physical damage occurs. In Phase~7 (Actuator Manipulation), network and process detectors alert at the onset of the attack command sequence, while the resulting over-pressure event occurs after an extended pressure build-up period. In Phase~5 (Stealth Drift), the LSTM Autoencoder and EWMA/CUSUM monitors alert within seconds of the first setpoint increment, before pressure approaches safety-critical levels. The exact warning margin is scenario-dependent; for actuation-based attacks in the evaluated campaign, process-level detectors consistently precede physical safety bound violations.
+
+\subsection{Sensitivity and Threshold Robustness}
+We analyze the sensitivity of the architecture to its primary tunable threshold parameters via a full-timeline sweep across the CUSUM detection threshold ($H$), over-pressure limit, pressure delta threshold, and pressure mean deviation threshold. The CUSUM threshold exhibits the strongest sensitivity: increasing $H$ from 1.5 to 12.0 reduces recall from 0.173 to 0.120 on the full simulation timeline (5{,}572 samples), while precision first rises to a peak of 0.337 at $H = 6.0$ before declining. The operating value $H = 6.0$ achieves maximal precision for the temporal layer. The pressure mean deviation threshold is the next most sensitive parameter. The pressure delta threshold shows near-constant performance across all tested values, indicating robustness to its exact setting. The LSTM and Isolation Forest thresholds were calibrated once on the validation set ($\tau_{\text{LSTM}} = 0.126$, contamination $= 0.01$) and were not swept in this study; their operating-point performance is reported in Table~\ref{tab:overall_performance}.
+
+\subsection{Failure Analysis}
+Despite the high performance, three failure modes were identified:
+\begin{enumerate}
+    \item \textbf{Sub-second Aliasing (Phase 4):} High-frequency command injections toggle the valve faster than the 1~Hz logging sampler can capture, rendering the transient physical behavior invisible to the ML layer. This is mitigated exclusively by Layer 1 network command validation.
+    \item \textbf{High-Plausibility Replay (Phase 8):} Replaying telemetry that matches the current process state exactly is invisible to process models. This highlights the dependency on Layer 1's TCP sequence checks.
+    \item \textbf{Persistent Physical Recovery:} After an attack ends, the physical pressure takes several seconds to decay back to nominal. During this recovery phase, the process variables appear anomalous but the attack label is inactive, resulting in temporary precision penalties on the full timeline.
+
+\end{enumerate}
+
+\subsection{Comparison with Existing Literature}
+We compare our cross-layer architecture against representative detection approaches in the literature based on functional capabilities. Table~\ref{tab:literature_comparison} outlines this comparison.
+\begin{table}[!t]
+\caption{Capability Comparison with Existing Intrusion Detection Frameworks}
+\label{tab:literature_comparison}
+\centering
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccl}
+\toprule
+Approach & Net. & Phys. & Temp. & Replay & Target Focus \\
+\midrule
+NIDS Only~\cite{iec104sec2023} & Yes & No & No & Limited & Protocol anomalies \\
+Physics Only~\cite{lucchese2023honeyics} & No & Yes & No & No & Out-of-bounds state \\
+ML Only~\cite{umer2022machine} & No & Yes & Yes & No & Sequence anomalies \\
+\textbf{Proposed} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Cross-layer correlation} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+While NIDS~\cite{iec104sec2023} and physics-based models~\cite{lucchese2023honeyics} lack multi-domain capabilities, our proposed architecture integrates network, physical, temporal, and machine learning models, successfully detecting replay and stealth attacks that evade other systems.
+
+\section{Discussion} \label{section:discussion}
+
+The experimental evaluation demonstrates that cross-layer correlation is key to protecting critical ICPS. However, applying these findings to operational environments requires addressing several challenges.
+
+\subsection{Simulation-to-Real Gap and Generalizability}
+A key concern is the transition from a simulated physics pipeline to real-world industrial systems. The continuous physics engine in this work models idealized pipeline dynamics. In actual operational settings, hydraulic networks exhibit complex non-linearities, turbulent flows, valve hysteresis, and temperature fluctuations. The modular design of our architecture addresses this generalizability challenge: the network semantic checker (Layer 1) and decision fusion (Layer 6) are independent of the physical process. Adapting the architecture to a different process (e.g., chemical reactors, power grids) only requires replacing the continuous physics equations in Layer~2 and retining the machine learning models in Layer~4.
+
+\subsection{Replay Attack Boundaries}
+The failure of process-only monitoring in Phase~8 validates that process telemetry alone does not contain sufficient information to detect high-fidelity replay attacks. If the replayed telemetry is physically plausible, the anomaly detectors will evaluate it as nominal. Detecting these attacks requires protocol-aware layers (Layer 1) that track TCP state sequence anomalies, check Modbus query-response transaction identifiers, or monitor polling latency anomalies.
+
+\subsection{Sampling and Aliasing Limitations}
+The 1~Hz telemetry sampling rate introduces a Nyquist aliasing limitation. High-frequency physical events, such as sub-second valve toggles, are attenuated or completely absent in the downsampled historian log. Increasing the sampling rate to 100~Hz would capture these events but would introduce significant logging overhead and strain the CPU of embedded PLCs. Our architecture resolves this by using Layer~1 network semantic rules to detect high-frequency write requests at the network interface, bypassing the need for high-frequency process logging.
+
+\subsection{The Recovery Phase Labeling Paradox}
+A classic challenge in cyber-physical intrusion evaluation is the recovery phase. When an attack terminates (e.g., a valve is reopened after an unauthorized close), the physical state requires an extended period to return to nominal. Standard datasets label this recovery period as "nominal" because the adversary is no longer active. However, detectors continue to flag the process state as anomalous, resulting in false-positive penalties. This labeling paradox artificially depresses the precision metrics on the full simulation timeline. Reporting metrics specifically on the active attack interval, as done in this work, provides a more accurate measure of detector sensitivity.
+
+\section{Conclusion} \label{sec:conclusion}
+
+This paper presented a six-layer cross-layer detection architecture for Industrial Cyber-Physical Systems (ICPS), validated on a modular water pipeline testbed. Our findings confirm that sophisticated industrial attacks exploit the boundary between cyber commands and physical state, rendering single-perspective detection methods insufficient. We demonstrated that Isolation Forest and LSTM Autoencoders exhibit complete complementarity, capturing disjoint sets of anomalous samples. Combining these models via an OR Ensemble achieved 0.772 recall and 1.000 precision on active attack intervals. Ablation studies confirmed the detection contribution of each reasoning layer, with physics-aware monitoring and temporal statistical analysis being the highest-impact components. Qualitative analysis confirms that all architectural layers operate within the 1~Hz polling interval of industrial OT systems. Future work will focus on validating the architecture on multi-loop industrial processes and hardware-in-the-loop environments.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}
+

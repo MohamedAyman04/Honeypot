@@ -17,27 +17,26 @@ Usage:
 
 import os, sys, subprocess, datetime, json
 
-# ── Optional deps ─────────────────────────────────────────────────────────────
+# ── Required deps (telemetry CSV export is mandatory) ─────────────────────────
 try:
     from influxdb_client import InfluxDBClient
     HAS_INFLUX = True
 except ImportError:
     HAS_INFLUX = False
-    print("[WARN] pip3 install influxdb-client  (CSV export will be skipped)")
 
 try:
     import pandas as pd
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
-    print("[WARN] pip3 install pandas            (CSV export will be skipped)")
+
+REQUIRED_MEASUREMENTS = ["pipeline_metrics"]
 
 # ── Config ────────────────────────────────────────────────────────────────────
 INFLUX_URL    = os.environ.get("INFLUX_URL",    "http://localhost:8086")
 INFLUX_TOKEN  = os.environ.get("INFLUX_TOKEN",  "supersecrettoken")
 INFLUX_ORG    = os.environ.get("INFLUX_ORG",    "my_refinery")
 INFLUX_BUCKET = os.environ.get("INFLUX_BUCKET", "sensor_logs")
-LOOKBACK      = os.environ.get("LOOKBACK",      "-6h")   # widen if you ran a long session
 
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -45,6 +44,11 @@ TS          = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 OUT_DIR     = os.path.join(PROJECT_DIR, "results", TS)
 CSV_DIR     = os.path.join(OUT_DIR, "csv")
 LOG_DIR     = os.path.join(OUT_DIR, "logs")
+ATTACK_CSV_DEFAULT = os.path.join(PROJECT_DIR, "results", "attack_results_extended.csv")
+
+# Set by _resolve_export_window() before any Influx query runs.
+EXPORT_START = None
+EXPORT_STOP = None
 for d in [CSV_DIR, LOG_DIR]:
     os.makedirs(d, exist_ok=True)
 
@@ -92,21 +96,117 @@ CONTAINERS = [
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+def _require_deps():
+    missing = []
+    if not HAS_INFLUX:
+        missing.append("influxdb-client")
+    if not HAS_PANDAS:
+        missing.append("pandas")
+    if missing:
+        print(
+            f"[FATAL] Missing required packages: {', '.join(missing)}",
+            file=sys.stderr,
+        )
+        print(
+            f"        Install in eval_env: "
+            f"/home/mohamed-ayman/eval_env/bin/pip install {' '.join(missing)}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def _validate_csv_export(counts: dict):
+    if not counts:
+        print("[FATAL] Telemetry export produced no measurement results.", file=sys.stderr)
+        sys.exit(1)
+
+    query_errors = [meas for meas, cnt in counts.items() if cnt == -1]
+    if query_errors:
+        print(
+            f"[FATAL] InfluxDB query failed for: {', '.join(query_errors)}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    for meas in REQUIRED_MEASUREMENTS:
+        row_count = counts.get(meas, 0)
+        if row_count <= 0:
+            print(
+                f"[FATAL] Required measurement '{meas}' exported {row_count} rows "
+                f"(window={EXPORT_START} → {EXPORT_STOP}, bucket={INFLUX_BUCKET}).",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+    csv_files = [
+        name for name in os.listdir(CSV_DIR)
+        if name.endswith(".csv") and os.path.getsize(os.path.join(CSV_DIR, name)) > 0
+    ]
+    if not csv_files:
+        print("[FATAL] csv/ directory contains no non-empty CSV files.", file=sys.stderr)
+        sys.exit(1)
+
+
+def _flux_time(iso_ts: str) -> str:
+    """Wrap an ISO-8601 UTC timestamp for use in a Flux range() call."""
+    return f'time(v: "{iso_ts}")'
+
+
+def _range_clause() -> str:
+    if not EXPORT_START or not EXPORT_STOP:
+        raise RuntimeError("Export window not resolved — call _resolve_export_window() first")
+    return f"range(start: {_flux_time(EXPORT_START)}, stop: {_flux_time(EXPORT_STOP)})"
+
+
+def _resolve_export_window(start: str | None, stop: str | None, attack_csv: str):
+    """Bind Influx queries to an explicit UTC window (never a relative lookback)."""
+    global EXPORT_START, EXPORT_STOP
+
+    if start and stop:
+        EXPORT_START, EXPORT_STOP = start, stop
+        return
+
+    if not os.path.isfile(attack_csv):
+        print(
+            "[FATAL] No --start/--stop provided and attack CSV not found at "
+            f"{attack_csv}. Pass explicit campaign bounds.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    atk = pd.read_csv(attack_csv)
+    if atk.empty or "timestamp" not in atk.columns:
+        print(
+            f"[FATAL] Attack CSV {attack_csv} is empty or missing timestamps.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    ts = pd.to_datetime(atk["timestamp"], utc=True)
+    # Match evaluate.py padding: 5 min before first event, 2 min after last.
+    start_dt = ts.min() - pd.Timedelta(minutes=5)
+    stop_dt = ts.max() + pd.Timedelta(minutes=2)
+    EXPORT_START = start_dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    EXPORT_STOP = stop_dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    print(
+        f"  [INFO] Derived export window from attack CSV: "
+        f"{EXPORT_START} → {EXPORT_STOP}"
+    )
+
+
 def _client():
     return InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 
 
 def export_csv():
-    if not (HAS_INFLUX and HAS_PANDAS):
-        print("  [SKIP] influxdb-client or pandas missing")
-        return {}
-    print(f"\n── CSV Export (lookback={LOOKBACK}) ─────────────────────────────────")
+    _require_deps()
+    print(f"\n── CSV Export ({EXPORT_START} → {EXPORT_STOP}) ─────────────────────")
     c = _client()
     counts = {}
     for meas in MEASUREMENTS:
         q = f'''
 from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: {LOOKBACK})
+  |> {_range_clause()}
   |> filter(fn: (r) => r["_measurement"] == "{meas}")
   |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
   |> sort(columns: ["_time"])
@@ -158,7 +258,7 @@ def alert_counts() -> dict:
     for at in ATTACKS:
         q = f'''
 from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: {LOOKBACK})
+  |> {_range_clause()}
   |> filter(fn: (r) => r["_measurement"] == "security_alerts"
                    and r["alert_type"] == "{at}"
                    and r["_field"] == "score")
@@ -179,7 +279,7 @@ def build_summary(csv_counts, ac) -> str:
         sep,
         "  ICS HONEYPOT — THESIS RESULTS SNAPSHOT",
         f"  Timestamp : {TS}",
-        f"  Lookback  : {LOOKBACK}",
+        f"  Export    : {EXPORT_START} → {EXPORT_STOP}",
         f"  InfluxDB  : {INFLUX_URL}",
         sep,
         "",
@@ -252,12 +352,33 @@ def build_summary(csv_counts, ac) -> str:
 
 # ─────────────────────────────────────────────────────────────────────────────
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Export InfluxDB telemetry for thesis results")
+    parser.add_argument(
+        "--start",
+        help="Campaign start timestamp (ISO-8601 UTC, e.g. 2026-06-29T20:12:54.000000Z)",
+    )
+    parser.add_argument(
+        "--stop",
+        help="Campaign stop timestamp (ISO-8601 UTC)",
+    )
+    parser.add_argument(
+        "--attack-csv",
+        default=ATTACK_CSV_DEFAULT,
+        help="Attack boundary CSV used to derive window if --start/--stop omitted",
+    )
+    args = parser.parse_args()
+
     print("\n╔══════════════════════════════════════════════════════════════╗")
     print("║   ICS Honeypot — Thesis Results Saver                       ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     print(f"  Saving to: results/{TS}/")
 
+    _require_deps()
+    _resolve_export_window(args.start, args.stop, args.attack_csv)
     csv_counts = export_csv()
+    _validate_csv_export(csv_counts)
     export_logs()
 
     print("\n── Computing Alert Counts ───────────────────────────────────────")

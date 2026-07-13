@@ -4,9 +4,7 @@ Physical Process Simulator
 Continuously models the pressure-regulated pipeline.
 Stores shared state in Redis, which is read by Modbus and S7 servers.
 
-Fix 1 — Flow Rate Initialization:
-  Starts with valve CLOSED (valve_pos=0.0) so flow_rate is guaranteed = 0
-  at container startup. The physics engine enforces this constraint internally.
+Default operating point: 1200 RPM pump, valve 50% open (~12 L/s flow).
 """
 import time
 import os
@@ -16,12 +14,16 @@ from physics.physics_engine import PipelineSimulator
 def run_physics():
     sim = PipelineSimulator(use_redis=True)
 
-    # Fix 1: Start with valve CLOSED — pump runs but no flow until operator opens valve
-    sim.set_pump_rpm(1200)    # pump is running (builds pressure)
-    sim.set_valve_pos(0.0)    # valve is CLOSED  → flow_rate = 0 (enforced by engine)
+    sim.set_pump_rpm(1200)
+    sim.set_valve_pos(0.5)    # 50% open — nominal ~12 L/s per plant model
 
+    state = sim.get_state()
     print("--- PHYSICAL PROCESS SIMULATOR STARTED ---")
-    print(f"    Initial state: pump=1200 RPM  valve=CLOSED  flow=0.0")
+    print(
+        f"    Initial state: pump={state['pump_rpm']:.0f} RPM  "
+        f"valve={state['valve_pos']:.0%}  "
+        f"flow={state['flow_rate']:.1f} L/s"
+    )
     print(f"    Update interval: 1s")
 
     while True:
