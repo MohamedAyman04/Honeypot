@@ -205,7 +205,10 @@ class UnifiedLogger:
         payload: dict[str, Any] | None = None,
         narrative: str | None = None,
     ) -> dict:
-        tid, tname, tactic, kill_chain, _purdue, protocol, tmpl = _lookup(event_type)
+        event_type = event_type.lower()
+        tid, tname, tactic, kill_chain, _purdue, protocol, tmpl = _lookup(event_type.upper())
+        if tid == "T0000":
+            tid, tname, tactic, kill_chain, _purdue, protocol, tmpl = _lookup(event_type)
         purdue = "Level 2"
 
         src_ip  = source.get("ip", "unknown")

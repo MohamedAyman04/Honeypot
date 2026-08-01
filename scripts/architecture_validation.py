@@ -73,12 +73,13 @@ FEATURE_COLS = [
 NETWORK_FEATURES = ["inter_arrival_time", "write_freq_10s", "is_write", "func_code", "length"]
 PROCESS_FEATURES = ["pressure", "flow_rate", "temperature", "pressure_delta", "pressure_mean_dev"]
 
-ALERT_PHASES = [4, 5, 7, 8]
+ALERT_PHASES = [4, 5, 7, 8, 9]
 PHASE_NAMES = {
     4: "Semantic Injection",
     5: "Stealth Drift",
     7: "Actuator Manipulation",
     8: "Replay Attack",
+    9: "SCADA Insider Setpoint",
 }
 
 DETECTOR_LABELS = {

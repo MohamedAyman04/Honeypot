@@ -34,7 +34,7 @@ class StoryClient:
             "run_id": self.run_id,
             "level": self.level,
             "component": self.component,
-            "event_type": event_type,
+            "event_type": event_type.lower(),
             "severity": severity,
             "message": message,
             "details": details or {},

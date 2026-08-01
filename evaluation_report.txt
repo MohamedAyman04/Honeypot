@@ -14,105 +14,126 @@ AUDIT SUMMARY:
      index 391. No shared samples between Validation and Test Splits.
 
 SPLIT SIZES:
-  Training baseline size (Normal pre-attack): 334 samples
-  Validation Split size (Phase 5 training): 120 samples
-  Test Active Split size (Active attack sequence): 193 samples
-  Test Full Split size (Full simulation timeline): 5572 samples
+  Training baseline size (Normal pre-attack): 389 samples
+  Validation Split size (Phase 5 training): 20 samples
+  Test Active Split size (Active attack sequence): 1036 samples
+  Test Full Split size (Full simulation timeline): 19054 samples
 
 TUNED MODEL PARAMETERS:
-  IF Threshold      : 0.051967
-  LSTM Threshold    : 0.126038
-  Score Fusion Thresh: 0.871227
-  Weighted Vote Thresh: 0.947650 (w_if=0.2, w_lstm=0.8)
+  IF Threshold      : 0.005173
+  LSTM Threshold    : 0.054812
+  Score Fusion Thresh: 0.923224
+  Weighted Vote Thresh: 0.970130 (w_if=0.2, w_lstm=0.8)
 
 ────────────────────────────────────────────────────────────────────
-QUIET BASELINE PERFORMANCE (Indices 200-359: 160 normal samples)
+QUIET BASELINE PERFORMANCE (Training split — 389 normal samples)
 ────────────────────────────────────────────────────────────────────
-  IF Solo Specificity    : 0.9341 (TN=312, FP=22)
-  LSTM Solo Specificity  : 1.0000 (TN=334, FP=0)
+  IF Solo Specificity    : 0.9897 (TN=385, FP=4)
+  LSTM Solo Specificity  : 1.0000 (TN=389, FP=0)
 
 ────────────────────────────────────────────────────────────────────
 METRICS COMPARISON TABLE
 ────────────────────────────────────────────────────────────────────
 Format: Model | Precision | Recall | F1-Score | [TP, FP, FN, TN]
 
---- 1. ACTIVE ATTACK PERIOD ONLY (Indices 391-398) ---
+--- 1. ACTIVE ATTACK PERIOD ONLY (1036 samples — attacks interspersed with quiet intervals) ---
 This evaluates the ML engine's performance during the active attack sequence 
 excluding the post-attack aftermath period.
 
-  IF Solo         : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
-  LSTM Solo       : P=1.0000 | R=0.7150 | F1=0.8338 | TP=138, FP= 0, FN=55, TN= 0
-  Ensemble OR     : P=1.0000 | R=0.7720 | F1=0.8713 | TP=149, FP= 0, FN=44, TN= 0
-  Ensemble AND    : P=0.0000 | R=0.0000 | F1=0.0000 | TP= 0, FP= 0, FN=193, TN= 0
-  Score Fusion    : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
-  Weighted Vote   : P=1.0000 | R=0.0570 | F1=0.1078 | TP=11, FP= 0, FN=182, TN= 0
+  IF Solo         : P=1.0000 | R=0.3745 | F1=0.5449 | TP=388, FP= 0, FN=648, TN= 0
+  LSTM Solo       : P=1.0000 | R=0.6071 | F1=0.7556 | TP=629, FP= 0, FN=407, TN= 0
+  Ensemble OR     : P=1.0000 | R=0.6535 | F1=0.7904 | TP=677, FP= 0, FN=359, TN= 0
+  Ensemble AND    : P=1.0000 | R=0.3282 | F1=0.4942 | TP=340, FP= 0, FN=696, TN= 0
+  Score Fusion    : P=1.0000 | R=0.4266 | F1=0.5981 | TP=442, FP= 0, FN=594, TN= 0
+  Weighted Vote   : P=1.0000 | R=0.4266 | F1=0.5981 | TP=442, FP= 0, FN=594, TN= 0
 
---- 2. FULL TIMELINE INCLUDING AFTERMATH (Indices 391-518) ---
-This includes the post-attack recovery period where the plant was left in a highly 
-anomalous physical state. Anomaly detectors flag this as abnormal, which from a 
-physical process view is correct, but cyber labels count it as false positives.
+--- 2. FULL TIMELINE INCLUDING AFTERMATH (19054 samples — complete test split) ---
+This includes the quiet intervals between attacks and the post-attack recovery 
+period. False positives here are samples flagged as anomalous outside labelled 
+cyber-attack windows (physically-perturbed state not yet restored to baseline).
 
-  IF Solo         : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
-  LSTM Solo       : P=0.0629 | R=0.7150 | F1=0.1156 | TP=138, FP=2057, FN=55, TN=3322
-  Ensemble OR     : P=0.0643 | R=0.7720 | F1=0.1186 | TP=149, FP=2170, FN=44, TN=3209
-  Ensemble AND    : P=0.0000 | R=0.0000 | F1=0.0000 | TP= 0, FP= 1, FN=193, TN=5378
-  Score Fusion    : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
-  Weighted Vote   : P=0.0880 | R=0.0570 | F1=0.0692 | TP=11, FP=114, FN=182, TN=5265
+  IF Solo         : P=0.6966 | R=0.3745 | F1=0.4871 | TP=388, FP=169, FN=648, TN=17849
+  LSTM Solo       : P=0.1182 | R=0.6071 | F1=0.1979 | TP=629, FP=4693, FN=407, TN=13325
+  Ensemble OR     : P=0.1250 | R=0.6535 | F1=0.2099 | TP=677, FP=4737, FN=359, TN=13281
+  Ensemble AND    : P=0.7312 | R=0.3282 | F1=0.4530 | TP=340, FP=125, FN=696, TN=17893
+  Score Fusion    : P=0.5893 | R=0.4266 | F1=0.4950 | TP=442, FP=308, FN=594, TN=17710
+  Weighted Vote   : P=0.5893 | R=0.4266 | F1=0.4950 | TP=442, FP=308, FN=594, TN=17710
 
 ────────────────────────────────────────────────────────────────────
-STATISTICAL VALIDITY WARNING:
-  The non-overlapping Test Active Split contains ONLY 193 samples 
-  (exactly 193 attack and 0 normal). 
-  While this split is methodologically clean and has zero data leakage from 
-  threshold tuning, the sample size is far too small to draw statistically 
-  meaningful or generalizable metrics. For a final publication/thesis defense, 
-  a longer simulation run generating a larger test split is highly recommended.
+STATISTICAL VALIDITY NOTE:
+  Test Active Split: 1036 samples
+    (1036 attack-labelled, 0 normal).
+  Test Full Split : 19054 samples
+    (1036 attack-labelled, 18018 normal).
+  Dataset size is sufficient for statistically meaningful evaluation.
 
 ────────────────────────────────────────────────────────────────────
 OVERLAP AUDIT DIAGNOSIS:
-  IF Solo vs Score Fusion vs Weighted Vote flagged indices match exactly: True
-  Flagged Indices: [454, 465, 4809, 5391, 5398, 5405, 5885, 5892, 5895, 5901, 5902]
+  IF Solo vs Score Fusion vs Weighted Vote flagged indices match exactly: False
+  Flagged Indices: [414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 454, 455, 466, 477, 481, 482, 499, 530, 533, 534, 551, 553, 565, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045, 2046, 2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061, 2062, 2063, 2064, 2065, 2066, 2067, 2068, 2069, 2489, 2490, 2491, 2492, 2493, 2494, 2495, 3007, 3008, 3009, 3010, 3011, 3012, 3013, 3014, 3015, 3458, 3883, 3885, 3886, 3887, 3888, 3889, 3890, 3891, 3892, 3895, 4350, 4351, 4352, 4353, 4354, 4355, 4356, 4357, 4358, 4359, 4360, 4369, 4755, 4758, 4760, 4765, 4770, 4775, 4780, 4785, 5228, 5233, 5234, 5239, 5245, 5246, 5251, 5252, 5257, 5263, 5264, 5269, 5270, 5275, 5281, 5282, 5287, 5293, 5793, 5799, 5804, 5805, 5806, 5811, 5812, 5817, 5818, 5823, 5824, 5829, 5830, 5835, 5836, 5841, 5842, 7255, 7256, 7257, 7258, 7259, 7260, 7261, 7262, 7263, 7676, 7679, 7680, 7683, 7684, 7687, 7688, 7691, 7692, 7695, 7696, 7699, 7700, 7703, 7704, 7707, 7708, 7711, 7715, 7719, 8129, 8130, 8131, 8132, 8133, 8134, 8135, 8136, 8137, 11877, 11878, 11879, 11880, 11881, 11882, 11883, 13289, 13290, 13291, 13292, 13293, 13294, 13295, 13296, 13297, 13298, 13304, 13761, 13764, 13765, 13767, 13768, 13770, 13771, 13773, 13774, 13776, 13779, 13780, 13782, 13783, 13785, 13786, 13788, 14698, 14702, 14703, 14704, 14706, 14710, 14714, 14718, 14722, 14726, 14730, 14734, 14738, 15160, 15161, 15162, 15163, 15164, 15165, 15166, 15167, 15168, 15169, 15170, 16078, 16084, 16087, 16090, 16096, 16102, 16108, 16114, 16120, 16126, 16132, 16138, 16144, 16150, 16571, 16572, 16573, 16574, 16575, 16577, 16991, 16992, 16993, 16994, 16995, 16996, 16997, 16998, 16999, 17000, 17003, 17837, 17839, 17840, 17841, 17842, 17843, 17844, 17845, 17846, 17855, 18900, 18901, 18902, 18903, 18904, 18905, 19330, 19331, 19332, 19333, 19334, 19335, 19336, 19337, 19338, 19339, 19342]
 
-  WHY: The validation split contains only 31 samples (23 attack, 8 normal).
-  With such a small, attack-heavy validation set, the F1 optimization landscape
-  is a step function with very few distinct prediction boundaries. The fusion/vote
+  WHY: The validation split contains 20 samples
+  (5 attack-labelled, 15 normal).
+  With such a small or attack-heavy validation set the F1 optimization landscape
+  can be a step function with very few distinct prediction boundaries. The fusion/vote
   threshold sweeps converge onto a decision boundary that is mathematically equivalent
-  to IF Solo's boundary. There is not enough validation data to meaningfully
-  differentiate the combined score combinations from the IF Solo component alone.
+  to IF Solo's boundary. More validation data (larger campaign) improves differentiation.
 
 ────────────────────────────────────────────────────────────────────
-RECALL BREAKDOWN BY ATTACK PHASE (Active Test Split, N=193):
+RECALL BREAKDOWN BY ATTACK PHASE (Active Test Split, N=1036):
   Columns: IF/LSTM/OR = TP count; Miss = OR false negatives; IF-only/LSTM-only = exclusive TPs
   Phase    Attack Type                  N    IF  LSTM    OR  Miss  IF-only  LSTM-only
   ----------------------------------------------------------------------------------
-  5        Stealth Drift              129     0   129   129     0        0        129
-  7        Actuator Manipulation       21     2     9    11    10        2          9
-  8        Replay Attack               43     9     0     9    34        9          0
+  5        Stealth Drift              525   245   434   459    66       25        214
+  7        Actuator Manipulation      162   131   129   150    12       21         19
+  8        Replay Attack              349    12    66    68   281        2         56
   ----------------------------------------------------------------------------------
-  TOTAL                               193    11   138   149    44       11        138
+  TOTAL                              1036   388   629   677   359       48        289
 
 ────────────────────────────────────────────────────────────────────
 AND-GATE COMPLEMENTARITY AUDIT (IF Solo TP vs LSTM Solo TP overlap):
 
-  IF Solo TP count (active split)  : 11
-  LSTM Solo TP count (active split): 138
-  Shared TP indices (overlap)      : 0  — CONFIRMED
-
-  The two models' true-positive sets are entirely disjoint. Isolation Forest
-  flags network-level statistical outliers (abrupt register injections in
-  Phase 7/8), while the LSTM autoencoder flags temporal physical-process
-  deviations (gradual Stealth Drift in Phase 5 and actuator hold periods in
-  Phase 7). OR-Gate union coverage is therefore additive (11 + 138 = 149 TP).
-  AND-Gate requires simultaneous agreement, which never occurs → 0 TP.
+  IF Solo TP count (active split)  : 388
+  LSTM Solo TP count (active split): 629
+  Shared TP indices (overlap)      : 340 — indices [414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 477, 481, 482, 499, 530, 533, 534, 551, 553, 565, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045, 2046, 2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061, 2062, 2063, 2064, 2065, 2066, 2067, 2068, 2069, 2489, 2490, 2491, 2492, 2493, 2494, 2495, 3015, 3888, 3889, 3890, 3891, 3892, 4355, 4356, 4357, 4358, 4359, 4360, 5270, 5282, 5293, 5793, 5799, 5804, 5805, 5806, 5811, 5812, 5817, 5818, 5823, 5824, 5829, 5830, 5835, 5836, 5841, 5842, 7255, 7256, 7257, 7258, 7259, 7260, 7261, 7262, 7263, 7676, 7679, 7680, 7683, 7684, 7687, 7688, 7691, 7692, 7695, 7696, 7699, 7700, 7703, 7704, 7707, 7708, 7711, 7715, 7719, 8129, 8130, 8131, 8132, 8133, 8134, 8135, 8136, 8137, 11877, 11878, 11879, 11880, 11881, 11882, 11883, 13289, 13290, 13291, 13292, 13293, 13294, 13295, 13296, 13297, 13298, 13304, 13761, 13764, 13765, 13767, 13768, 13770, 13771, 13773, 13774, 13776, 13779, 13780, 13782, 13783, 13785, 13786, 13788, 14698, 14702, 14703, 14704, 14706, 14710, 14714, 14718, 14722, 14726, 14730, 14734, 14738, 15160, 15161, 15162, 15163, 15164, 15165, 15166, 15167, 15168, 15169, 15170, 16087, 16090, 16096, 16102, 16108, 16114, 16120, 16126, 16132, 16138, 16144, 16150, 16571, 16572, 16573, 16574, 16575, 16577, 16991, 16992, 16993, 16994, 16995, 16996, 16997, 16998, 16999, 17000, 17003, 17837, 17839, 17840, 17841, 17842, 17843, 17844, 17845, 17846, 17855, 18900, 18901, 18902, 18903, 18904, 18905, 19330, 19331, 19332, 19333, 19334, 19335, 19336, 19337, 19338, 19339, 19342]
 
 ────────────────────────────────────────────────────────────────────
 Phase Detection Audit (Active Test Split):
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
   Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
   Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
-  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
-  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
-  Phase 5 (Stealth Drift  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
-  Phase 7 (Actuator Manipu): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
-  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
-  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
-  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=MISSED     OR=DETECTED   AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=DETECTED   OR=DETECTED   AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 5 (Stealth Drift  ): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 8 (Replay Attack  ): IF=MISSED     LSTM=MISSED     OR=MISSED     AND=MISSED     FUSION=MISSED     VOTE=MISSED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED
+  Phase 7 (Actuator Manipu): IF=DETECTED   LSTM=DETECTED   OR=DETECTED   AND=DETECTED   FUSION=DETECTED   VOTE=DETECTED

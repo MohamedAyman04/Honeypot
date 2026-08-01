@@ -9,3 +9,5 @@ results
 # ML model artifacts
 *.pkl
 *.keras
+
+journal

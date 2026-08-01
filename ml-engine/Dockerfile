@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir \
     pandas \
     numpy \
     joblib \
+    matplotlib \
     influxdb-client \
     redis \
     fastapi \

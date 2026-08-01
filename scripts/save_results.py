@@ -49,8 +49,7 @@ ATTACK_CSV_DEFAULT = os.path.join(PROJECT_DIR, "results", "attack_results_extend
 # Set by _resolve_export_window() before any Influx query runs.
 EXPORT_START = None
 EXPORT_STOP = None
-for d in [CSV_DIR, LOG_DIR]:
-    os.makedirs(d, exist_ok=True)
+
 
 # ── Measurements to export ────────────────────────────────────────────────────
 MEASUREMENTS = [
@@ -368,12 +367,26 @@ def main():
         default=ATTACK_CSV_DEFAULT,
         help="Attack boundary CSV used to derive window if --start/--stop omitted",
     )
+    parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="Explicit output directory path (e.g. results/checkpoint_20260724_020000)",
+    )
     args = parser.parse_args()
+
+    global OUT_DIR, CSV_DIR, LOG_DIR
+    if args.out_dir:
+        OUT_DIR = os.path.abspath(args.out_dir)
+        CSV_DIR = os.path.join(OUT_DIR, "csv")
+        LOG_DIR = os.path.join(OUT_DIR, "logs")
+
+    for d in [CSV_DIR, LOG_DIR]:
+        os.makedirs(d, exist_ok=True)
 
     print("\n╔══════════════════════════════════════════════════════════════╗")
     print("║   ICS Honeypot — Thesis Results Saver                       ║")
     print("╚══════════════════════════════════════════════════════════════╝")
-    print(f"  Saving to: results/{TS}/")
+    print(f"  Saving to: {OUT_DIR}")
 
     _require_deps()
     _resolve_export_window(args.start, args.stop, args.attack_csv)
@@ -392,7 +405,7 @@ def main():
         f.write(summary)
 
     print("\n" + summary)
-    print(f"\n[SAVED] All results in: results/{TS}/")
+    print(f"\n[SAVED] All results in: {OUT_DIR}/")
     print("        ├── csv/          ← import into Excel / pandas for your thesis tables")
     print("        ├── logs/         ← evidence logs for appendix")
     print("        └── summary.txt   ← copy detection counts directly into your thesis\n")

