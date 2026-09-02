@@ -18,10 +18,21 @@ v3 changes vs v2
 
 import json
 import os
+import sys
 import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+# Ensure project root in sys.path
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+try:
+    from physics.safety_boundaries import evaluate_safety_boundaries
+except ImportError:
+    evaluate_safety_boundaries = lambda state, **kw: []
 
 try:
     from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -30,7 +41,7 @@ try:
 except ImportError:
     _HAS_INFLUX = False
 
-SCHEMA_VERSION = "3.0"
+SCHEMA_VERSION = "4.0"
 
 # ---------------------------------------------------------------------------
 # MITRE ATT&CK for ICS mapping
@@ -222,6 +233,30 @@ class UnifiedLogger:
         if event_type == "API_ACCESS" and (src_ip.startswith("172.28.") or src_ip.startswith("10.88.")):
             return {}
 
+        # Build ML-ready process & network feature blocks
+        p_load = payload or {}
+        proc_feat = p_load.get("process_features", {
+            "pressure": float(p_load.get("pressure", 120.0)),
+            "flow_rate": float(p_load.get("flow_rate", 50.0)),
+            "temperature": float(p_load.get("temperature", 45.0)),
+            "pump_rpm": float(p_load.get("pump_rpm", 1200.0)),
+            "valve_pos": float(p_load.get("valve_pos", 0.50)),
+            "viscosity": float(p_load.get("viscosity", 1.0)),
+            "pressure_delta": float(p_load.get("pressure_delta", 0.0)),
+            "pressure_mean_dev": float(p_load.get("pressure_mean_dev", 0.0)),
+        })
+        net_feat = p_load.get("network_features", {
+            "inter_arrival_time": float(p_load.get("inter_arrival_time", 0.05)),
+            "write_freq_10s": float(p_load.get("write_freq_10s", 0.0)),
+            "is_write": int(p_load.get("is_write", 1 if "write" in event_type else 0)),
+            "func_code": int(p_load.get("func_code", 6 if "write" in event_type else 3)),
+            "length": int(p_load.get("length", 12)),
+            "dport": int(target.get("port", 502)),
+            "sport": int(source.get("port", 49152)),
+            "protocol": protocol,
+        })
+        violations = evaluate_safety_boundaries(proc_feat)
+
         record = {
             "timestamp":        time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
             "schema_version":   SCHEMA_VERSION,
@@ -236,6 +271,14 @@ class UnifiedLogger:
             "narrative":        auto_story,
             "correlation_id":   corr_id,
             "session_id":       sess_id,
+            # ── ML-Ready Features & Labels ────────────────────────────────
+            "process_features": proc_feat,
+            "network_features": net_feat,
+            "ml_labels": {
+                "is_anomaly": 1 if (sev in {"HIGH", "CRITICAL"} or violations) else 0,
+                "anomaly_type": event_type.upper(),
+                "boundary_violations": [v.to_dict() for v in violations],
+            },
             # ── MITRE ATT&CK enrichment ───────────────────────────────────
             "mitre_technique":      tid,
             "mitre_name":           tname,

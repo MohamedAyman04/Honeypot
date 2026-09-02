@@ -109,19 +109,38 @@ def load_data():
     
     df = pd.DataFrame(events)
 
-    # Normalize columns: promote commonly-used fields from meta to top-level
+    # Normalize fields from clean hierarchical schema
+    if "event" in df.columns:
+        df["event_type"] = df["event"].apply(lambda e: e.get("type") if isinstance(e, dict) else None)
+        df["severity"] = df["event"].apply(lambda e: e.get("severity") if isinstance(e, dict) else None)
+        df["message"] = df["event"].apply(lambda e: e.get("narrative") if isinstance(e, dict) else None)
+
+    if "context" in df.columns:
+        df["component"] = df["context"].apply(lambda c: c.get("sensor") if isinstance(c, dict) else None)
+        df["level"] = df["context"].apply(lambda c: c.get("purdue_level") if isinstance(c, dict) else None)
+        df["journey_id"] = df["context"].apply(lambda c: c.get("journey_id") if isinstance(c, dict) else None)
+
+    if "mitre" in df.columns:
+        df["mitre_tactic"] = df["mitre"].apply(lambda m: m.get("tactic") if isinstance(m, dict) else None)
+        df["mitre_technique_id"] = df["mitre"].apply(lambda m: m.get("technique_id") if isinstance(m, dict) else None)
+        df["mitre_technique_name"] = df["mitre"].apply(lambda m: m.get("technique_name") if isinstance(m, dict) else None)
+
+    if "security" in df.columns:
+        df["kill_chain_stage"] = df["security"].apply(lambda s: s.get("kill_chain_stage") if isinstance(s, dict) else None)
+
+    if "network" in df.columns:
+        df["protocol"] = df["network"].apply(lambda n: n.get("protocol") if isinstance(n, dict) else None)
+
+    # Alias process / ml_analysis to process_features / ml_labels for backward compatibility
+    if "process" in df.columns and "process_features" not in df.columns:
+        df["process_features"] = df["process"]
+    if "ml_analysis" in df.columns and "ml_labels" not in df.columns:
+        df["ml_labels"] = df["ml_analysis"]
+
+    # Fallback to legacy meta if present
     for col in ("level", "component", "severity", "message"):
         if col not in df.columns and "meta" in df.columns:
-            df[col] = df["meta"].apply(
-                lambda m: m.get(col) if isinstance(m, dict) else None
-            )
-
-    # MITRE ATT&CK promotion (they might be at root or in meta)
-    for col in ("mitre_tactic", "mitre_technique_id", "mitre_technique_name", "kill_chain_stage", "purdue_level", "protocol"):
-        if col not in df.columns and "meta" in df.columns:
-            df[col] = df["meta"].apply(
-                lambda m: m.get(col) if isinstance(m, dict) else None
-            )
+            df[col] = df["meta"].apply(lambda m: m.get(col) if isinstance(m, dict) else None)
 
     # Map 'ts' (new schema) → 'timestamp' (dashboard expected name)
     if 'timestamp' not in df.columns and 'ts' in df.columns:
@@ -192,7 +211,64 @@ m4.metric("Active Assets", unique_comps)
 st.divider()
 
 # -- Tabs for different views --
-tab_viz, tab_mitre, tab_timeline, tab_raw = st.tabs(["📊 Distribution Analysis", "🎯 MITRE ATT&CK", "📈 Event Timeline", "📋 Raw Telemetry"])
+tab_viz, tab_physics, tab_mitre, tab_timeline, tab_raw = st.tabs(["📊 Distribution Analysis", "⚙️ Physical Safety & ML Features", "🎯 MITRE ATT&CK", "📈 Event Timeline", "📋 Raw Telemetry"])
+
+with tab_physics:
+    st.subheader("⚙️ Multi-Variable Physical Safety & Process Telemetry")
+    
+    # Check if process_features exist
+    has_proc = 'process_features' in filtered_df.columns
+    if has_proc:
+        proc_data = []
+        for pf in filtered_df['process_features'].dropna():
+            if isinstance(pf, dict):
+                proc_data.append(pf)
+        
+        if proc_data:
+            p_df = pd.DataFrame(proc_data)
+            p_col1, p_col2, p_col3, p_col4 = st.columns(4)
+            p_col1.metric("Avg Pressure", f"{p_df['pressure'].mean():.1f} PSI", f"Max: {p_df['pressure'].max():.1f}")
+            p_col2.metric("Avg Flow Rate", f"{p_df['flow_rate'].mean():.1f} L/s", f"Max: {p_df['flow_rate'].max():.1f}")
+            p_col3.metric("Avg Temperature", f"{p_df['temperature'].mean():.1f} °C", f"Max: {p_df['temperature'].max():.1f}")
+            p_col4.metric("Avg Pump Speed", f"{p_df['pump_rpm'].mean():.0f} RPM", f"Max: {p_df['pump_rpm'].max():.0f}")
+
+            st.divider()
+            
+            g_col1, g_col2 = st.columns(2)
+            with g_col1:
+                st.subheader("Pressure Distribution vs. ASME B31.4 Limits")
+                fig_p = px.histogram(p_df, x="pressure", nbins=40, color_discrete_sequence=['#3b82f6'])
+                fig_p.add_vline(x=150.0, line_dash="dash", line_color="#ef4444", annotation_text="Safety Trip (150 PSI)")
+                fig_p.add_vline(x=50.0, line_dash="dash", line_color="#f59e0b", annotation_text="Containment Loss (50 PSI)")
+                fig_p.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+                st.plotly_chart(fig_p, use_container_width=True)
+                
+            with g_col2:
+                st.subheader("Flow Rate vs. API 610 Runout Limits")
+                fig_q = px.histogram(p_df, x="flow_rate", nbins=40, color_discrete_sequence=['#10b981'])
+                fig_q.add_vline(x=75.0, line_dash="dash", line_color="#ef4444", annotation_text="Surge Limit (75 L/s)")
+                fig_q.add_vline(x=5.0, line_dash="dash", line_color="#f59e0b", annotation_text="Deadhead Limit (5 L/s)")
+                fig_q.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+                st.plotly_chart(fig_q, use_container_width=True)
+                
+            g_col3, g_col4 = st.columns(2)
+            with g_col3:
+                st.subheader("Temperature Distribution (°C)")
+                fig_t = px.histogram(p_df, x="temperature", nbins=30, color_discrete_sequence=['#f97316'])
+                fig_t.add_vline(x=75.0, line_dash="dash", line_color="#ef4444", annotation_text="Thermal Trip (75 °C)")
+                fig_t.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+                st.plotly_chart(fig_t, use_container_width=True)
+                
+            with g_col4:
+                st.subheader("Pump Speed (RPM) vs. Mechanical Limit")
+                fig_rpm = px.histogram(p_df, x="pump_rpm", nbins=30, color_discrete_sequence=['#8b5cf6'])
+                fig_rpm.add_vline(x=2000.0, line_dash="dash", line_color="#ef4444", annotation_text="Overspeed Trip (2000 RPM)")
+                fig_rpm.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+                st.plotly_chart(fig_rpm, use_container_width=True)
+        else:
+            st.info("Process features dictionary is empty.")
+    else:
+        st.info("No process_features column found in current dataset.")
 
 with tab_viz:
     col1, col2 = st.columns(2)

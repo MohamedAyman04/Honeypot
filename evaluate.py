@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
-ICS Honeypot — High-Resolution ML Evaluation Script (v7)
-===================================================
-Role   : Lead ICS Security Researcher
-Context: Re-evaluating the Honeypot v5.2 experimental run using 
-         high-resolution telemetry (1Hz) with rigorous train/val/test splits.
+[DEPRECATED / LEGACY EXPLORATORY SCRIPT]
+=======================================
+Notice: This script is preserved for legacy exploratory reference only.
+For authoritative, reproducible 6-layer evaluation under strict validation calibration,
+Domain Feature Separation, Narrow Mechanism Gate (NMG), and Phase 9 SCADA Insider evaluation,
+use the canonical pipeline:
 
-Methodology Audits Addressed:
-1. DATA LEAKAGE RESOLVED: Baselines are trained strictly on the pre-attack normal split.
-   No post-attack or active attack normal samples are used during baseline scaling or model fitting.
-2. CIRCULAR CONTAMINATION RESOLVED: Contamination parameter (0.01) is derived from 
-   domain knowledge (operators tolerate ~1% false alarms) instead of evaluating post-hoc on the test set.
-3. DYNAMIC THRESHOLDS: Thresholds for LSTM, Score Fusion, and Weighted Voting are 
-   fully tuned on a separate Validation Split before being locked down and evaluated on the Test Split.
+    python scripts/canonical_evaluation.py
+
+See results/CANONICAL_RESULTS.md and README.md for current benchmark results.
 """
 
 import os

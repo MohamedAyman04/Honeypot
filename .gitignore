@@ -11,3 +11,5 @@ results
 *.keras
 
 journal
+*.bak
+*.bak_original
