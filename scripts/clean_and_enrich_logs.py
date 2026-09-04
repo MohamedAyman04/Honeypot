@@ -164,8 +164,16 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
             "pressure_delta": round(random.uniform(-0.5, 0.5), 2),
             "pressure_mean_deviation": round(p - 120.0, 2),
         }
+        is_dos = (phase == 10) or ("dos" in et.lower())
+        if is_dos:
+            iat_val = round(random.uniform(0.001, 0.004), 4)
+        elif is_write:
+            iat_val = round(random.uniform(0.005, 0.05), 3)
+        else:
+            iat_val = round(random.uniform(0.01, 0.2), 3)
+
         net_feat = {
-            "inter_arrival_time": round(random.uniform(0.01, 0.2), 3),
+            "inter_arrival_time": iat_val,
             "write_frequency_10s": round(freq, 1),
             "is_write": is_write,
             "function_code": 6 if is_write else 3,
@@ -173,23 +181,31 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
             "protocol": proto,
         }
         violations = evaluate_safety_boundaries(proc_feat)
-        is_ano = 1 if (phase > 3 or violations) else 0
-        cat_name = "Normal Baseline" if is_ano == 0 else f"Phase {phase} Execution"
+        is_ano = 1 if (phase > 3 or violations or is_dos) else 0
+        cat_name = "Normal Baseline" if is_ano == 0 else (f"Phase 10 Execution (DoS)" if is_dos else f"Phase {phase} Execution")
 
         labels = {
             "is_anomaly": is_ano,
-            "anomaly_type": "ATTACK" if is_ano else "NORMAL",
-            "attack_phase": phase,
+            "anomaly_type": "DOS_ATTACK" if is_dos else ("ATTACK" if is_ano else "NORMAL"),
+            "attack_phase": 10 if is_dos else phase,
             "attack_category": cat_name,
             "boundary_violations": [v.to_dict() for v in violations],
         }
 
-        mitre_tags = {
-            "technique_id": "T0855" if is_write else ("T0807" if "terminal" in et else ("T0846" if "probe" in et else "T0000")),
-            "technique_name": "Unauthorized Command" if is_write else ("Command-Line Interface" if "terminal" in et else "Normal Operation"),
-            "tactic": "Impair Process Control" if is_write else ("Execution" if "terminal" in et else "None"),
-            "kill_chain_stage": "Stage 2 - ICS Impact" if is_ano else "Operational Baseline",
-        }
+        if is_dos:
+            mitre_tags = {
+                "technique_id": "T0814",
+                "technique_name": "Denial of Service",
+                "tactic": "Inhibit Response Function",
+                "kill_chain_stage": "Stage 2 - ICS Impact",
+            }
+        else:
+            mitre_tags = {
+                "technique_id": "T0855" if is_write else ("T0807" if "terminal" in et else ("T0846" if "probe" in et else "T0000")),
+                "technique_name": "Unauthorized Command" if is_write else ("Command-Line Interface" if "terminal" in et else "Normal Operation"),
+                "tactic": "Impair Process Control" if is_write else ("Execution" if "terminal" in et else "None"),
+                "kill_chain_stage": "Stage 2 - ICS Impact" if is_ano else "Operational Baseline",
+            }
 
         rec = create_ml_ready_log_record(
             event_type=et,
@@ -221,6 +237,8 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
     archetypes = [
         # 1. Normal Steady State (Modbus port 502)
         ("process_telemetry", "Modbus", 502, 120.2, 50.1, 45.0, 1200.0, 0.50, 0.0, 0, 3, "NORMAL", 0, "Normal Baseline", "Nominal pipeline steady-state operation within standard ASME B31.4 limits.", "INFO", "T0000", "Normal Operation", "None", "Operational Baseline"),
+        # 1b. Normal Steady State (Siemens S7comm port 102)
+        ("s7comm_read_telemetry", "S7comm", 102, 120.1, 50.2, 45.1, 1200.0, 0.50, 0.0, 0, 4, "NORMAL", 0, "Normal Baseline", "Siemens S7comm cyclic DB read (DB1.DBD0-DBD12) capturing pipeline hydrodynamic state.", "INFO", "T0000", "Normal Operation", "None", "Operational Baseline"),
         # 2. Over-Pressure Safety Trip (Phase 9 / SCADA Insider - Modbus port 502)
         ("over_pressure_trip", "Modbus", 502, 325.0, 0.0, 48.2, 2800.0, 0.0, 1.0, 1, 6, "OVER_PRESSURE_TRIP", 9, "Insider Setpoint Overpressure", "Critical overpressure (325.0 PSI > 150 PSI) caused by pump overspeed to 2800 RPM against closed valve.", "CRITICAL", "T0828", "Loss of Safety", "Damage to Property", "Stage 2 - ICS Impact"),
         # 3. Under-Pressure Line Break (Modbus port 502)
@@ -239,10 +257,14 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
         ("cavitation_risk", "Modbus", 502, 165.0, 8.0, 58.0, 2100.0, 0.08, 2.0, 1, 6, "CAVITATION_RISK", 7, "Cavitation & Deadhead", "Cavitation criteria met: 2100 RPM against 8% valve opening causes localized vaporization shock.", "CRITICAL", "T0828", "Loss of Safety", "Damage to Property", "Stage 2 - ICS Impact"),
         # 10. Stealth Pressure Drift (Phase 5 CUSUM/EWMA - Modbus port 502)
         ("stealth_pressure_drift", "Modbus", 502, 136.5, 52.0, 46.2, 1350.0, 0.52, 1.0, 1, 6, "STEALTH_DRIFT", 5, "Stealth Drift", "Subtle cumulative drift (+2.5 PSI/step) accumulating CUSUM statistic (H = 6.8 > 6.0).", "HIGH", "T0836", "Modify Parameter", "Impair Process Control", "Stage 2 - ICS Impact"),
+        # 10b. Siemens S7comm Stealth Parameter Modification (S7comm port 102)
+        ("s7comm_stealth_drift", "S7comm", 102, 134.8, 51.5, 45.8, 1320.0, 0.52, 0.5, 1, 5, "STEALTH_DRIFT", 5, "Stealth Drift", "Siemens S7comm incremental setpoint increment (+2 PSI/step) triggering CUSUM drift alarm.", "HIGH", "T0836", "Modify Parameter", "Impair Process Control", "Stage 2 - ICS Impact"),
         # 11. Telemetry Flatline Replay (Phase 8 NMG Gate - Modbus port 502)
         ("telemetry_replay_spoof", "Modbus", 502, 120.0, 50.0, 45.0, 1200.0, 0.50, 0.0, 0, 3, "REPLAY_ATTACK", 8, "Telemetry Replay", "Out-of-band InfluxDB replay: telemetry flatlined at nominal state while Modbus write traffic is zero.", "HIGH", "T0856", "Spoof Reporting Message", "Impair Process Control", "Stage 2 - ICS Impact"),
         # 12. Modbus High-Frequency Semantic Injection (Modbus port 502)
         ("semantic_write_burst", "Modbus", 502, 142.0, 48.0, 45.5, 1300.0, 0.45, 8.5, 1, 6, "SEMANTIC_INJECTION", 4, "Semantic Injection", "Sub-second Modbus FC6 write burst (8.5 writes/10s) toggling holding registers.", "HIGH", "T0855", "Unauthorized Command", "Impair Process Control", "Stage 2 - ICS Impact"),
+        # 12b. Siemens S7comm Force Write / Valve Override (S7comm port 102)
+        ("s7comm_force_write", "S7comm", 102, 168.0, 22.0, 56.5, 1850.0, 0.15, 4.0, 1, 5, "S7COMM_UNAUTHORIZED_WRITE", 7, "Actuator Manipulation", "Siemens S7comm Job write to DB1 overriding pump speed and valve setpoint.", "CRITICAL", "T0855", "Unauthorized Command", "Impair Process Control", "Stage 2 - ICS Impact"),
         # 13. Reconnaissance Port Sweep (Modbus port 502)
         ("network_scan_probe", "Modbus", 502, 120.0, 50.0, 45.0, 1200.0, 0.50, 0.0, 0, 3, "RECON_SCAN", 1, "Reconnaissance", "Nmap TCP port scan probing industrial ports 502 (Modbus), 102 (S7comm), and 20000 (DNP3).", "LOW", "T1595", "Active Scanning", "Reconnaissance", "Stage 1 - IT Intrusion"),
         # 14. Siemens S7comm Fingerprinting (S7comm port 102 STRICT)
@@ -251,6 +273,8 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
         ("dnp3_probe", "DNP3", 20000, 120.0, 50.0, 45.0, 1200.0, 0.50, 0.0, 0, 1, "RECON_SCAN", 2, "Information Gathering", "DNP3 Class 0/1/2/3 poll scan probing outstation registers on port 20000.", "LOW", "T0846", "Network Service Discovery", "Discovery", "Stage 1 - IT Intrusion"),
         # 16. Lateral Movement SSH Pivot (SSH port 22 STRICT)
         ("lateral_pivot_attempt", "SSH", 22, 120.0, 50.0, 45.0, 1200.0, 0.50, 0.0, 0, 0, "LATERAL_MOVEMENT", 6, "Lateral Movement", "SSH login attempt to SCADA workstation (ics_scada_ssh:22) exploiting leaked credentials.", "MEDIUM", "T0885", "Remote Services", "Lateral Movement", "Stage 1 - IT Intrusion"),
+        # 17. Denial of Service Connection Starvation (Modbus port 502 / SSH port 22)
+        ("dos_connection_starvation", "Modbus", 502, 120.0, 50.0, 45.0, 1200.0, 0.50, 0.0, 0, 3, "DOS_ATTACK", 10, "Denial of Service", "Sub-5ms Modbus transaction flood exhausting PLC socket pool and starving SCADA polling.", "HIGH", "T0814", "Denial of Service", "Inhibit Response Function", "Stage 2 - ICS Impact"),
     ]
 
     current_time = base_time
@@ -261,14 +285,14 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
         ts_str = current_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         if random.random() < 0.70:
-            arch = archetypes[0] # Normal
+            arch = archetypes[0] if random.random() < 0.50 else archetypes[1] # Alternate Modbus & S7comm normal
             p_noise = random.uniform(-2.5, 2.5)
             q_noise = random.uniform(-1.5, 1.5)
             t_noise = random.uniform(-0.8, 0.8)
             rpm_noise = random.uniform(-15.0, 15.0)
             v_noise = random.uniform(-0.02, 0.02)
         else:
-            arch = random.choice(archetypes[1:]) # Diverse Anomaly
+            arch = random.choice(archetypes[2:]) # Diverse Anomaly covering Modbus, S7, DNP3, SSH, DoS
             p_noise = random.uniform(-1.0, 1.0)
             q_noise = random.uniform(-0.5, 0.5)
             t_noise = random.uniform(-0.5, 0.5)
@@ -298,8 +322,15 @@ def generate_ml_ready_dataset(input_file: Path, output_file: Path):
             "pressure_mean_deviation": p_mean_dev,
         }
 
+        if ph == 10 or ano_type == "DOS_ATTACK":
+            iat = round(random.uniform(0.001, 0.004), 4) # Sub-5ms flood triggering Rule 1.5
+        elif ph == 4:
+            iat = round(random.uniform(0.005, 0.05), 3) # Sub-second write bursts
+        else:
+            iat = round(random.uniform(0.01, 0.15), 3)
+
         net_feat = {
-            "inter_arrival_time": round(random.uniform(0.01, 0.15), 3),
+            "inter_arrival_time": iat,
             "write_frequency_10s": round(freq_base, 1),
             "is_write": is_w,
             "function_code": fc,

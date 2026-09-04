@@ -336,3 +336,74 @@ def evaluate_safety_boundaries(
         ))
 
     return violations
+
+
+@dataclass
+class CUSUMConfig:
+    """Configuration for statistical process control on physical variables."""
+    mu_0: float
+    k: float
+    h: float
+    ewma_lambda: float = 0.10
+
+
+class MultiVariableCUSUM:
+    """
+    Multi-Variable Cumulative Sum (CUSUM) and EWMA detector.
+    Monitors Pressure (P), Flow Rate (Q), Temperature (T), and Pump Speed (R).
+    Enables detection of stealth drift attacks across all process & actuator variables.
+    """
+    def __init__(self, configs: dict[str, CUSUMConfig] | None = None):
+        if configs is None:
+            self.configs = {
+                "pressure": CUSUMConfig(mu_0=120.0, k=0.5, h=6.0, ewma_lambda=0.10),
+                "flow_rate": CUSUMConfig(mu_0=50.0, k=0.5, h=5.0, ewma_lambda=0.10),
+                "temperature": CUSUMConfig(mu_0=45.0, k=0.2, h=3.0, ewma_lambda=0.05),
+                "pump_rpm": CUSUMConfig(mu_0=1200.0, k=10.0, h=60.0, ewma_lambda=0.10),
+            }
+        else:
+            self.configs = configs
+        
+        self.state = {
+            var: {"s_pos": 0.0, "s_neg": 0.0, "ewma": cfg.mu_0}
+            for var, cfg in self.configs.items()
+        }
+
+    def update(self, current_values: dict[str, float]) -> dict[str, dict[str, Any]]:
+        results = {}
+        for var, cfg in self.configs.items():
+            if var not in current_values:
+                continue
+            val = float(current_values[var])
+            s = self.state[var]
+            
+            # Update EWMA smoothed baseline
+            s["ewma"] = cfg.ewma_lambda * val + (1.0 - cfg.ewma_lambda) * s["ewma"]
+            
+            # Residual deviation from running EWMA baseline
+            dev = val - s["ewma"]
+            
+            # Recursive CUSUM accumulators
+            s["s_pos"] = max(0.0, s["s_pos"] + dev - cfg.k)
+            s["s_neg"] = max(0.0, s["s_neg"] - dev - cfg.k)
+            
+            is_drift = (s["s_pos"] > cfg.h) or (s["s_neg"] > cfg.h)
+            results[var] = {
+                "val": round(val, 2),
+                "ewma": round(s["ewma"], 2),
+                "s_pos": round(s["s_pos"], 2),
+                "s_neg": round(s["s_neg"], 2),
+                "is_drift": is_drift,
+            }
+        return results
+
+    def reset(self, variable: str | None = None):
+        """Reset CUSUM accumulators (e.g. after authorized operational setpoint changes)."""
+        if variable:
+            if variable in self.state:
+                cfg = self.configs[variable]
+                self.state[variable] = {"s_pos": 0.0, "s_neg": 0.0, "ewma": cfg.mu_0}
+        else:
+            for var, cfg in self.configs.items():
+                self.state[var] = {"s_pos": 0.0, "s_neg": 0.0, "ewma": cfg.mu_0}
+

