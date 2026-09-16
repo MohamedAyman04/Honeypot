@@ -401,7 +401,7 @@ services:
     volumes:
       - .:/repo
     environment:
-      - "STORY_LOG_PATH=/repo/general logs.jsonl"
+      - "STORY_LOG_PATH=/repo/data/general logs.jsonl"
       - PYTHONUNBUFFERED=1
     networks:
       - dmz-net
@@ -443,7 +443,7 @@ services:
     ports:
       - "8502:8501"
     volumes:
-      - "./general logs.jsonl:/data/general_logs.jsonl"
+      - "./data/general logs.jsonl:/data/general_logs.jsonl"
     networks:
       - monitor-net
     env_file: .env

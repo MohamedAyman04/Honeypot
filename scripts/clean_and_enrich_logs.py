@@ -39,8 +39,8 @@ from physics.safety_boundaries import (
 )
 from shared.log_schema import create_ml_ready_log_record, format_iso_timestamp
 
-LOG_FILE = PROJECT_ROOT / "general logs.jsonl"
-BACKUP_FILE = PROJECT_ROOT / "general logs.jsonl.bak_original"
+LOG_FILE = PROJECT_ROOT / "data" / "general logs.jsonl" if (PROJECT_ROOT / "data" / "general logs.jsonl").exists() else PROJECT_ROOT / "general logs.jsonl"
+BACKUP_FILE = PROJECT_ROOT / "data" / "general logs.jsonl.bak_original" if (PROJECT_ROOT / "data").exists() else PROJECT_ROOT / "general logs.jsonl.bak_original"
 
 
 def parse_timestamp(ts_str: str) -> datetime.datetime:

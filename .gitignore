@@ -1,6 +1,7 @@
 .idea
-.venv
-.venv-windows-backup
+.venv*
+eval_env*
+*venv*
 __pycache__
 shared_data
 results
@@ -13,3 +14,5 @@ results
 journal
 *.bak
 *.bak_original
+*.drawio
+diagrams_jCLhoney.drawio

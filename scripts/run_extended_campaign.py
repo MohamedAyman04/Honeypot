@@ -281,7 +281,7 @@ def save_and_locate_results():
         raise CampaignError("Failed to copy attack_results_extended.csv into results dir")
 
     log(f"Campaign artefacts saved: {latest_dir}")
-    log(f"Evaluate with: python3 evaluate.py --data-dir {shlex.quote(latest_dir)}")
+    log(f"Evaluate with: python3 scripts/evaluate.py --data-dir {shlex.quote(latest_dir)}")
     return latest_dir
 
 def run_evaluation_metrics(latest_dir):
@@ -290,9 +290,11 @@ def run_evaluation_metrics(latest_dir):
     log("EVALUATING DETECTION METRICS (Precision, Recall, F1-Score)")
     log("=" * 70)
     
-    eval_script = os.path.join(PROJECT_DIR, "evaluate.py")
+    eval_script = os.path.join(PROJECT_DIR, "scripts", "evaluate.py")
     if not os.path.isfile(eval_script):
-        log("[WARNING] evaluate.py not found in project root. Skipping automatic evaluation metrics.")
+        eval_script = os.path.join(PROJECT_DIR, "evaluate.py")
+    if not os.path.isfile(eval_script):
+        log("[WARNING] evaluate.py not found. Skipping automatic evaluation metrics.")
         return
 
     eval_cmd = f"{shlex.quote(EVAL_PYTHON)} {shlex.quote(eval_script)} --data-dir {shlex.quote(latest_dir)}"
@@ -777,7 +779,7 @@ def main():
         log(f"Results directory : {latest_dir}")
         log(
             f"Run evaluation   : "
-            f"python3 evaluate.py --data-dir {shlex.quote(latest_dir)}"
+            f"python3 scripts/evaluate.py --data-dir {shlex.quote(latest_dir)}"
         )
         log("=" * 70)
 

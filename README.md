@@ -7,7 +7,7 @@ A high-interaction, physics-grounded Industrial Cyber-Physical System (\ac{icps}
 ## 1. Executive Summary & Authoritative Benchmark Entry Point
 
 > **Authoritative Evaluation Script:** `python scripts/canonical_evaluation.py`  
-> **Summary Report:** [`results/CANONICAL_RESULTS.md`](results/CANONICAL_RESULTS.md)
+> **Summary Report:** [`reports/CANONICAL_RESULTS.md`](reports/CANONICAL_RESULTS.md)
 
 Conventional intrusion detection systems suffer from a single-perspective monitoring limitation: network-level monitors are 100% blind to out-of-band telemetry spoofing (Scenario 8 Replay) and authorized insider setpoint changes (Scenario 9), while process-level monitors fail to distinguish malicious tampering from operational transients, causing precision collapse. Furthermore, naive multi-layer fusion rules (logical OR fusion / weighted voting) accumulate false alarms across independent process detectors, dropping precision down to 0.165–0.212 ($\text{F1} = 0.268$--$0.333$).
 
@@ -146,4 +146,65 @@ python scripts/canonical_evaluation.py
 ```bash
 # Start Docker honeypot stack (PCN, Perimeter Bastion, Monitoring)
 docker compose up -d
+```
+
+---
+
+## 7. Clustered Repository Structure
+
+All project assets are organized into purpose-driven directory clusters:
+
+```text
+Honeypot/
+├── README.md                      # Comprehensive project documentation & architecture guide
+├── docker-compose.yml             # Full 4-network orchestration (PCN, DMZ, Monitor, Backplane)
+├── .gitignore                     # Git ignore rules
+│
+├── data/                          # Clustered datasets & event telemetry
+│   └── general logs.jsonl         # Canonical enriched 10-scenario event dataset (with root symlink)
+│
+├── docs/                          # Technical thesis documentation & deployment guides
+│   ├── ARCHITECTURE_REVIEW.md     # Scientific evaluation & experimental analysis
+│   ├── DEPLOYMENT_GUIDE.md        # Step-by-step testbed deployment instructions
+│   ├── IMPLEMENTATION_PLAN.md     # Engineering implementation design notes
+│   └── THESIS_DOCUMENTATION.md    # Master thesis technical specifications
+│
+├── figures/                       # Clustered evaluation plots & architecture diagrams
+│   ├── confusion_matrices.png     # Multi-detector confusion matrix
+│   ├── f1_by_protocol.png         # Protocol-level F1 breakdown
+│   ├── thesis_confusion_matrices.png # Multi-class LSTM anomaly matrix (G1–G6)
+│   ├── thesis_f1_protocol.png     # Comparative protocol benchmark curves
+│   ├── thesis_pr_curves.png       # Precision-Recall curves across detectors
+│   ├── thesis_timeline.png        # Detector activation timeline
+│   └── timeline_anomaly_scores.png# Temporal anomaly score dynamics
+│
+├── reports/                       # Clustered benchmark reports & experimental tables
+│   ├── CANONICAL_RESULTS.md       # Full canonical benchmark summary & methodology
+│   ├── evaluation_report.txt      # Multi-detector evaluation metrics report
+│   └── table_ablation_complete.csv# Full ablation experiment results table
+│
+├── scripts/                       # Benchmark execution, evaluation & utility scripts
+│   ├── canonical_evaluation.py    # Authoritative 3-campaign benchmark evaluation
+│   ├── evaluate.py                # Multi-detector ML evaluation pipeline
+│   ├── clean_and_enrich_logs.py   # Dataset standardization & feature enrichment
+│   ├── attack_simulation.py       # Standalone multi-scenario attack simulation
+│   ├── recompute_ablation.py      # Ablation recomputation tool
+│   ├── profile_normals.py         # Normal baseline statistical profiling
+│   ├── check_disk.py              # Disk space & campaign size estimator
+│   ├── check_indices.py           # InfluxDB index validation utility
+│   └── ...                        # Additional experimental validation scripts
+│
+├── attacker_node/                 # Offensive attack suite & protocol probes (Purdue Level 3.5 / WAN)
+├── plc/                           # Level 1–2 PCN Field PLCs (Modbus/TCP, Siemens S7comm, DNP3)
+├── fake_plc/                      # Secondary low-interaction honeypot PLC
+├── physics/                       # Hydrodynamic simulation & ASME/API physical safety boundaries
+├── ml-engine/                     # Domain-separated ML intrusion detection (IF & LSTM-AE)
+├── scada_ssh/                     # Perimeter SSH bastion honeypot (Cowrie / Level 3.5)
+├── logger/                        # Unified event logger & MITRE ATT&CK correlator
+├── log_dashboard/                 # Streamlit real-time security dashboard
+├── historian_api/                 # Legitimate internal SCADA historian API
+├── honeypot_historian_api/        # Decoy honeypot historian API
+├── grafana_dashboards/            # Pre-provisioned Grafana monitoring dashboards
+├── grafana_provisioning/          # Grafana datasources & dashboard provisioning configs
+└── shared/                        # Shared schemas, MITRE ATT&CK mapping, and IPC client
 ```
