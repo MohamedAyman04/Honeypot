@@ -1,0 +1,63 @@
+timestamp,phase,phase_name,status,detail
+2026-07-23T20:03:36.811001Z,1,phase1_recon,started,Validation chain
+2026-07-23T20:03:46.510809Z,1,phase1_recon,completed,
+2026-07-23T20:03:56.510947Z,2,phase2_info_gathering,started,Validation chain
+2026-07-23T20:04:16.973578Z,2,phase2_info_gathering,completed,
+2026-07-23T20:04:26.973704Z,3,phase3_vuln_scan,started,Validation chain
+2026-07-23T20:05:01.528517Z,3,phase3_vuln_scan,completed,
+2026-07-23T20:05:11.528646Z,4,phase4_exploit,started,Validation chain
+2026-07-23T20:05:12.046618Z,4,phase4_exploit,completed,
+2026-07-23T20:05:22.046732Z,5,phase5_payload,started,Validation chain
+2026-07-23T20:05:47.833642Z,5,phase5_payload,completed,
+2026-07-23T20:05:57.833782Z,6,phase6_lateral_movement,started,Validation chain
+2026-07-23T20:06:00.430700Z,6,phase6_lateral_movement,completed,
+2026-07-23T20:06:10.430845Z,7,phase7_privesc,started,Validation chain
+2026-07-23T20:06:12.622260Z,7,phase7_privesc,completed,
+2026-07-23T20:06:22.622412Z,8,phase8_replay,started,Validation chain
+2026-07-23T20:06:24.329421Z,8,phase8_replay,completed,
+2026-07-23T20:06:34.329672Z,8,phase8_replay,started,Validation extra 1/2 — Replay 118.0 PSI × 175 frames @ 0.1s
+2026-07-23T20:06:52.312463Z,8,phase8_replay,completed,
+2026-07-23T20:07:22.312613Z,8,phase8_replay,started,Validation extra 2/2 — Replay 118.0 PSI × 275 frames @ 0.1s
+2026-07-23T20:07:50.488756Z,8,phase8_replay,completed,
+2026-07-23T20:16:20.489066Z,5,phase5_payload,started,"Validation Standalone — +3 PSI every 5 s, 10 steps"
+2026-07-23T20:17:10.631492Z,5,phase5_payload,completed,
+2026-07-23T20:31:48.632077Z,4,phase4_exploit,started,Test Solo — Injection 420 PSI
+2026-07-23T20:31:48.729988Z,4,phase4_exploit,completed,
+2026-07-23T20:37:43.730299Z,8,phase8_replay,started,Test Solo — Replay 125.0 PSI × 225 frames @ 0.15s
+2026-07-23T20:38:18.194663Z,8,phase8_replay,completed,
+2026-07-23T20:44:03.194913Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3200 Valve=50 hold=5s
+2026-07-23T20:44:09.323281Z,7,phase7_privesc,completed,
+2026-07-23T20:51:05.323532Z,4,phase4_exploit,started,Test Solo — Injection 375 PSI
+2026-07-23T20:51:05.435953Z,4,phase4_exploit,completed,
+2026-07-23T20:56:58.436239Z,4,phase4_exploit,started,Test Solo — Injection 345 PSI
+2026-07-23T20:56:58.877568Z,4,phase4_exploit,completed,
+2026-07-23T21:03:50.877808Z,5,phase5_payload,started,Test Solo — Drift +3 PSI every 6s × 12
+2026-07-23T21:05:03.040054Z,5,phase5_payload,completed,
+2026-07-23T21:11:25.040331Z,5,phase5_payload,started,Test Solo — Drift +5 PSI every 4s × 14
+2026-07-23T21:12:21.209553Z,5,phase5_payload,completed,
+2026-07-23T21:19:10.209817Z,8,phase8_replay,started,Test Solo — Replay 115.0 PSI × 225 frames @ 0.08s
+2026-07-23T21:19:28.662509Z,8,phase8_replay,completed,
+2026-07-23T21:26:13.662771Z,8,phase8_replay,started,Test Solo — Replay 130.0 PSI × 175 frames @ 0.1s
+2026-07-23T21:26:31.623678Z,8,phase8_replay,completed,
+2026-07-23T21:32:54.623931Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3000 Valve=0 hold=12s
+2026-07-23T21:33:07.745782Z,7,phase7_privesc,completed,
+2026-07-23T21:39:24.746044Z,5,phase5_payload,started,Test Solo — Drift +2 PSI every 5s × 8
+2026-07-23T21:40:04.877968Z,5,phase5_payload,completed,
+2026-07-23T21:47:10.878237Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2400 Valve=0 hold=6s
+2026-07-23T21:47:17.996639Z,7,phase7_privesc,completed,
+2026-07-23T21:53:35.996928Z,8,phase8_replay,started,Test Solo — Replay 120.0 PSI × 225 frames @ 0.12s
+2026-07-23T21:54:03.692654Z,8,phase8_replay,completed,
+2026-07-23T22:01:02.692929Z,8,phase8_replay,started,Test Solo — Replay 118.0 PSI × 225 frames @ 0.12s
+2026-07-23T22:01:30.383535Z,8,phase8_replay,completed,
+2026-07-23T22:07:08.383812Z,4,phase4_exploit,started,Test Solo — Injection 345 PSI
+2026-07-23T22:07:08.484769Z,4,phase4_exploit,completed,
+2026-07-23T22:13:33.485035Z,8,phase8_replay,started,Test Solo — Replay 130.0 PSI × 300 frames @ 0.12s
+2026-07-23T22:14:10.363854Z,8,phase8_replay,completed,
+2026-07-23T22:20:10.364106Z,8,phase8_replay,started,Test Solo — Replay 115.0 PSI × 200 frames @ 0.2s
+2026-07-23T22:20:51.027825Z,8,phase8_replay,completed,
+2026-07-23T22:27:58.028087Z,8,phase8_replay,started,Test Solo — Replay 118.0 PSI × 250 frames @ 0.12s
+2026-07-23T22:28:28.802907Z,8,phase8_replay,completed,
+2026-07-23T22:34:40.803165Z,5,phase5_payload,started,Test Solo — Drift +5 PSI every 5s × 10
+2026-07-23T22:35:30.950080Z,5,phase5_payload,completed,
+2026-07-23T22:43:15.950336Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3200 Valve=200 hold=8s
+2026-07-23T22:43:25.083112Z,7,phase7_privesc,completed,

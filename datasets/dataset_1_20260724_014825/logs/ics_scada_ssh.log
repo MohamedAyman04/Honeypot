@@ -1,0 +1,22 @@
+[SCADA-SSH] Physics REST API started on :5100 (PID 15)
+[SCADA-SSH] Physics REST API started on :5100 (PID 15)
+Server listening on 0.0.0.0 port 2222.
+Server listening on :: port 2222.
+Accepted password for engineer from 172.23.0.3 port 41916 ssh2
+Received disconnect from 172.23.0.3 port 41916:11: disconnected by user
+Disconnected from user engineer 172.23.0.3 port 41916
+Accepted password for engineer from 172.23.0.3 port 41920 ssh2
+Received disconnect from 172.23.0.3 port 41920:11: disconnected by user
+Disconnected from user engineer 172.23.0.3 port 41920
+Accepted password for engineer from 172.23.0.3 port 41926 ssh2
+Received disconnect from 172.23.0.3 port 41926:11: disconnected by user
+Disconnected from user engineer 172.23.0.3 port 41926
+Accepted password for engineer from 172.23.0.3 port 41930 ssh2
+Received disconnect from 172.23.0.3 port 41930:11: disconnected by user
+Disconnected from user engineer 172.23.0.3 port 41930
+Accepted password for operator from 172.23.0.3 port 41940 ssh2
+Received disconnect from 172.23.0.3 port 41940:11: disconnected by user
+Disconnected from user operator 172.23.0.3 port 41940
+Received signal 15; terminating.
+Server listening on 0.0.0.0 port 2222.
+Server listening on :: port 2222.

@@ -1,0 +1,500 @@
+INFO:modbus_server:MODBUS write address=100 values=[130]
+WARNING:modbus_server:[INJECTION] Wrote 130 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 130 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[135]
+WARNING:modbus_server:[INJECTION] Wrote 135 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 135 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[140]
+WARNING:modbus_server:[INJECTION] Wrote 140 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 140 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[145]
+WARNING:modbus_server:[INJECTION] Wrote 145 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 145 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[150]
+WARNING:modbus_server:[INJECTION] Wrote 150 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 150 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[155]
+WARNING:modbus_server:[INJECTION] Wrote 155 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 155 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[160]
+WARNING:modbus_server:[INJECTION] Wrote 160 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 160 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[165]
+WARNING:modbus_server:[INJECTION] Wrote 165 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 165 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[170]
+WARNING:modbus_server:[INJECTION] Wrote 170 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 170 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[175]
+WARNING:modbus_server:[INJECTION] Wrote 175 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 175 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[180]
+WARNING:modbus_server:[INJECTION] Wrote 180 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 180 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[185]
+WARNING:modbus_server:[INJECTION] Wrote 185 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 185 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[190]
+WARNING:modbus_server:[INJECTION] Wrote 190 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 190 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[195]
+WARNING:modbus_server:[INJECTION] Wrote 195 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 195 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+INFO:modbus_server:MODBUS write address=100 values=[198]
+WARNING:modbus_server:[INJECTION] Wrote 198 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 198 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[201]
+WARNING:modbus_server:[INJECTION] Wrote 201 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 201 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[204]
+WARNING:modbus_server:[INJECTION] Wrote 204 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 204 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[207]
+WARNING:modbus_server:[INJECTION] Wrote 207 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 207 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[210]
+WARNING:modbus_server:[INJECTION] Wrote 210 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 210 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[213]
+WARNING:modbus_server:[INJECTION] Wrote 213 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 213 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[216]
+WARNING:modbus_server:[INJECTION] Wrote 216 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 216 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[219]
+WARNING:modbus_server:[INJECTION] Wrote 219 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 219 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[222]
+WARNING:modbus_server:[INJECTION] Wrote 222 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 222 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[225]
+WARNING:modbus_server:[INJECTION] Wrote 225 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 225 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[100]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[229]
+WARNING:modbus_server:[INJECTION] Wrote 229 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 229 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[233]
+WARNING:modbus_server:[INJECTION] Wrote 233 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 233 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[237]
+WARNING:modbus_server:[INJECTION] Wrote 237 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 237 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[241]
+WARNING:modbus_server:[INJECTION] Wrote 241 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 241 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[245]
+WARNING:modbus_server:[INJECTION] Wrote 245 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 245 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[249]
+WARNING:modbus_server:[INJECTION] Wrote 249 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 249 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[253]
+WARNING:modbus_server:[INJECTION] Wrote 253 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 253 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[257]
+WARNING:modbus_server:[INJECTION] Wrote 257 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 257 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[261]
+WARNING:modbus_server:[INJECTION] Wrote 261 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 261 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[265]
+WARNING:modbus_server:[INJECTION] Wrote 265 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 265 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[269]
+WARNING:modbus_server:[INJECTION] Wrote 269 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 269 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[273]
+WARNING:modbus_server:[INJECTION] Wrote 273 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 273 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[277]
+WARNING:modbus_server:[INJECTION] Wrote 277 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 277 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[281]
+WARNING:modbus_server:[INJECTION] Wrote 281 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 281 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[285]
+WARNING:modbus_server:[INJECTION] Wrote 285 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 285 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[289]
+WARNING:modbus_server:[INJECTION] Wrote 289 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 289 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[293]
+WARNING:modbus_server:[INJECTION] Wrote 293 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 293 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[297]
+WARNING:modbus_server:[INJECTION] Wrote 297 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 297 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[301]
+WARNING:modbus_server:[INJECTION] Wrote 301 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 301 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[305]
+WARNING:modbus_server:[INJECTION] Wrote 305 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 305 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[309]
+WARNING:modbus_server:[INJECTION] Wrote 309 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 309 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[313]
+WARNING:modbus_server:[INJECTION] Wrote 313 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 313 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[317]
+WARNING:modbus_server:[INJECTION] Wrote 317 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 317 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[321]
+WARNING:modbus_server:[INJECTION] Wrote 321 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 321 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[325]
+WARNING:modbus_server:[INJECTION] Wrote 325 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 325 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[329]
+WARNING:modbus_server:[INJECTION] Wrote 329 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 329 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[333]
+WARNING:modbus_server:[INJECTION] Wrote 333 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 333 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[337]
+WARNING:modbus_server:[INJECTION] Wrote 337 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 337 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[341]
+WARNING:modbus_server:[INJECTION] Wrote 341 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 341 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[345]
+WARNING:modbus_server:[INJECTION] Wrote 345 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 345 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[300]
+WARNING:modbus_server:[INJECTION] Wrote 300 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 300 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[2800]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[200]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[2400]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[50]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[200]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[2800]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[3200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[200]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[375]
+WARNING:modbus_server:[INJECTION] Wrote 375 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 375 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[345]
+WARNING:modbus_server:[INJECTION] Wrote 345 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 345 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[2800]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[100]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[3200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[349]
+WARNING:modbus_server:[INJECTION] Wrote 349 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 349 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[353]
+WARNING:modbus_server:[INJECTION] Wrote 353 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 353 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[357]
+WARNING:modbus_server:[INJECTION] Wrote 357 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 357 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[361]
+WARNING:modbus_server:[INJECTION] Wrote 361 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 361 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[365]
+WARNING:modbus_server:[INJECTION] Wrote 365 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 365 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[369]
+WARNING:modbus_server:[INJECTION] Wrote 369 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 369 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[373]
+WARNING:modbus_server:[INJECTION] Wrote 373 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 373 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[377]
+WARNING:modbus_server:[INJECTION] Wrote 377 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 377 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[382]
+WARNING:modbus_server:[INJECTION] Wrote 382 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 382 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[387]
+WARNING:modbus_server:[INJECTION] Wrote 387 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 387 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[392]
+WARNING:modbus_server:[INJECTION] Wrote 392 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 392 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[397]
+WARNING:modbus_server:[INJECTION] Wrote 397 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 397 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[402]
+WARNING:modbus_server:[INJECTION] Wrote 402 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 402 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[407]
+WARNING:modbus_server:[INJECTION] Wrote 407 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 407 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[412]
+WARNING:modbus_server:[INJECTION] Wrote 412 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 412 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[417]
+WARNING:modbus_server:[INJECTION] Wrote 417 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 417 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[422]
+WARNING:modbus_server:[INJECTION] Wrote 422 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 422 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[427]
+WARNING:modbus_server:[INJECTION] Wrote 427 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 427 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[432]
+WARNING:modbus_server:[INJECTION] Wrote 432 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 432 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[437]
+WARNING:modbus_server:[INJECTION] Wrote 437 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 437 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[442]
+WARNING:modbus_server:[INJECTION] Wrote 442 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 442 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[447]
+WARNING:modbus_server:[INJECTION] Wrote 447 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 447 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[452]
+WARNING:modbus_server:[INJECTION] Wrote 452 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 452 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[457]
+WARNING:modbus_server:[INJECTION] Wrote 457 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 457 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[462]
+WARNING:modbus_server:[INJECTION] Wrote 462 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 462 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[467]
+WARNING:modbus_server:[INJECTION] Wrote 467 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 467 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[472]
+WARNING:modbus_server:[INJECTION] Wrote 472 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 472 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[477]
+WARNING:modbus_server:[INJECTION] Wrote 477 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 477 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[482]
+WARNING:modbus_server:[INJECTION] Wrote 482 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 482 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[487]
+WARNING:modbus_server:[INJECTION] Wrote 487 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 487 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[492]
+WARNING:modbus_server:[INJECTION] Wrote 492 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 492 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[497]
+WARNING:modbus_server:[INJECTION] Wrote 497 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 497 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[300]
+WARNING:modbus_server:[INJECTION] Wrote 300 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 300 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[302]
+WARNING:modbus_server:[INJECTION] Wrote 302 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 302 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[304]
+WARNING:modbus_server:[INJECTION] Wrote 304 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 304 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[306]
+WARNING:modbus_server:[INJECTION] Wrote 306 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 306 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[308]
+WARNING:modbus_server:[INJECTION] Wrote 308 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 308 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[310]
+WARNING:modbus_server:[INJECTION] Wrote 310 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 310 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[312]
+WARNING:modbus_server:[INJECTION] Wrote 312 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 312 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[314]
+WARNING:modbus_server:[INJECTION] Wrote 314 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 314 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[316]
+WARNING:modbus_server:[INJECTION] Wrote 316 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 316 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[318]
+WARNING:modbus_server:[INJECTION] Wrote 318 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 318 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[320]
+WARNING:modbus_server:[INJECTION] Wrote 320 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 320 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[322]
+WARNING:modbus_server:[INJECTION] Wrote 322 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 322 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[324]
+WARNING:modbus_server:[INJECTION] Wrote 324 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 324 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[326]
+WARNING:modbus_server:[INJECTION] Wrote 326 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 326 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[328]
+WARNING:modbus_server:[INJECTION] Wrote 328 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 328 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[330]
+WARNING:modbus_server:[INJECTION] Wrote 330 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 330 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[332]
+WARNING:modbus_server:[INJECTION] Wrote 332 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 332 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[2800]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[50]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[335]
+WARNING:modbus_server:[INJECTION] Wrote 335 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 335 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[338]
+WARNING:modbus_server:[INJECTION] Wrote 338 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 338 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[341]
+WARNING:modbus_server:[INJECTION] Wrote 341 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 341 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[344]
+WARNING:modbus_server:[INJECTION] Wrote 344 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 344 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[347]
+WARNING:modbus_server:[INJECTION] Wrote 347 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 347 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[350]
+WARNING:modbus_server:[INJECTION] Wrote 350 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 350 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[353]
+WARNING:modbus_server:[INJECTION] Wrote 353 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 353 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[356]
+WARNING:modbus_server:[INJECTION] Wrote 356 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 356 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[359]
+WARNING:modbus_server:[INJECTION] Wrote 359 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 359 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[362]
+WARNING:modbus_server:[INJECTION] Wrote 362 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 362 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[330]
+WARNING:modbus_server:[INJECTION] Wrote 330 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 330 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[2400]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[2400]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[100]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[333]
+WARNING:modbus_server:[INJECTION] Wrote 333 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 333 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[336]
+WARNING:modbus_server:[INJECTION] Wrote 336 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 336 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[339]
+WARNING:modbus_server:[INJECTION] Wrote 339 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 339 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[342]
+WARNING:modbus_server:[INJECTION] Wrote 342 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 342 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[345]
+WARNING:modbus_server:[INJECTION] Wrote 345 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 345 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[348]
+WARNING:modbus_server:[INJECTION] Wrote 348 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 348 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[351]
+WARNING:modbus_server:[INJECTION] Wrote 351 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 351 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[354]
+WARNING:modbus_server:[INJECTION] Wrote 354 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 354 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[357]
+WARNING:modbus_server:[INJECTION] Wrote 357 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 357 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[360]
+WARNING:modbus_server:[INJECTION] Wrote 360 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 360 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[2800]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[420]
+WARNING:modbus_server:[INJECTION] Wrote 420 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 420 (SEMANTIC INJECTION)

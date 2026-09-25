@@ -1,0 +1,370 @@
+[PHYSICS] Connected to Redis at redis:6379
+[PHYSICS] Connected to Redis at redis:6379
+INFO:modbus_server:Starting Modbus PLC Simulator on port 502 with Redis session 693acebb
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=3
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:MODBUS write address=100 values=[350]
+WARNING:modbus_server:[INJECTION] Wrote 350 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 350 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[125]
+WARNING:modbus_server:[INJECTION] Wrote 125 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 125 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[130]
+WARNING:modbus_server:[INJECTION] Wrote 130 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 130 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[135]
+WARNING:modbus_server:[INJECTION] Wrote 135 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 135 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[140]
+WARNING:modbus_server:[INJECTION] Wrote 140 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 140 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[145]
+WARNING:modbus_server:[INJECTION] Wrote 145 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 145 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[150]
+WARNING:modbus_server:[INJECTION] Wrote 150 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 150 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[155]
+WARNING:modbus_server:[INJECTION] Wrote 155 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 155 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[160]
+WARNING:modbus_server:[INJECTION] Wrote 160 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 160 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[165]
+WARNING:modbus_server:[INJECTION] Wrote 165 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 165 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[170]
+WARNING:modbus_server:[INJECTION] Wrote 170 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 170 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[175]
+WARNING:modbus_server:[INJECTION] Wrote 175 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 175 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[180]
+WARNING:modbus_server:[INJECTION] Wrote 180 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 180 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[185]
+WARNING:modbus_server:[INJECTION] Wrote 185 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 185 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[190]
+WARNING:modbus_server:[INJECTION] Wrote 190 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 190 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[195]
+WARNING:modbus_server:[INJECTION] Wrote 195 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 195 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=202 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=202 count=1
+INFO:modbus_server:MODBUS write address=100 values=[198]
+WARNING:modbus_server:[INJECTION] Wrote 198 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 198 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[201]
+WARNING:modbus_server:[INJECTION] Wrote 201 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 201 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[204]
+WARNING:modbus_server:[INJECTION] Wrote 204 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 204 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[207]
+WARNING:modbus_server:[INJECTION] Wrote 207 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 207 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[210]
+WARNING:modbus_server:[INJECTION] Wrote 210 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 210 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[213]
+WARNING:modbus_server:[INJECTION] Wrote 213 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 213 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[216]
+WARNING:modbus_server:[INJECTION] Wrote 216 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 216 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[219]
+WARNING:modbus_server:[INJECTION] Wrote 219 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 219 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[222]
+WARNING:modbus_server:[INJECTION] Wrote 222 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 222 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[225]
+WARNING:modbus_server:[INJECTION] Wrote 225 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 225 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[420]
+WARNING:modbus_server:[INJECTION] Wrote 420 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 420 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[50]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[375]
+WARNING:modbus_server:[INJECTION] Wrote 375 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 375 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[345]
+WARNING:modbus_server:[INJECTION] Wrote 345 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 345 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[348]
+WARNING:modbus_server:[INJECTION] Wrote 348 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 348 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[351]
+WARNING:modbus_server:[INJECTION] Wrote 351 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 351 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[354]
+WARNING:modbus_server:[INJECTION] Wrote 354 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 354 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[357]
+WARNING:modbus_server:[INJECTION] Wrote 357 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 357 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[360]
+WARNING:modbus_server:[INJECTION] Wrote 360 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 360 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[363]
+WARNING:modbus_server:[INJECTION] Wrote 363 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 363 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[366]
+WARNING:modbus_server:[INJECTION] Wrote 366 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 366 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[369]
+WARNING:modbus_server:[INJECTION] Wrote 369 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 369 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[372]
+WARNING:modbus_server:[INJECTION] Wrote 372 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 372 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[375]
+WARNING:modbus_server:[INJECTION] Wrote 375 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 375 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[378]
+WARNING:modbus_server:[INJECTION] Wrote 378 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 378 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[381]
+WARNING:modbus_server:[INJECTION] Wrote 381 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 381 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[386]
+WARNING:modbus_server:[INJECTION] Wrote 386 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 386 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[391]
+WARNING:modbus_server:[INJECTION] Wrote 391 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 391 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[396]
+WARNING:modbus_server:[INJECTION] Wrote 396 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 396 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[401]
+WARNING:modbus_server:[INJECTION] Wrote 401 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 401 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[406]
+WARNING:modbus_server:[INJECTION] Wrote 406 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 406 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[411]
+WARNING:modbus_server:[INJECTION] Wrote 411 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 411 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[416]
+WARNING:modbus_server:[INJECTION] Wrote 416 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 416 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[421]
+WARNING:modbus_server:[INJECTION] Wrote 421 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 421 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[426]
+WARNING:modbus_server:[INJECTION] Wrote 426 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 426 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[431]
+WARNING:modbus_server:[INJECTION] Wrote 431 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 431 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[436]
+WARNING:modbus_server:[INJECTION] Wrote 436 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 436 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[441]
+WARNING:modbus_server:[INJECTION] Wrote 441 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 441 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[446]
+WARNING:modbus_server:[INJECTION] Wrote 446 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 446 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[451]
+WARNING:modbus_server:[INJECTION] Wrote 451 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 451 (SEMANTIC INJECTION)
+ERROR:pymodbus.logging:Datastore unable to fulfill request: Error -2 connecting to redis:6379. Name or service not known.; Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 3170, in get_connection
+    connection.can_read()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1352, in can_read
+    return self._parser.can_read(timeout)
+  File "/usr/local/lib/python3.10/site-packages/redis/_parsers/base.py", line 160, in can_read
+    return self._buffer.can_read(timeout)
+  File "/usr/local/lib/python3.10/site-packages/redis/_parsers/socket.py", line 97, in can_read
+    return bool(self.unread_bytes()) or self._read_from_socket(
+  File "/usr/local/lib/python3.10/site-packages/redis/_parsers/socket.py", line 67, in _read_from_socket
+    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+redis.exceptions.ConnectionError: Connection closed by server.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1034, in connect_check_health
+    sock = self._connect()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1546, in _connect
+    for res in socket.getaddrinfo(
+  File "/usr/local/lib/python3.10/socket.py", line 967, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -2] Name or service not known
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/server/async_io.py", line 266, in execute
+    response = request.execute(context)
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/register_read_message.py", line 141, in execute
+    values = context.getValues(self.function_code, self.address, self.count)
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/datastore/context.py", line 72, in getValues
+    return self.store[self.decode(fc_as_hex)].getValues(address, count)
+  File "/app/plc/modbus_server.py", line 135, in getValues
+    self.physics_engine.load_state()
+  File "/app/physics/physics_engine.py", line 121, in load_state
+    data = self.r.get("pipeline_state")
+  File "/usr/local/lib/python3.10/site-packages/redis/commands/core.py", line 3194, in get
+    return self.execute_command("GET", name, keys=[name])
+  File "/usr/local/lib/python3.10/site-packages/redis/client.py", line 798, in execute_command
+    return self._execute_command(*args, **options)
+  File "/usr/local/lib/python3.10/site-packages/redis/client.py", line 804, in _execute_command
+    conn = self.connection or pool.get_connection()
+  File "/usr/local/lib/python3.10/site-packages/redis/utils.py", line 258, in wrapper
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 3177, in get_connection
+    connection.connect()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1007, in connect
+    self.retry.call_with_retry(
+  File "/usr/local/lib/python3.10/site-packages/redis/retry.py", line 132, in call_with_retry
+    raise error
+  File "/usr/local/lib/python3.10/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1008, in <lambda>
+    lambda: self.connect_check_health(
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1056, in connect_check_health
+    raise e
+redis.exceptions.ConnectionError: Error -2 connecting to redis:6379. Name or service not known.
+
+ERROR:pymodbus.logging:Exception response Exception Response(131, 3, SlaveFailure)
+ERROR:pymodbus.logging:Datastore unable to fulfill request: Error -2 connecting to redis:6379. Name or service not known.; Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1034, in connect_check_health
+    sock = self._connect()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1546, in _connect
+    for res in socket.getaddrinfo(
+  File "/usr/local/lib/python3.10/socket.py", line 967, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -2] Name or service not known
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/server/async_io.py", line 266, in execute
+    response = request.execute(context)
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/register_read_message.py", line 141, in execute
+    values = context.getValues(self.function_code, self.address, self.count)
+  File "/usr/local/lib/python3.10/site-packages/pymodbus/datastore/context.py", line 72, in getValues
+    return self.store[self.decode(fc_as_hex)].getValues(address, count)
+  File "/app/plc/modbus_server.py", line 135, in getValues
+    self.physics_engine.load_state()
+  File "/app/physics/physics_engine.py", line 121, in load_state
+    data = self.r.get("pipeline_state")
+  File "/usr/local/lib/python3.10/site-packages/redis/commands/core.py", line 3194, in get
+    return self.execute_command("GET", name, keys=[name])
+  File "/usr/local/lib/python3.10/site-packages/redis/client.py", line 798, in execute_command
+    return self._execute_command(*args, **options)
+  File "/usr/local/lib/python3.10/site-packages/redis/client.py", line 804, in _execute_command
+    conn = self.connection or pool.get_connection()
+  File "/usr/local/lib/python3.10/site-packages/redis/utils.py", line 258, in wrapper
+    return func(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 3163, in get_connection
+    connection.connect()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1007, in connect
+    self.retry.call_with_retry(
+  File "/usr/local/lib/python3.10/site-packages/redis/retry.py", line 132, in call_with_retry
+    raise error
+  File "/usr/local/lib/python3.10/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1008, in <lambda>
+    lambda: self.connect_check_health(
+  File "/usr/local/lib/python3.10/site-packages/redis/connection.py", line 1056, in connect_check_health
+    raise e
+redis.exceptions.ConnectionError: Error -2 connecting to redis:6379. Name or service not known.
+
+ERROR:pymodbus.logging:Exception response Exception Response(131, 3, SlaveFailure)
+INFO:modbus_server:Starting Modbus PLC Simulator on port 502 with Redis session 4f1c7684
+INFO:modbus_server:MODBUS write address=200 values=[3000]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[133]
+WARNING:modbus_server:[INJECTION] Wrote 133 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 133 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[135]
+WARNING:modbus_server:[INJECTION] Wrote 135 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 135 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[137]
+WARNING:modbus_server:[INJECTION] Wrote 137 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 137 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[139]
+WARNING:modbus_server:[INJECTION] Wrote 139 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 139 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[141]
+WARNING:modbus_server:[INJECTION] Wrote 141 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 141 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[143]
+WARNING:modbus_server:[INJECTION] Wrote 143 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 143 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[145]
+WARNING:modbus_server:[INJECTION] Wrote 145 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 145 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[147]
+WARNING:modbus_server:[INJECTION] Wrote 147 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 147 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[2400]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[0]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=100 values=[345]
+WARNING:modbus_server:[INJECTION] Wrote 345 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 345 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[350]
+WARNING:modbus_server:[INJECTION] Wrote 350 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 350 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[355]
+WARNING:modbus_server:[INJECTION] Wrote 355 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 355 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[360]
+WARNING:modbus_server:[INJECTION] Wrote 360 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 360 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[365]
+WARNING:modbus_server:[INJECTION] Wrote 365 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 365 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[370]
+WARNING:modbus_server:[INJECTION] Wrote 370 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 370 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[375]
+WARNING:modbus_server:[INJECTION] Wrote 375 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 375 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[380]
+WARNING:modbus_server:[INJECTION] Wrote 380 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 380 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[385]
+WARNING:modbus_server:[INJECTION] Wrote 385 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 385 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[390]
+WARNING:modbus_server:[INJECTION] Wrote 390 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 390 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=100 values=[395]
+WARNING:modbus_server:[INJECTION] Wrote 395 PSI to pipeline_metrics (Grafana spike)
+WARNING:modbus_server:[FORCED WRITE] Sensor register 100 = 395 (SEMANTIC INJECTION)
+INFO:modbus_server:MODBUS write address=200 values=[3200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[200]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1
+INFO:modbus_server:MODBUS write address=200 values=[1200]
+INFO:modbus_server:[RECON] Suspicious read: address=200 count=1
+INFO:modbus_server:MODBUS write address=201 values=[500]
+INFO:modbus_server:[RECON] Suspicious read: address=201 count=1

@@ -1,0 +1,121 @@
+timestamp,phase,phase_name,status,detail
+2026-07-31T22:42:43.166620Z,1,phase1_recon,started,Validation chain
+2026-07-31T22:42:51.908621Z,1,phase1_recon,completed,
+2026-07-31T22:43:01.908755Z,2,phase2_info_gathering,started,Validation chain
+2026-07-31T22:43:22.334942Z,2,phase2_info_gathering,completed,
+2026-07-31T22:43:32.335080Z,3,phase3_vuln_scan,started,Validation chain
+2026-07-31T22:44:06.563141Z,3,phase3_vuln_scan,completed,
+2026-07-31T22:44:16.563258Z,4,phase4_exploit,started,Validation chain
+2026-07-31T22:44:16.751665Z,4,phase4_exploit,completed,
+2026-07-31T22:44:26.751776Z,5,phase5_payload,started,Validation chain
+2026-07-31T22:44:52.196632Z,5,phase5_payload,completed,
+2026-07-31T22:45:02.196757Z,6,phase6_lateral_movement,started,Validation chain
+2026-07-31T22:45:04.793592Z,6,phase6_lateral_movement,completed,
+2026-07-31T22:45:14.793717Z,7,phase7_privesc,started,Validation chain
+2026-07-31T22:45:16.990500Z,7,phase7_privesc,completed,
+2026-07-31T22:45:26.990635Z,8,phase8_replay,started,Validation chain
+2026-07-31T22:45:28.706897Z,8,phase8_replay,completed,
+2026-07-31T22:45:38.707122Z,9,phase9_insider,started,Validation — SCADA Insider Setpoint RPM=2800 Valve=0 hold=10s
+2026-07-31T22:45:38.769523Z,9,phase9_insider,completed,
+2026-07-31T22:45:48.769785Z,8,phase8_replay,started,Validation extra 1/2 — Replay 128.0 PSI × 100 frames @ 0.2s
+2026-07-31T22:46:09.182776Z,8,phase8_replay,completed,
+2026-07-31T22:46:39.183221Z,8,phase8_replay,started,Validation extra 2/2 — Replay 130.0 PSI × 300 frames @ 0.15s
+2026-07-31T22:47:25.238840Z,8,phase8_replay,completed,
+2026-07-31T22:55:55.239162Z,5,phase5_payload,started,"Validation Standalone — +3 PSI every 5 s, 10 steps"
+2026-07-31T22:56:45.388815Z,5,phase5_payload,completed,
+2026-07-31T23:12:03.389375Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3000 Valve=100 hold=15s
+2026-07-31T23:12:19.502662Z,7,phase7_privesc,completed,
+2026-07-31T23:19:17.502933Z,5,phase5_payload,started,Test Solo — Drift +4 PSI every 5s × 14
+2026-07-31T23:20:27.662278Z,5,phase5_payload,completed,
+2026-07-31T23:28:10.662595Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=2900 Valve=50 hold=12s
+2026-07-31T23:28:10.731636Z,9,phase9_insider,completed,
+2026-07-31T23:35:57.731899Z,5,phase5_payload,started,Test Solo — Drift +4 PSI every 6s × 16
+2026-07-31T23:37:33.932721Z,5,phase5_payload,completed,
+2026-07-31T23:44:07.933016Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=2800 Valve=0 hold=14s
+2026-07-31T23:44:07.985789Z,9,phase9_insider,completed,
+2026-07-31T23:50:47.986274Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=2800 Valve=50 hold=15s
+2026-07-31T23:50:48.041555Z,9,phase9_insider,completed,
+2026-07-31T23:58:46.041930Z,4,phase4_exploit,started,Test Solo — Injection 300 PSI
+2026-07-31T23:58:46.143064Z,4,phase4_exploit,completed,
+2026-08-01T00:07:06.143370Z,8,phase8_replay,started,Test Solo — Replay 118.0 PSI × 250 frames @ 0.1s
+2026-08-01T00:07:31.881383Z,8,phase8_replay,completed,
+2026-08-01T00:15:22.881955Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2800 Valve=200 hold=15s
+2026-08-01T00:15:38.992625Z,7,phase7_privesc,completed,
+2026-08-01T00:22:44.993232Z,8,phase8_replay,started,Test Solo — Replay 110.0 PSI × 250 frames @ 0.12s
+2026-08-01T00:23:15.887207Z,8,phase8_replay,completed,
+2026-08-01T00:30:11.887513Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2400 Valve=50 hold=6s
+2026-08-01T00:30:18.998474Z,7,phase7_privesc,completed,
+2026-08-01T00:37:13.999056Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=3200 Valve=50 hold=15s
+2026-08-01T00:37:14.065434Z,9,phase9_insider,completed,
+2026-08-01T00:45:17.065706Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=2800 Valve=50 hold=12s
+2026-08-01T00:45:17.122874Z,9,phase9_insider,completed,
+2026-08-01T00:52:01.123122Z,8,phase8_replay,started,Test Solo — Replay 118.0 PSI × 275 frames @ 0.08s
+2026-08-01T00:52:23.815536Z,8,phase8_replay,completed,
+2026-08-01T01:00:09.815790Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3000 Valve=200 hold=10s
+2026-08-01T01:00:20.940280Z,7,phase7_privesc,completed,
+2026-08-01T01:07:48.940861Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2800 Valve=0 hold=10s
+2026-08-01T01:08:00.040021Z,7,phase7_privesc,completed,
+2026-08-01T01:15:27.040493Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3200 Valve=200 hold=18s
+2026-08-01T01:15:46.150630Z,7,phase7_privesc,completed,
+2026-08-01T01:23:46.150907Z,8,phase8_replay,started,Test Solo — Replay 118.0 PSI × 175 frames @ 0.15s
+2026-08-01T01:24:13.065146Z,8,phase8_replay,completed,
+2026-08-01T01:31:59.065429Z,4,phase4_exploit,started,Test Solo — Injection 375 PSI
+2026-08-01T01:31:59.163072Z,4,phase4_exploit,completed,
+2026-08-01T01:39:48.163388Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=3200 Valve=100 hold=8s
+2026-08-01T01:39:48.219788Z,9,phase9_insider,completed,
+2026-08-01T01:47:22.220100Z,4,phase4_exploit,started,Test Solo — Injection 345 PSI
+2026-08-01T01:47:22.322982Z,4,phase4_exploit,completed,
+2026-08-01T01:54:24.323254Z,8,phase8_replay,started,Test Solo — Replay 115.0 PSI × 225 frames @ 0.2s
+2026-08-01T01:55:10.159806Z,8,phase8_replay,completed,
+2026-08-01T02:02:31.160124Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3000 Valve=0 hold=15s
+2026-08-01T02:02:47.275812Z,7,phase7_privesc,completed,
+2026-08-01T02:09:20.276094Z,8,phase8_replay,started,Test Solo — Replay 128.0 PSI × 175 frames @ 0.1s
+2026-08-01T02:09:38.316453Z,8,phase8_replay,completed,
+2026-08-01T02:18:15.316934Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2800 Valve=100 hold=10s
+2026-08-01T02:18:26.419063Z,7,phase7_privesc,completed,
+2026-08-01T02:27:06.419682Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3200 Valve=0 hold=8s
+2026-08-01T02:27:15.534161Z,7,phase7_privesc,completed,
+2026-08-01T02:34:28.534489Z,5,phase5_payload,started,Test Solo — Drift +4 PSI every 3s × 8
+2026-08-01T02:34:52.668724Z,5,phase5_payload,completed,
+2026-08-01T02:42:56.668998Z,5,phase5_payload,started,Test Solo — Drift +5 PSI every 3s × 16
+2026-08-01T02:43:44.853740Z,5,phase5_payload,completed,
+2026-08-01T02:51:37.854384Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=2800 Valve=100 hold=8s
+2026-08-01T02:51:37.926753Z,9,phase9_insider,completed,
+2026-08-01T02:58:05.926993Z,5,phase5_payload,started,Test Solo — Drift +5 PSI every 3s × 8
+2026-08-01T02:58:30.063036Z,5,phase5_payload,completed,
+2026-08-01T03:04:52.063299Z,4,phase4_exploit,started,Test Solo — Injection 300 PSI
+2026-08-01T03:04:52.147081Z,4,phase4_exploit,completed,
+2026-08-01T03:12:34.147374Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=3100 Valve=100 hold=10s
+2026-08-01T03:12:34.193361Z,9,phase9_insider,completed,
+2026-08-01T03:19:38.194138Z,8,phase8_replay,started,Test Solo — Replay 120.0 PSI × 200 frames @ 0.12s
+2026-08-01T03:20:02.938150Z,8,phase8_replay,completed,
+2026-08-01T03:27:34.938399Z,5,phase5_payload,started,Test Solo — Drift +2 PSI every 3s × 16
+2026-08-01T03:28:23.129978Z,5,phase5_payload,completed,
+2026-08-01T03:36:07.130260Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2800 Valve=50 hold=18s
+2026-08-01T03:36:26.242452Z,7,phase7_privesc,completed,
+2026-08-01T03:43:26.242721Z,5,phase5_payload,started,Test Solo — Drift +3 PSI every 4s × 10
+2026-08-01T03:44:06.393398Z,5,phase5_payload,completed,
+2026-08-01T03:51:42.393987Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=3100 Valve=50 hold=15s
+2026-08-01T03:51:42.449503Z,9,phase9_insider,completed,
+2026-08-01T04:00:12.449812Z,4,phase4_exploit,started,Test Solo — Injection 330 PSI
+2026-08-01T04:00:12.553939Z,4,phase4_exploit,completed,
+2026-08-01T04:08:27.554188Z,8,phase8_replay,started,Test Solo — Replay 120.0 PSI × 300 frames @ 0.2s
+2026-08-01T04:09:28.607947Z,8,phase8_replay,completed,
+2026-08-01T04:16:50.608202Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2400 Valve=0 hold=18s
+2026-08-01T04:17:09.728098Z,7,phase7_privesc,completed,
+2026-08-01T04:23:33.728532Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2400 Valve=100 hold=18s
+2026-08-01T04:23:52.857091Z,7,phase7_privesc,completed,
+2026-08-01T04:32:29.857377Z,5,phase5_payload,started,Test Solo — Drift +3 PSI every 6s × 10
+2026-08-01T04:33:30.001716Z,5,phase5_payload,completed,
+2026-08-01T04:40:51.001996Z,8,phase8_replay,started,Test Solo — Replay 125.0 PSI × 300 frames @ 0.15s
+2026-08-01T04:41:37.073110Z,8,phase8_replay,completed,
+2026-08-01T04:50:01.073400Z,7,phase7_privesc,started,Test Solo — Actuator RPM=2800 Valve=0 hold=5s
+2026-08-01T04:50:07.186371Z,7,phase7_privesc,completed,
+2026-08-01T04:57:44.187018Z,7,phase7_privesc,started,Test Solo — Actuator RPM=3000 Valve=0 hold=8s
+2026-08-01T04:57:53.303166Z,7,phase7_privesc,completed,
+2026-08-01T05:04:45.303430Z,8,phase8_replay,started,Test Solo — Replay 120.0 PSI × 175 frames @ 0.08s
+2026-08-01T05:04:59.791230Z,8,phase8_replay,completed,
+2026-08-01T05:11:32.791477Z,9,phase9_insider,started,Test Solo — SCADA Insider Setpoint RPM=3000 Valve=50 hold=12s
+2026-08-01T05:11:32.853566Z,9,phase9_insider,completed,
+2026-08-01T05:18:08.853867Z,4,phase4_exploit,started,Test Solo — Injection 420 PSI
+2026-08-01T05:18:08.946669Z,4,phase4_exploit,completed,

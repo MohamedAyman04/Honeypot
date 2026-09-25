@@ -1,0 +1,26 @@
+
+╔══════════════════════════════════════════════════════════╗
+║       ICS Honeypot — Attacker Node (Kali-like)           ║
+╠══════════════════════════════════════════════════════════╣
+║  TARGETS                                                 ║
+║    plc_simulator:502      Modbus PLC (main target)       ║
+║    ics_s7_plc:102         Siemens S7-300 PLC             ║
+║    ics_dnp3:20000         DNP3 RTU (power/water)         ║
+║    ics_scada_ssh:2222     SCADA SSH pivot (Level 2)      ║
+║    honeypot_historian_api:5000  Historian REST API       ║
+╠══════════════════════════════════════════════════════════╣
+║  TOOLS AVAILABLE                                         ║
+║    Network:  nmap, masscan, arp-scan, hping3             ║
+║    ICS:      mbtget, mb-read, mb-write, pymodbus         ║
+║              python3 s7comm_probe.py                     ║
+║              python3 dnp3_probe.py                       ║
+║    Web:      sqlmap, curl                                ║
+║    Auth:     hydra, medusa, ncrack, john, sshpass        ║
+║    Packet:   tcpdump, tshark, scapy, netcat, socat       ║
+╠══════════════════════════════════════════════════════════╣
+║  AUTOMATED KILL CHAIN                                    ║
+║    python3 /tools/attack_suite.py --phase 0  (all)       ║
+║    python3 /tools/attack_suite.py --phase 4  (exploit)   ║
+║    python3 /tools/attack_suite.py --phase 6  (lateral)   ║
+╚══════════════════════════════════════════════════════════╝
+

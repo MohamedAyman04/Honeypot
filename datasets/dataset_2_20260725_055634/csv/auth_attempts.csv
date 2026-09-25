@@ -1,0 +1,4 @@
+result,table,_start,_stop,_time,_measurement,service,session_id,src_ip,detail
+_result,0,2026-07-24 20:29:11.255273+00:00,2026-07-25 02:56:34.423623+00:00,2026-07-24 21:34:31.089806+00:00,auth_attempts,s7comm,805856ef,172.22.0.2,probe: S7/COTP connection (tcp-monitor(state=01))
+_result,0,2026-07-24 20:29:11.255273+00:00,2026-07-25 02:56:34.423623+00:00,2026-07-24 21:35:01.296071+00:00,auth_attempts,s7comm,805856ef,172.22.0.2,probe: S7/COTP connection (tcp-monitor(state=01))
+_result,0,2026-07-24 20:29:11.255273+00:00,2026-07-25 02:56:34.423623+00:00,2026-07-24 21:35:33.110745+00:00,auth_attempts,s7comm,805856ef,172.22.0.2,probe: S7/COTP connection (tcp-monitor(state=01))
