@@ -163,6 +163,12 @@ Honeypot/
 ├── data/                          # Clustered datasets & event telemetry
 │   └── general logs.jsonl         # Canonical enriched 10-scenario event dataset (with root symlink)
 │
+├── datasets/                      # 3 Multi-hour operational cyber-physical evaluation campaigns
+│   ├── README.md                  # Comprehensive dataset manifest & field definitions
+│   ├── dataset_1/                 # Campaign 1 (4.8h, Scenarios 1–8)
+│   ├── dataset_2/                 # Campaign 2 (7.2h, Scenarios 1–8)
+│   └── dataset_3/                 # 🌟 Primary Paper Benchmark Campaign (7.8h, Scenarios 1–10, F1=0.891)
+│
 ├── docs/                          # Technical thesis documentation & deployment guides
 │   ├── ARCHITECTURE_REVIEW.md     # Scientific evaluation & experimental analysis
 │   ├── DEPLOYMENT_GUIDE.md        # Step-by-step testbed deployment instructions
