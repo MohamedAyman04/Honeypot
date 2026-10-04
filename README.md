@@ -23,7 +23,7 @@ Conventional intrusion detection systems suffer from a single-perspective monito
 
 To overcome these vulnerabilities, this project implements:
 1. **Domain Feature Separation:** $\mathbf{x}_{\text{net}}$ (protocol timing, write frequency, function code, length) for $\text{ML}_{\text{net}}$ ($0.982$--$0.989$ Precision) vs. $\mathbf{x}_{\text{proc}}$ (pressure, flow rate, temperature, pressure delta, mean deviation) for $\text{ML}_{\text{proc}}$. Strict feature isolation prevents baseline process variance from bleeding into network anomaly scores.
-2. **Narrow Mechanism Gate (NMG — Replay Gate):** $A_{\text{NMG}}$ evaluates whether an observed physical state deviation ($|\delta_P| > \tau_{\text{NMG}}$) occurs in the absence of state-modifying write commands ($f_{\text{write\_10s}} = 0$). This causal check isolates out-of-band telemetry replay (Scenario 8, $87.6\%$ recall) while suppressing over $96.5\%$ of process false alarms.
+2. **Narrow Mechanism Gate (NMG — Replay Gate):** $A_{\text{NMG}}$ evaluates whether an observed physical state deviation ($|\delta_P| > \tau_{\text{NMG}}$) occurs in the absence of state-modifying write commands (`f_write_10s == 0`). This causal check isolates out-of-band telemetry replay (Scenario 8, $87.6\%$ recall) while suppressing over $96.5\%$ of process false alarms.
 3. **Proposed Prioritized Decision Fusion ($A_{\text{Fused}}$):** The final reasoning layer evaluates:
    $$A_{\text{Fused}} = A_{\text{NMG}} \lor A_{\text{L3}} \lor A_{\text{proc}}$$
    where $A_{\text{NMG}}$ provides causal replay gating, $A_{\text{L3}}$ provides sequential statistical drift memory (CUSUM, Scenario 5, $100.0\%$ recall), and $A_{\text{proc}}$ provides deterministic physical safety limits (Layer 2, ASME B31.4 $P > 150\text{ PSI}$, Scenario 9 insider setpoint attack, $100.0\%$ recall) alongside unsupervised multivariate autoencoders (Layer $5_{\text{proc}}$). $A_{\text{Fused}}$ represents the definitive system-level anomaly verdict.
@@ -119,13 +119,13 @@ Consistent with Table VI of the manuscript (`results.tex`), the per-scenario rec
 | **1** | Reconnaissance Scan | TCP SYN port scan (502/102/20000) | 100.0% | 0.0% | 0.0% | 0.0% | 94.2% | 0.0% | **100.0%** ($A_{\text{net}}$) |
 | **2** | Information Gathering | Modbus FC3 read sweep, COTP CC grab | 100.0% | 0.0% | 0.0% | 0.0% | 91.5% | 0.0% | **100.0%** ($A_{\text{net}}$) |
 | **3** | Vulnerability Scan | Probe DNP3 link states, S7 handshake | 100.0% | 0.0% | 0.0% | 0.0% | 95.8% | 0.0% | **100.0%** ($A_{\text{net}}$) |
-| **4** | Semantic Injection | Sub-second FC6 write toggles ($f_{\text{write\_10s}} > 5.0$) | 70.0% | 70.0% | 0.0% | 70.0% | 75.0% | 70.0% | **70.0%** ($A_{\text{proc}}$) |
+| **4** | Semantic Injection | Sub-second FC6 write toggles (`f_write_10s > 5.0`) | 70.0% | 70.0% | 0.0% | 70.0% | 75.0% | 70.0% | **70.0%** ($A_{\text{proc}}$) |
 | **5** | Stealth Drift | Creeping setpoint (+2–3 PSI/step, 129s) | 0.0% | 47.0% | 100.0% | 0.0% | 99.2% | 98.4% | **100.0%** ($A_{L3}$) |
 | **6** | Lateral Movement | SSH password brute-force (port 22) | 100.0% | 0.0% | 0.0% | 0.0% | 92.4% | 0.0% | **100.0%** ($A_{\text{net}}$) |
-| **7** | Actuator Hijack | Valve shutdown at max pump RPM ($P > 2000$) | 97.2% | 100.0% | 0.0% | 97.2% | 96.8% | 98.1% | **100.0%** ($A_{\text{proc}}$) |
-| **8** | Telemetry Replay | InfluxDB direct spoofing ($f_{\text{write\_10s}} = 0, \|\delta_P\| > 35$) | **0.0%** | 99.5%* | 33.3% | 87.6% | **0.0%** | 92.3%* | **87.6%** ($A_{\text{NMG}}$) |
-| **9** | Insider Setpoint | Authorized SCADA setpoint abuse ($P > 150$) | **0.0%** | **100.0%** | 2.9% | **0.0%** | **0.0%** | 96.0% | **100.0%** ($A_{\text{proc}}$) |
-| **10** | Denial of Service (DoS) | Sub-5ms Modbus flooding ($\Delta t_{\text{arr}} < 5\text{ms}$) | 100.0% | 0.0% | 0.0% | 0.0% | 98.6% | 0.0% | **100.0%** ($A_{\text{net}}$) |
+| **7** | Actuator Hijack | Valve shutdown at max pump RPM (`P > 2000`) | 97.2% | 100.0% | 0.0% | 97.2% | 96.8% | 98.1% | **100.0%** ($A_{\text{proc}}$) |
+| **8** | Telemetry Replay | InfluxDB direct spoofing (`f_write_10s == 0`, `|δ_P| > 35`) | **0.0%** | 99.5%* | 33.3% | 87.6% | **0.0%** | 92.3%* | **87.6%** ($A_{\text{NMG}}$) |
+| **9** | Insider Setpoint | Authorized SCADA setpoint abuse (`P > 150`) | **0.0%** | **100.0%** | 2.9% | **0.0%** | **0.0%** | 96.0% | **100.0%** ($A_{\text{proc}}$) |
+| **10** | Denial of Service (DoS) | Sub-5ms Modbus flooding (`Δt_arr < 5ms`) | 100.0% | 0.0% | 0.0% | 0.0% | 98.6% | 0.0% | **100.0%** ($A_{\text{net}}$) |
 
 *Note: Raw process layers flag flatlines in Scenario 8 but produce 2,120 false positives during normal operation; NMG isolates Scenario 8 with 87.6% recall without false alarms. The final fusion layer asserts $A_{\text{Fused}} = A_{\text{NMG}} \lor A_{L3} \lor A_{\text{proc}}$, providing the unified anomaly verdict with 95.8% macro threat recall and 95.2% benign specificity.*
 
@@ -178,13 +178,19 @@ The architecture codifies multi-variable physical safety boundaries (`physics/sa
 
 A core strength of this platform is the temporal synchronization of multi-perspective observations into a standardized, machine-learning-ready audit trail ([`data/general logs.jsonl`](data/general%20logs.jsonl)). Rather than producing disparate, unstructured text lines, the testbed's centralized logging engine ([`logger/unified_logger.py`](logger/unified_logger.py)) and schema specification ([`shared/log_schema.py`](shared/log_schema.py)) enforce a canonical hierarchical JSON schema for every logged event.
 
+### Logging Scheme Implementation & Architecture Files
+- **Unified Logger Daemon & Engine:** [`logger/unified_logger.py`](logger/unified_logger.py) — Core logging engine implementing the `UnifiedLogger` class, automated MITRE ATT&CK for ICS classification, severity mapping, and live dual-write dispatch to InfluxDB and the JSONL file.
+- **Canonical Schema Specification:** [`shared/log_schema.py`](shared/log_schema.py) — Canonical Python data structure creating validated ML-ready JSONL event dictionaries (`create_ml_ready_log_record()`).
+- **Aggregated Audit Trail File:** [`data/general logs.jsonl`](data/general%20logs.jsonl) — Master time-synchronized log stream capturing all cross-layer events across the Purdue hierarchy.
+- **Continuous Benchmark Campaigns:** [`datasets/dataset_3/csv/correlation_logs.csv`](datasets/dataset_3/csv/correlation_logs.csv) — Authoritative multi-hour evaluation benchmark logs.
+
 ### Canonical Event Schema Breakdown
 
 | Schema Component | Nested JSON Keys | Description & Recorded Fields |
 |---|---|---|
 | **Event Header** | `timestamp`, `event_id`, `event.type`, `event.severity`, `event.narrative` | ISO 8601 UTC timestamp, unique UUIDv4 event ID, normalized event category, operational severity (`INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), and human-readable diagnostic message. |
 | **Provenance Context** | `context.sensor`, `context.purdue_level`, `context.journey_id`, `context.session_id` | Originating microservice daemon, architectural Purdue level (`Level 0` through `Level 3.5`), journey identifier, and correlated session token across multi-stage attack pivots. |
-| **Network Telemetry ($\mathbf{x}_{\text{net}}$)** | `network.source`, `network.destination`, `network.protocol`, `network.inter_arrival_time`, `network.write_frequency_10s`, `network.is_write`, `network.function_code`, `network.length` | Source/destination IP and port pairs, protocol identifier (`Modbus`, `S7comm`, `DNP3`, `SSH`, `HTTP`), packet inter-arrival time $\Delta t_{\text{arr}}$, 10-second rolling write burst frequency $f_{\text{write\_10s}}$, binary write flag $\mathbb{I}_{\text{write}}$, function code $c_{\text{func}}$, and payload length $l_{\text{pkt}}$. |
+| **Network Telemetry ($\mathbf{x}_{\text{net}}$)** | `network.source`, `network.destination`, `network.protocol`, `network.inter_arrival_time`, `network.write_frequency_10s`, `network.is_write`, `network.function_code`, `network.length` | Source/destination IP and port pairs, protocol identifier (`Modbus`, `S7comm`, `DNP3`, `SSH`, `HTTP`), packet inter-arrival time $\Delta t_{\text{arr}}$, 10-second rolling write burst frequency `f_write_10s`, binary write flag `is_write`, function code $c_{\text{func}}$, and payload length $l_{\text{pkt}}$. |
 | **Process Telemetry ($\mathbf{x}_{\text{proc}}$)** | `process.pressure`, `process.flow_rate`, `process.temperature`, `process.pump_rpm`, `process.valve_position`, `process.viscosity`, `process.pressure_delta`, `process.pressure_mean_deviation` | Synchronized continuous hydrodynamic state vector: pipeline pressure ($P$ in PSI), flow rate ($Q$ in L/s), temperature ($T$ in °C), pump speed ($R$ in RPM), valve position ($V \in [0.0, 1.0]$), viscosity ($\mu$ in cSt), first derivative rate of change ($\Delta P = dP/dt$), and real-time deviation from baseline mean ($\delta_P = \|P_t - \mu_0\|$). |
 | **ML Ground Truth & Safety Envelopes** | `ml_analysis.is_anomaly`, `ml_analysis.anomaly_type`, `ml_analysis.attack_phase`, `ml_analysis.attack_category`, `ml_analysis.boundary_violations` | Binary ground-truth label ($y \in \{0, 1\}$), categorical anomaly type, discrete attack phase ID (Scenarios 1–10), threat category, and structured descriptors of active ASME B31.4 / API 610 safety-boundary violations. |
 | **MITRE ATT&CK for ICS** | `mitre.technique_id`, `mitre.technique_name`, `mitre.tactic` | Automated mapping to the MITRE ATT&CK for ICS matrix (e.g. `T0855: Unauthorized Command Message`, `T0886: Remote Services`, `T0814: Denial of Service`). |
@@ -406,14 +412,22 @@ Honeypot/
 - To add a new sensor (e.g. differential pressure $\Delta P$ or vibration): update `setValues` and register addresses in `modbus_server.py`, sync the variable to the physics simulator, and log the event to InfluxDB.
 
 #### 2. Detection Engine & Threshold Calibration (`ml-engine/`, `scripts/canonical_evaluation.py`)
-- **Layer 1 Timing Rules:** In `canonical_evaluation.py` (Rule 1.1 write frequency $f_{\text{write\_10s}} > 5.0$, Rule 1.5 DoS arrival time $\Delta t_{\text{arr}} < 5\text{ms}$).
+- **Layer 1 Timing Rules:** In `canonical_evaluation.py` (Rule 1.1 write frequency `f_write_10s > 5.0`, Rule 1.5 DoS arrival time `Δt_arr < 5ms`).
 - **Layer 2 Physics Limits:** In [`physics/safety_boundaries.py`](physics/safety_boundaries.py) (`ASME B31.4 MAOP`, `API 610 MCSF`).
 - **Layer 3 CUSUM / EWMA Parameters:** Tweak decision interval $H$ and allowance $K$ in `scripts/canonical_evaluation.py` to adjust sensitivity to stealth drift.
-- **Layer 6 Decision Fusion ($A_{\text{Fused}}$):** Gating logic evaluates $A_{\text{Fused}} = A_{\text{NMG}} \lor A_{\text{L3}} \lor A_{\text{proc}}$. The NMG deviation threshold $\tau_{\text{NMG}}$ ($|\delta_P| > \tau_{\text{NMG}} \land f_{\text{write\_10s}} == 0$) is calibrated automatically on the network-silent validation split.
+- **Layer 6 Decision Fusion ($A_{\text{Fused}}$):** Gating logic evaluates $A_{\text{Fused}} = A_{\text{NMG}} \lor A_{\text{L3}} \lor A_{\text{proc}}$. The NMG deviation threshold $\tau_{\text{NMG}}$ (`|δ_P| > τ_NMG` and `f_write_10s == 0`) is calibrated automatically on the network-silent validation split.
 
 #### 3. Attack Suite & Scenarios (`attacker_node/attack_suite.py`)
 - Each attack scenario is defined as a phase function in [`attacker_node/attack_suite.py`](attacker_node/attack_suite.py).
 - To add a new scenario: create a new phase method, map the MITRE ATT&CK technique via `_record_result()`, execute the offensive probe, and record ground-truth timing in `attack_status.csv`.
+
+#### 4. Cross-Layer Logging & Schema Extensions (`logger/unified_logger.py`, `shared/log_schema.py`)
+- **Unified Logger Daemon:** [`logger/unified_logger.py`](logger/unified_logger.py) defines the `UnifiedLogger` class utilized across all containerized honeypot microservices (PLC servers, network sniffer, SCADA SSH bastion, ML engine, and correlator) to emit normalized events to InfluxDB and the JSONL audit stream.
+- **Canonical Schema Specification:** [`shared/log_schema.py`](shared/log_schema.py) implements the validated serialization contract (`create_ml_ready_log_record()`).
+- **Modifying or Adding Telemetry Fields:**
+  1. Add new attributes or nested keys into [`shared/log_schema.py`](shared/log_schema.py).
+  2. Emit the field through `unified_logger.log(event_type=..., **fields)` in [`logger/unified_logger.py`](logger/unified_logger.py) or within individual sensor callers.
+  3. Ensure downstream offline feature extraction in `scripts/clean_and_enrich_logs.py` ingests the new key.
 
 ---
 
