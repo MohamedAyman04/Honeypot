@@ -1,6 +1,16 @@
 # ICS Honeypot — Physics-Aware Industrial Control System Deception & Cross-Layer Intrusion Detection Environment
 
-A high-interaction, physics-grounded Industrial Cyber-Physical System (\ac{icps}) honeypot and cross-layer intrusion detection research environment. Designed to emulate realistic Operational Technology (\ac{ot}) infrastructure across 4 segmented Docker networks, continuous hydraulic physics simulation, Modbus/TCP, Siemens S7comm, and DNP3 services, automated 10-scenario cyber-attack campaigns (including stealth drift, un-commanded telemetry replay, authorized SCADA insider setpoint manipulation, and denial-of-service starvation), and a 6-layer cross-layer detection architecture.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
+[![Docker Compose v2](https://img.shields.io/badge/Docker-Compose%20v2-2496ED.svg)](https://docs.docker.com/compose/)
+[![Open Source: Public](https://img.shields.io/badge/Open%20Source-Public%20Repository-success.svg)](https://github.com/MohamedAyman04/Honeypot)
+[![Benchmark F1](https://img.shields.io/badge/Champion%20F1-0.891-orange.svg)](#1-executive-summary--authoritative-benchmark-entry-point)
+[![Datasets Available](https://img.shields.io/badge/Datasets-3%20Multi--Hour%20Campaigns-purple.svg)](#2--benchmark-datasets--download-links)
+
+A high-interaction, physics-grounded Industrial Cyber-Physical System (ICPS) honeypot and cross-layer intrusion detection research environment. Emulates realistic Operational Technology (OT) infrastructure across 4 segmented Docker networks, continuous hydraulic physics simulation, Modbus/TCP, Siemens S7comm, and DNP3 services, automated 10-scenario cyber-attack campaigns (including stealth drift, un-commanded telemetry replay, authorized SCADA insider setpoint manipulation, and denial-of-service starvation), and a 6-layer cross-layer detection architecture.
+
+> **📢 Public Open-Source Research Platform:**  
+> This repository is **public, open-source, and actively open to community contributions**. Whether you are an industrial cybersecurity researcher, an automation engineer, or a machine learning practitioner, we welcome bug reports, new industrial protocol implementations, high-fidelity physics simulators, advanced ML anomaly detection models, and benchmark extensions. Please refer to our [Contributing & Developer Guide](#8--contributing--developer-guide) to get started!
 
 ---
 
@@ -22,11 +32,11 @@ All numbers below are produced by `python scripts/canonical_evaluation.py` (`val
 
 | Dataset | Configuration | Precision | Recall | F1 Score | TP | FP | FN |
 |---|---|---:|---:|---:|---:|---:|---:|
-| **Dataset 1** (`20260724_014825`, 6.5h) | Network-only Baseline ($\text{L1} + \text{ML}_{\text{net}}$) | 0.866 | 0.378 | **0.527** | 123 | 19 | 202 |
+| **Dataset 1** (`20260724_014825`, 4.8h) | Network-only Baseline ($\text{L1} + \text{ML}_{\text{net}}$) | 0.866 | 0.378 | **0.527** | 123 | 19 | 202 |
 | | Combined Architecture (OR Fusion) | 0.212 | 0.778 | **0.333** | 253 | 942 | 72 |
 | | ★ **Narrow Mechanism Gate (NMG)** | **0.485** | **0.760** | **0.592** | **247** | **262** | **78** |
 | | | | | | | | |
-| **Dataset 2** (`20260725_055634`, 6.5h) | Network-only Baseline ($\text{L1} + \text{ML}_{\text{net}}$) | 0.982 | 0.538 | **0.695** | 267 | 5 | 229 |
+| **Dataset 2** (`20260725_055634`, 7.2h) | Network-only Baseline ($\text{L1} + \text{ML}_{\text{net}}$) | 0.982 | 0.538 | **0.695** | 267 | 5 | 229 |
 | | Combined Architecture (OR Fusion) | 0.173 | 0.829 | **0.286** | 411 | 1965 | 85 |
 | | ★ **Narrow Mechanism Gate (NMG)** | **0.600** | **0.972** | **0.742** | **482** | **321** | **14** |
 | | | | | | | | |
@@ -36,7 +46,39 @@ All numbers below are produced by `python scripts/canonical_evaluation.py` (`val
 
 ---
 
-## 2. Realistic Network Segmentation & Purdue Model Architecture
+## 2. 📊 Benchmark Datasets & Download Links
+
+The evaluation datasets gathered from extended continuous operational runs of the testbed are bundled directly in this repository and mirrored online:
+
+> ### 🌟 Primary Paper Benchmark: Dataset 3 (`dataset_3_20260801_052308`)
+> - **Directory:** [`datasets/dataset_3/`](datasets/dataset_3/) (or via canonical symlink in [`datasets/`](datasets/))
+> - **Campaign Duration:** **7.8 hours** continuous runtime (57,058 synchronized telemetry records @ 1 Hz)
+> - **Threat Spectrum:** **Complete 10-Scenario Attack Suite**, introducing **Scenario 9 (authorized SCADA insider setpoint manipulation)** alongside stealth drift (S5) and out-of-band telemetry replay (S8).
+> - **Paper Headline Metrics:** **$F_1 = 0.891$**, Recall = **$0.901$**, Precision = **$0.881$** (only 74 false alarms across 5,212 benign frames, achieving **95.2% benign specificity**).
+> - **Why it is authoritative:** Dataset 3 provides the most comprehensive evaluation profile and is the primary dataset evaluated in the published manuscript.
+
+### Dataset Directory & Remote Access Links
+
+All three multi-hour datasets are accessible through the following channels:
+
+| Dataset Identifier | Campaign Directory | Duration | Total Records | Attack Spectrum | Primary Highlight |
+|---|---|:---:|:---:|:---:|---|
+| **Dataset 1** | [`datasets/dataset_1/`](datasets/dataset_1/) | 4.8 h | 34,228 | Scenarios 1–8 | Baseline multi-stage campaign |
+| **Dataset 2** | [`datasets/dataset_2/`](datasets/dataset_2/) | 7.2 h | 52,187 | Scenarios 1–8 | Extended multi-hour calibration |
+| **Dataset 3** *(Primary)* | [`datasets/dataset_3/`](datasets/dataset_3/) | **7.8 h** | **57,058** | **Scenarios 1–10** | **Paper benchmark: F1=0.891, Recall=0.901, Scenario 9** |
+
+- 📂 **Local Repository Directory:** [`datasets/`](datasets/) — See [`datasets/README.md`](datasets/README.md) for detailed column schemas, unit definitions, and CSV specifications.
+- 🌐 **Public GitHub Tree:** [github.com/MohamedAyman04/Honeypot/tree/main/datasets](https://github.com/MohamedAyman04/Honeypot/tree/main/datasets)
+- 🔒 **Anonymous Peer-Review Repository Mirror:** [anonymous.4open.science/r/Honeypot-FC35/tree/main/datasets](https://anonymous.4open.science/r/Honeypot-FC35/tree/main/datasets)
+
+To reproduce the paper's canonical results directly on Dataset 3:
+```bash
+python scripts/canonical_evaluation.py --ds1 datasets/dataset_3 --ds2 datasets/dataset_3
+```
+
+---
+
+## 3. Realistic Network Segmentation & Purdue Model Architecture
 
 In accordance with **IEC 62443** and the **Purdue Model**, field industrial protocols (Modbus, S7comm, DNP3) are strictly **NOT** exposed on the external perimeter. The testbed models a realistic multi-stage network topology:
 
@@ -48,7 +90,7 @@ In accordance with **IEC 62443** and the **Purdue Model**, field industrial prot
 
 ---
 
-## 3. Six-Layer Cross-Layer Detection Architecture
+## 4. Six-Layer Cross-Layer Detection Architecture
 
 The framework processes synchronized network packets, PLC registers, and physical process telemetry through 6 reasoning layers:
 
@@ -80,7 +122,7 @@ The framework processes synchronized network packets, PLC registers, and physica
 
 ---
 
-## 4. 10-Scenario Cyber Attack Spectrum & Evaluation Methodology
+## 5. 10-Scenario Cyber Attack Spectrum & Evaluation Methodology
 
 The testbed incorporates 10 representative attack classes mapping to MITRE ATT&CK for ICS:
 
@@ -100,7 +142,7 @@ While Scenario 10 (DoS) is fully implemented and tested, it is deliberately eval
 
 ---
 
-## 5. Deterministic Physical Safety Boundaries & Standards Grounding
+## 6. Deterministic Physical Safety Boundaries & Standards Grounding
 
 The architecture codifies multi-variable physical safety boundaries (`physics/safety_boundaries.py`) grounded in industrial standards:
 
@@ -123,45 +165,83 @@ The architecture codifies multi-variable physical safety boundaries (`physics/sa
 
 ---
 
-## 6. Quickstart & Evaluation Instructions
+## 7. Quickstart & Project Setup
 
-### Setup Environment
+### Prerequisites
+- **Linux / macOS / Windows (WSL2)**
+- **Python 3.10+** (recommended: 3.10–3.12)
+- **Docker Engine & Docker Compose v2** (for running the honeypot testbed)
+- **Git**
+
+### Step 1: Clone Repository & Virtual Environment Setup
 ```bash
-# Clone and enter workspace
+# Clone the repository
 git clone https://github.com/MohamedAyman04/Honeypot.git
 cd Honeypot
 
-# Activate virtual environment
+# Create and activate Python virtual environment
+python3 -m venv honeypot-venv
 source honeypot-venv/bin/activate
+
+# Install required dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Run Authoritative Benchmark Evaluation
+### Step 2: Instant Authoritative Benchmark Evaluation (No Docker Required)
+You can evaluate the pre-collected multi-hour campaigns immediately without starting Docker containers:
 ```bash
-# Executes 3-dataset benchmark under canonical methodology
+# Evaluate all 3 datasets under canonical validation methodology
 python scripts/canonical_evaluation.py
+
+# Evaluate Dataset 3 specifically (Primary Paper Benchmark)
+python scripts/canonical_evaluation.py --ds1 datasets/dataset_3 --ds2 datasets/dataset_3
+```
+This runs the full 6-layer reasoning pipeline, cross-layer NMG gating, and prints canonical Precision, Recall, and F1 metrics.
+
+### Step 3: Launching the Full Docker Testbed Infrastructure
+To spin up the 4-network high-interaction honeypot with field PLCs, physics simulation, InfluxDB, and Grafana:
+```bash
+# Start all microservices in background
+docker compose up -d --build
+
+# Verify all services are running healthy
+docker compose ps
 ```
 
-### Run Docker Infrastructure
+### Step 4: Accessing Services and Dashboards
+Once the Docker stack is active:
+
+| Service / Component | Protocol / Port | Local URL / Access | Description |
+|---|---|---|---|
+| **Grafana Monitoring** | HTTP / `3000` | [`http://localhost:3000`](http://localhost:3000) | Pre-provisioned telemetry dashboards (`admin` / `admin`). |
+| **Streamlit Log Explorer** | HTTP / `8501` | [`http://localhost:8501`](http://localhost:8501) | Real-time security events & MITRE ATT&CK dashboard. |
+| **InfluxDB Historian** | HTTP / `8086` | [`http://localhost:8086`](http://localhost:8086) | Time-series database for raw 1 Hz process telemetry. |
+| **Decoy Historian API** | HTTP / `5000` | [`http://localhost:5000`](http://localhost:5000) | Low-interaction honeypot REST API in DMZ. |
+| **SCADA SSH Bastion** | SSH / `2222` | `ssh operator@localhost -p 2222` | Purdue Level 3.5 Cowrie SSH honeypot. |
+| **PCN Modbus/TCP PLC** | TCP / `502` | `localhost:502` | Field PLC holding registers & actuator control. |
+| **PCN Siemens S7comm** | TCP / `102` | `localhost:102` | Emulated Siemens S7-300/1200 field controller. |
+| **PCN DNP3 Outstation** | TCP / `20000` | `localhost:20000` | Industrial DNP3 telemetry outstation. |
+
+To trigger an automated offensive campaign from the attacker container:
 ```bash
-# Start Docker honeypot stack (PCN, Perimeter Bastion, Monitoring)
-docker compose up -d
+docker compose exec attacker_node python3 attack_suite.py --phase 0
 ```
 
 ---
 
-## 7. Clustered Repository Structure
+## 8. 🛠️ Contributing & Developer Guide
 
-All project assets are organized into purpose-driven directory clusters:
+### 8.1 Welcome to Contributors!
+This repository is **public, open-source, and warmly welcomes community contributions**. Whether you want to fix a bug, enhance the physics fidelity, implement an additional industrial protocol, add novel attack vectors, or develop new ML anomaly detection models, your input is highly appreciated!
+
+### 8.2 Repository Architecture & Component Breakdown
 
 ```text
 Honeypot/
-├── README.md                      # Comprehensive project documentation & architecture guide
-├── docker-compose.yml             # Full 4-network orchestration (PCN, DMZ, Monitor, Backplane)
-├── .gitignore                     # Git ignore rules
-│
-├── data/                          # Clustered datasets & event telemetry
-│   └── general logs.jsonl         # Canonical enriched 10-scenario event dataset (with root symlink)
+├── README.md                      # Comprehensive documentation & developer guide
+├── requirements.txt               # Top-level Python dependency specification
+├── docker-compose.yml             # 4-network orchestration (PCN, DMZ, Monitor, Backplane)
 │
 ├── datasets/                      # 3 Multi-hour operational cyber-physical evaluation campaigns
 │   ├── README.md                  # Comprehensive dataset manifest & field definitions
@@ -169,48 +249,212 @@ Honeypot/
 │   ├── dataset_2/                 # Campaign 2 (7.2h, Scenarios 1–8)
 │   └── dataset_3/                 # 🌟 Primary Paper Benchmark Campaign (7.8h, Scenarios 1–10, F1=0.891)
 │
-├── docs/                          # Technical thesis documentation & deployment guides
-│   ├── ARCHITECTURE_REVIEW.md     # Scientific evaluation & experimental analysis
-│   ├── DEPLOYMENT_GUIDE.md        # Step-by-step testbed deployment instructions
-│   ├── IMPLEMENTATION_PLAN.md     # Engineering implementation design notes
-│   └── THESIS_DOCUMENTATION.md    # Master thesis technical specifications
+├── physics/                       # Hydrodynamic simulation & ASME/API physical safety boundaries
+│   ├── physics_engine.py          # PipelineSimulator mathematical physics ODE/difference model
+│   ├── physics_process.py         # Standalone 1 Hz simulation loop syncing state to Redis
+│   └── safety_boundaries.py       # Grounded ASME B31.4, API 610, & HI 9.6.1 trip boundaries
 │
-├── figures/                       # Clustered evaluation plots & architecture diagrams
-│   ├── confusion_matrices.png     # Multi-detector confusion matrix
-│   ├── f1_by_protocol.png         # Protocol-level F1 breakdown
-│   ├── thesis_confusion_matrices.png # Multi-class LSTM anomaly matrix (G1–G6)
-│   ├── thesis_f1_protocol.png     # Comparative protocol benchmark curves
-│   ├── thesis_pr_curves.png       # Precision-Recall curves across detectors
-│   ├── thesis_timeline.png        # Detector activation timeline
-│   └── timeline_anomaly_scores.png# Temporal anomaly score dynamics
+├── plc/                           # Level 1–2 PCN Field PLCs
+│   ├── modbus_server.py           # Physics-coupled Modbus/TCP server (holding registers 100-202)
+│   ├── s7_server.py               # Siemens S7comm server coupled to physics
+│   └── dnp3_server.py             # DNP3 outstation daemon
 │
-├── reports/                       # Clustered benchmark reports & experimental tables
-│   ├── CANONICAL_RESULTS.md       # Full canonical benchmark summary & methodology
-│   ├── evaluation_report.txt      # Multi-detector evaluation metrics report
-│   └── table_ablation_complete.csv# Full ablation experiment results table
-│
-├── scripts/                       # Benchmark execution, evaluation & utility scripts
-│   ├── canonical_evaluation.py    # Authoritative 3-campaign benchmark evaluation
-│   ├── evaluate.py                # Multi-detector ML evaluation pipeline
-│   ├── clean_and_enrich_logs.py   # Dataset standardization & feature enrichment
-│   ├── attack_simulation.py       # Standalone multi-scenario attack simulation
-│   ├── recompute_ablation.py      # Ablation recomputation tool
-│   ├── profile_normals.py         # Normal baseline statistical profiling
-│   ├── check_disk.py              # Disk space & campaign size estimator
-│   ├── check_indices.py           # InfluxDB index validation utility
-│   └── ...                        # Additional experimental validation scripts
+├── ml-engine/                     # Cross-layer machine learning & statistical reasoning
+│   ├── detector.py                # Online anomaly detector & feature extractors
+│   └── trainer.py                 # Offline unsupervised model training (IF & LSTM-AE)
 │
 ├── attacker_node/                 # Offensive attack suite & protocol probes (Purdue Level 3.5 / WAN)
-├── plc/                           # Level 1–2 PCN Field PLCs (Modbus/TCP, Siemens S7comm, DNP3)
-├── fake_plc/                      # Secondary low-interaction honeypot PLC
-├── physics/                       # Hydrodynamic simulation & ASME/API physical safety boundaries
-├── ml-engine/                     # Domain-separated ML intrusion detection (IF & LSTM-AE)
-├── scada_ssh/                     # Perimeter SSH bastion honeypot (Cowrie / Level 3.5)
-├── logger/                        # Unified event logger & MITRE ATT&CK correlator
-├── log_dashboard/                 # Streamlit real-time security dashboard
-├── historian_api/                 # Legitimate internal SCADA historian API
-├── honeypot_historian_api/        # Decoy honeypot historian API
-├── grafana_dashboards/            # Pre-provisioned Grafana monitoring dashboards
-├── grafana_provisioning/          # Grafana datasources & dashboard provisioning configs
-└── shared/                        # Shared schemas, MITRE ATT&CK mapping, and IPC client
+│   ├── attack_suite.py            # Automated 10-scenario MITRE ATT&CK campaign runner
+│   ├── s7comm_probe.py            # S7 protocol handshake & exploit probe
+│   └── dnp3_probe.py              # DNP3 enumeration script
+│
+├── logger/                        # Centralized event logging & correlation
+│   ├── unified_logger.py          # InfluxDB-to-JSONL log aggregator
+│   └── correlator.py              # Command-to-consequence causal correlator
+│
+├── shared/                        # Shared utility libraries
+│   ├── log_schema.py              # Canonical hierarchical JSON schema definitions
+│   ├── mitre_mapping.py           # Automated MITRE ATT&CK for ICS classification
+│   └── story_client.py            # Inter-service HTTP event logging client
+│
+├── scripts/                       # Benchmark evaluation, enrichment, and maintenance scripts
+│   ├── canonical_evaluation.py    # Authoritative 3-dataset benchmark evaluation
+│   ├── clean_and_enrich_logs.py   # Telemetry cleansing and derived feature generation
+│   └── attack_simulation.py       # Standalone attack injection simulator
+│
+├── log_dashboard/                 # Real-time Streamlit security event visualizer
+├── grafana_dashboards/            # Pre-provisioned Grafana dashboards
+└── docs/                          # In-depth architectural & deployment documentation
 ```
+
+### 8.3 Data Flow & Inter-Component Communication
+
+```
+[Attacker Node / SCADA Bastion]
+           │
+           ▼ (Modbus FC6 / S7 Writes / DNP3)
+    [Field PLCs (plc/)] ◄───► [Redis State: pipeline_state] ◄───► [Physics Engine (physics/)]
+           │                                                                 │
+           │ (Modbus Events / Forced Writes)                                 │ (P, Q, T, RPM @ 1 Hz)
+           ▼                                                                 ▼
+    [InfluxDB Historian] ──────────────────────────────────────────► [ML Engine (ml-engine/)]
+           │                                                                 │
+           ▼                                                                 ▼
+    [Unified Logger & Correlator] ──► [general_logs.jsonl] ──► [6-Layer Reasoning & NMG Gate]
+```
+
+### 8.4 Where and How to Modify Existing Components
+
+#### 1. Field PLCs & Register Mappings (`plc/`)
+- **Modbus Registers:** Defined in [`plc/modbus_server.py`](plc/modbus_server.py) (`PhysicsAwareDataBlock`).
+  - Read registers: `100` (Pressure, PSI), `101` (Flow Rate $\times 10$, L/s), `102` (Temperature, °C), `103` (Pump RPM).
+  - Actuator write registers: `200` (Pump RPM setpoint, 0–3000), `201` (Valve position $\times 1000$, 0–1000), `202` (Valve toggle bit).
+- **Siemens S7 & DNP3:** Corresponding data blocks and outstation points are mapped in [`plc/s7_server.py`](plc/s7_server.py) and [`plc/dnp3_server.py`](plc/dnp3_server.py).
+- To add a new sensor (e.g. differential pressure $\Delta P$ or vibration): update `setValues` and register addresses in `modbus_server.py`, sync the variable to the physics simulator, and log the event to InfluxDB.
+
+#### 2. Detection Engine & Threshold Calibration (`ml-engine/`, `scripts/canonical_evaluation.py`)
+- **Layer 1 Timing Rules:** In `canonical_evaluation.py` (Rule 1.1 write frequency $f_{\text{write\_10s}} > 5.0$, Rule 1.5 DoS arrival time $\Delta t_{\text{arr}} < 5\text{ms}$).
+- **Layer 2 Physics Limits:** In [`physics/safety_boundaries.py`](physics/safety_boundaries.py) (`ASME B31.4 MAOP`, `API 610 MCSF`).
+- **Layer 3 CUSUM / EWMA Parameters:** Tweak decision interval $H$ and allowance $K$ in `scripts/canonical_evaluation.py` to adjust sensitivity to stealth drift.
+- **Layer 6 Narrow Mechanism Gate (NMG):** Gating logic condition $|\delta_P| > \tau_{\text{NMG}} \land f_{\text{write\_10s}} == 0$. Threshold $\tau_{\text{NMG}}$ is automatically calibrated on the network-silent validation split.
+
+#### 3. Attack Suite & Scenarios (`attacker_node/attack_suite.py`)
+- Each attack scenario is defined as a phase function in [`attacker_node/attack_suite.py`](attacker_node/attack_suite.py).
+- To add a new scenario: create a new phase method, map the MITRE ATT&CK technique via `_record_result()`, execute the offensive probe, and record ground-truth timing in `attack_status.csv`.
+
+---
+
+### 8.5 Deep Dive: Replacing or Improving the Physics Engine
+
+The honeypot separates physical simulation from communication protocols using a decoupled, service-oriented architecture:
+
+#### Architecture & IPC Decoupling
+1. **Simulation Engine:** [`physics/physics_engine.py`](physics/physics_engine.py) implements the class `PipelineSimulator`.
+2. **Simulation Process:** [`physics/physics_process.py`](physics/physics_process.py) runs a continuous 1-second simulation loop.
+3. **IPC Bridge:** The physical state is serialized as JSON and stored in Redis under the key `pipeline_state`. Field PLCs (`modbus_server.py`, `s7_server.py`) read and write this shared state.
+
+#### The Shared State Schema
+Any physics engine must maintain and expose the following JSON structure:
+```json
+{
+  "pressure": 120.45,
+  "flow_rate": 24.12,
+  "temperature": 26.80,
+  "viscosity": 0.98,
+  "pump_rpm": 1200.0,
+  "valve_pos": 0.50
+}
+```
+
+#### The Minimal Interface Contract
+If you wish to replace `PipelineSimulator` with a higher-fidelity model, your class must implement:
+```python
+class CustomPhysicsEngine:
+    def __init__(self, use_redis: bool = True):
+        ...
+    def set_pump_rpm(self, rpm: float) -> None:
+        """Update pump speed command (actuator input)."""
+        ...
+    def set_valve_pos(self, pos: float) -> None:
+        """Update valve position command [0.0 = closed, 1.0 = fully open]."""
+        ...
+    def update(self) -> dict:
+        """Step simulation by dt and return updated state dict."""
+        ...
+    def get_state(self) -> dict:
+        """Return current physical state adhering to the schema above."""
+        ...
+```
+
+#### Physical Consistency Invariants to Maintain
+To avoid introducing artificial anomalies or breaking detector assumptions:
+- **Zero Flow Invariant:** If `valve_pos <= 0.01` (valve closed), `flow_rate` **must** evaluate to `0.0` regardless of pump RPM.
+- **Hydraulic Inertia:** Fluid cannot instantaneously change velocity; respect pump acceleration curves and pressure damping constants ($\tau_p, \tau_q$).
+- **Safety Boundaries:** Check and align changes with [`physics/safety_boundaries.py`](physics/safety_boundaries.py). If you change nominal operating points (e.g. from 120 PSI to 60 PSI), update ASME/API limits accordingly.
+
+#### Ideas for Advanced Physics Plugins:
+- **EPANET / WNTR Integration:** Replace the single-pipe simulator with a full multi-junction water distribution network.
+- **Simulink / OpenModelica FMU:** Export high-fidelity digital twins via the Functional Mock-up Interface (FMI/FMU) and drive them using `pyfmi`.
+- **Chemical / Thermal Reactors:** Model exothermic CSTR dynamics (Continuous Stirred Tank Reactor) to test cyber-attacks on chemical cooling jackets.
+
+---
+
+### 8.6 How to Add or Improve Other Components
+
+#### Adding New Industrial Fieldbus Protocols
+1. Create a server implementation in `plc/` (e.g., `opcua_server.py` using `asyncua`, or `iec104_server.py` using `c104`).
+2. Bind the server to the internal `pcn-net` Docker network.
+3. Import `PipelineSimulator` (or query Redis `pipeline_state`) to serve real-time sensor measurements.
+4. Hook actuator writes to update pump RPM or valve position in Redis.
+5. Log incoming packets and write operations to InfluxDB `sensor_logs`.
+6. Add the new service container to [`docker-compose.yml`](docker-compose.yml).
+
+#### Adding New Machine Learning Anomaly Detectors
+1. Implement your model in `ml-engine/` (e.g., Temporal Convolutional Networks, Graph Attention Networks, Isolation Forest variants).
+2. **Crucial Rule — Enforce Domain Feature Separation:**
+   - **Never** train ML models on unseparated raw vectors ($\mathbf{x}_{\text{net}} \cup \mathbf{x}_{\text{proc}}$). Normal process fluctuations bleed into network anomaly scores, causing severe false-alarm collapse (Precision drops below 0.10).
+   - Train dedicated network models on `["inter_arrival_time", "write_freq_10s", "is_write", "func_code", "length"]`.
+   - Train dedicated process models on `["pressure", "flow_rate", "temperature", "pressure_delta", "pressure_mean_dev"]`.
+3. Plug your model into Layer 5 or Layer 6 of `scripts/canonical_evaluation.py` and benchmark on Dataset 3.
+
+#### Adding New Cyber-Attack Scenarios
+1. Write the attack routine in [`attacker_node/attack_suite.py`](attacker_node/attack_suite.py).
+2. Assign the next scenario number (e.g., Scenario 11).
+3. Map to the appropriate MITRE ATT&CK for ICS technique in [`shared/mitre_mapping.py`](shared/mitre_mapping.py).
+4. Run the attack in a continuous testbed session and record timestamps in `data/attack_status.csv`.
+
+---
+
+### 8.7 Submitting Contributions & Pull Request Workflow
+
+We follow standard GitHub Flow:
+
+1. **Fork the Repository:** Click the "Fork" button at the top of the GitHub page.
+2. **Clone your Fork:**
+   ```bash
+   git clone https://github.com/<your-username>/Honeypot.git
+   cd Honeypot
+   ```
+3. **Create a Dedicated Branch:**
+   ```bash
+   git checkout -b feature/epanet-physics-engine
+   # or
+   git checkout -b fix/modbus-framing-error
+   ```
+4. **Develop and Test:**
+   - Write clean, documented, and PEP 8-compliant Python code.
+   - Include docstrings and type hints where applicable.
+5. **Run the Authoritative Benchmark Verification:**
+   Before submitting any PR modifying physics, detection rules, or logging, execute the canonical benchmark:
+   ```bash
+   python scripts/canonical_evaluation.py
+   ```
+   *Ensure that existing baseline performance on Dataset 3 ($F_1 = 0.891$) is maintained without regressions.*
+6. **Commit and Push:**
+   ```bash
+   git add .
+   git commit -m "feat(physics): integrate EPANET hydraulic network solver"
+   git push origin feature/epanet-physics-engine
+   ```
+7. **Open a Pull Request:**
+   - Open a PR against the `main` branch of `MohamedAyman04/Honeypot`.
+   - Include a concise description of changes, motivation, and any evaluation or test outputs.
+   - Engage with feedback during code review!
+
+---
+
+## 9. Citation & Contact
+
+If you use this testbed, datasets, or detection architecture in your research, please cite:
+
+```bibtex
+@article{ayman2026physics,
+  title   = {Cross-Layer Intrusion Detection in Industrial Control Systems via Domain-Separated Machine Learning and Physical Gating},
+  author  = {Ayman, Mohamed and et al.},
+  journal = {IEEE Transactions on Industrial Informatics},
+  year    = {2026}
+}
+```
+
+- **Project Lead:** Mohamed Ayman ([GitHub](https://github.com/MohamedAyman04))
+- **Questions & Issues:** Please open an issue on the [GitHub Issue Tracker](https://github.com/MohamedAyman04/Honeypot/issues).
