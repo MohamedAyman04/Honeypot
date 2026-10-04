@@ -10,7 +10,7 @@
 A high-interaction, physics-grounded Industrial Cyber-Physical System (ICPS) honeypot and cross-layer intrusion detection research environment. Emulates realistic Operational Technology (OT) infrastructure across 4 segmented Docker networks, continuous hydraulic physics simulation, Modbus/TCP, Siemens S7comm, and DNP3 services, automated 10-scenario cyber-attack campaigns (including stealth drift, un-commanded telemetry replay, authorized SCADA insider setpoint manipulation, and denial-of-service starvation), and a 6-layer cross-layer detection architecture.
 
 > **📢 Public Open-Source Research Platform:**  
-> This repository is **public, open-source, and actively open to community contributions**. Whether you are an industrial cybersecurity researcher, an automation engineer, or a machine learning practitioner, we welcome bug reports, new industrial protocol implementations, high-fidelity physics simulators, advanced ML anomaly detection models, and benchmark extensions. Please refer to our [Contributing & Developer Guide](#8--contributing--developer-guide) to get started!
+> This repository is **public, open-source, and actively open to community contributions**. Whether you are an industrial cybersecurity researcher, an automation engineer, or a machine learning practitioner, we welcome bug reports, new industrial protocol implementations, high-fidelity physics simulators, advanced ML anomaly detection models, and benchmark extensions. Please refer to our [Contributing & Developer Guide](#9--contributing--developer-guide) to get started!
 
 ---
 
@@ -165,7 +165,91 @@ The architecture codifies multi-variable physical safety boundaries (`physics/sa
 
 ---
 
-## 7. Quickstart & Project Setup
+## 7. 📝 Canonical Cross-Layer Logging Scheme & Audit Trail (`general_logs.jsonl`)
+
+A core strength of this platform is the temporal synchronization of multi-perspective observations into a standardized, machine-learning-ready audit trail ([`data/general logs.jsonl`](data/general%20logs.jsonl)). Rather than producing disparate, unstructured text lines, the testbed's centralized logging engine ([`logger/unified_logger.py`](logger/unified_logger.py)) and schema specification ([`shared/log_schema.py`](shared/log_schema.py)) enforce a canonical hierarchical JSON schema for every logged event.
+
+### Canonical Event Schema Breakdown
+
+| Schema Component | Nested JSON Keys | Description & Recorded Fields |
+|---|---|---|
+| **Event Header** | `timestamp`, `event_id`, `event.type`, `event.severity`, `event.narrative` | ISO 8601 UTC timestamp, unique UUIDv4 event ID, normalized event category, operational severity (`INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), and human-readable diagnostic message. |
+| **Provenance Context** | `context.sensor`, `context.purdue_level`, `context.journey_id`, `context.session_id` | Originating microservice daemon, architectural Purdue level (`Level 0` through `Level 3.5`), journey identifier, and correlated session token across multi-stage attack pivots. |
+| **Network Telemetry ($\mathbf{x}_{\text{net}}$)** | `network.source`, `network.destination`, `network.protocol`, `network.inter_arrival_time`, `network.write_frequency_10s`, `network.is_write`, `network.function_code`, `network.length` | Source/destination IP and port pairs, protocol identifier (`Modbus`, `S7comm`, `DNP3`, `SSH`, `HTTP`), packet inter-arrival time $\Delta t_{\text{arr}}$, 10-second rolling write burst frequency $f_{\text{write\_10s}}$, binary write flag $\mathbb{I}_{\text{write}}$, function code $c_{\text{func}}$, and payload length $l_{\text{pkt}}$. |
+| **Process Telemetry ($\mathbf{x}_{\text{proc}}$)** | `process.pressure`, `process.flow_rate`, `process.temperature`, `process.pump_rpm`, `process.valve_position`, `process.viscosity`, `process.pressure_delta`, `process.pressure_mean_deviation` | Synchronized continuous hydrodynamic state vector: pipeline pressure ($P$ in PSI), flow rate ($Q$ in L/s), temperature ($T$ in °C), pump speed ($R$ in RPM), valve position ($V \in [0.0, 1.0]$), viscosity ($\mu$ in cSt), first derivative rate of change ($\Delta P = dP/dt$), and real-time deviation from baseline mean ($\delta_P = \|P_t - \mu_0\|$). |
+| **ML Ground Truth & Safety Envelopes** | `ml_analysis.is_anomaly`, `ml_analysis.anomaly_type`, `ml_analysis.attack_phase`, `ml_analysis.attack_category`, `ml_analysis.boundary_violations` | Binary ground-truth label ($y \in \{0, 1\}$), categorical anomaly type, discrete attack phase ID (Scenarios 1–10), threat category, and structured descriptors of active ASME B31.4 / API 610 safety-boundary violations. |
+| **MITRE ATT&CK for ICS** | `mitre.technique_id`, `mitre.technique_name`, `mitre.tactic` | Automated mapping to the MITRE ATT&CK for ICS matrix (e.g. `T0855: Unauthorized Command Message`, `T0886: Remote Services`, `T0814: Denial of Service`). |
+| **Cyber Kill Chain Stage** | `security.kill_chain_stage` | Strategic attack lifecycle stage (e.g. `Reconnaissance`, `Lateral Movement`, `Execution`, `Infiltration`, `Impact`). |
+
+### Originating Sensor Daemons & Provenance Context
+
+To guarantee end-to-end traceability across the Purdue hierarchy:
+- `plc_simulator`: Field PLCs operating at **Purdue Levels 1–2**, executing local control loops, maintaining register banks, and applying physical actuator changes.
+- `ics_sniffer`: Passive network sensor operating at **Purdue Level 2**, capturing raw fieldbus traffic and computing real-time inter-arrival dynamics and rolling burst rates.
+- `ml_engine`: Anomaly detector spanning **Purdue Levels 2–3**, performing online feature normalization, statistical drift tracking, autoencoder reconstruction, and physics safety checks.
+- `ics_scada_ssh`: Perimeter bastion honeypot at **Purdue Level 3.5**, logging authentication attempts, interactive command history, and credential brute-force attacks.
+- `synthetic`: Simulation orchestrator generating startup baseline events, heartbeat checks, and automated benchmark verification probes.
+
+### Representative Event Record (`JSONL`)
+
+Below is an exact record illustrating how a telemetry event is formatted in `general_logs.jsonl`:
+
+```json
+{
+  "timestamp": "2026-05-08T18:54:44.252412Z",
+  "event_id": "ff8a0a42-b3b4-4541-9082-181c8139cdac",
+  "event": {
+    "type": "process_telemetry",
+    "severity": "INFO",
+    "narrative": "Nominal pipeline steady-state operation within standard ASME B31.4 limits."
+  },
+  "context": {
+    "sensor": "plc_simulator",
+    "purdue_level": "Level 2",
+    "journey_id": "sess_001",
+    "session_id": "sess_001"
+  },
+  "network": {
+    "source": { "ip": "172.24.0.8", "port": 49152 },
+    "destination": { "ip": "172.24.0.8", "port": 502 },
+    "protocol": "Modbus",
+    "inter_arrival_time": 0.015,
+    "write_frequency_10s": 0.0,
+    "is_write": 0,
+    "function_code": 3,
+    "length": 12
+  },
+  "process": {
+    "pressure": 118.35,
+    "flow_rate": 49.84,
+    "temperature": 44.53,
+    "pump_rpm": 1194.4,
+    "valve_position": 0.50,
+    "viscosity": 1.0,
+    "pressure_delta": 0.01,
+    "pressure_mean_deviation": -1.65
+  },
+  "ml_analysis": {
+    "is_anomaly": 0,
+    "anomaly_type": "NORMAL",
+    "attack_phase": 0,
+    "attack_category": "Normal Baseline",
+    "boundary_violations": []
+  },
+  "mitre": {
+    "technique_id": "T0000",
+    "technique_name": "Normal Operation",
+    "tactic": "None"
+  },
+  "security": {
+    "kill_chain_stage": "Operational Baseline"
+  }
+}
+```
+
+---
+
+## 8. Quickstart & Project Setup
 
 ### Prerequisites
 - **Linux / macOS / Windows (WSL2)**
@@ -230,12 +314,12 @@ docker compose exec attacker_node python3 attack_suite.py --phase 0
 
 ---
 
-## 8. 🛠️ Contributing & Developer Guide
+## 9. 🛠️ Contributing & Developer Guide
 
-### 8.1 Welcome to Contributors!
+### 9.1 Welcome to Contributors!
 This repository is **public, open-source, and warmly welcomes community contributions**. Whether you want to fix a bug, enhance the physics fidelity, implement an additional industrial protocol, add novel attack vectors, or develop new ML anomaly detection models, your input is highly appreciated!
 
-### 8.2 Repository Architecture & Component Breakdown
+### 9.2 Repository Architecture & Component Breakdown
 
 ```text
 Honeypot/
@@ -287,7 +371,7 @@ Honeypot/
 └── docs/                          # In-depth architectural & deployment documentation
 ```
 
-### 8.3 Data Flow & Inter-Component Communication
+### 9.3 Data Flow & Inter-Component Communication
 
 ```
 [Attacker Node / SCADA Bastion]
@@ -303,7 +387,7 @@ Honeypot/
     [Unified Logger & Correlator] ──► [general_logs.jsonl] ──► [6-Layer Reasoning & NMG Gate]
 ```
 
-### 8.4 Where and How to Modify Existing Components
+### 9.4 Where and How to Modify Existing Components
 
 #### 1. Field PLCs & Register Mappings (`plc/`)
 - **Modbus Registers:** Defined in [`plc/modbus_server.py`](plc/modbus_server.py) (`PhysicsAwareDataBlock`).
@@ -324,7 +408,7 @@ Honeypot/
 
 ---
 
-### 8.5 Deep Dive: Replacing or Improving the Physics Engine
+### 9.5 Deep Dive: Replacing or Improving the Physics Engine
 
 The honeypot separates physical simulation from communication protocols using a decoupled, service-oriented architecture:
 
@@ -379,7 +463,7 @@ To avoid introducing artificial anomalies or breaking detector assumptions:
 
 ---
 
-### 8.6 How to Add or Improve Other Components
+### 9.6 How to Add or Improve Other Components
 
 #### Adding New Industrial Fieldbus Protocols
 1. Create a server implementation in `plc/` (e.g., `opcua_server.py` using `asyncua`, or `iec104_server.py` using `c104`).
@@ -405,7 +489,7 @@ To avoid introducing artificial anomalies or breaking detector assumptions:
 
 ---
 
-### 8.7 Submitting Contributions & Pull Request Workflow
+### 9.7 Submitting Contributions & Pull Request Workflow
 
 We follow standard GitHub Flow:
 
@@ -443,7 +527,7 @@ We follow standard GitHub Flow:
 
 ---
 
-## 9. Citation & Contact
+## 10. Citation & Contact
 
 If you use this testbed, datasets, or detection architecture in your research, please cite:
 
